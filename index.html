@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบการทำงานภายในบริษัท | NPT Consultant And Service</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode"> <!-- Defaults to dark-mode for premium look, can be toggled to light-mode -->
+
+    <!-- ================= SIMULATED GMAIL NOTIFICATION ================= -->
+    <div id="simulated-sms" class="sms-notification hidden">
+        <div class="sms-header">
+            <span class="sms-title" style="color: #ea4335;"><i data-lucide="mail"></i> อีเมลใหม่ (Gmail)</span>
+            <span class="sms-time">เมื่อสักครู่</span>
+        </div>
+        <div class="sms-body" id="sms-body-content">
+            รหัส OTP ของคุณคือ <strong id="sms-otp-code">123456</strong> สำหรับการเข้าใช้งานระบบ NPT Consultant And Service (มีอายุใช้งาน 5 นาที)
+        </div>
+    </div>
+
+    <!-- ================= LOGIN PAGE (OVERLAY) ================= -->
+    <div id="login-overlay" class="login-container">
+        <div class="login-card glass">
+            <div class="login-header">
+                <div class="logo-area">
+                    <h2>NPT Consultant And Service</h2>
+                    <p>ระบบบริหารงานและบุคลากรภายในบริษัท</p>
+                </div>
+            </div>
+
+            <!-- Gmail Input View -->
+            <div id="phone-view" class="login-form-view">
+                <div class="form-group">
+                    <label for="login-email"><i data-lucide="mail"></i> อีเมลผู้ใช้งาน</label>
+                    <input type="email" id="login-email" placeholder="กรอกอีเมลของคุณ" autocomplete="off">
+                    <small class="form-hint">ระบุ Gmail ของคุณเพื่อเข้าใช้งานระบบ</small>
+                </div>
+                <button id="btn-request-otp" class="btn btn-primary btn-block">
+                    <span>เข้าสู่ระบบ</span>
+                    <i data-lucide="log-in"></i>
+                </button>
+            </div>
+
+            <!-- OTP Input View -->
+            <div id="otp-view" class="login-form-view hidden">
+                <div class="otp-intro">
+                    <p>เราได้ส่งรหัส OTP 6 หลักไปที่อีเมล <strong id="display-target-email">npt.admin@gmail.com</strong> แล้ว</p>
+                </div>
+                <div class="form-group">
+                    <label for="login-otp"><i data-lucide="key-round"></i> รหัส OTP (6 หลัก)</label>
+                    <div class="otp-input-wrapper">
+                        <input type="text" id="login-otp" placeholder="กรอกรหัส 6 หลัก" maxlength="6" autocomplete="off" pattern="\d*">
+                    </div>
+                </div>
+                <div class="otp-actions">
+                    <button id="btn-verify-otp" class="btn btn-primary btn-block">
+                        <span>ยืนยันเข้าสู่ระบบ</span>
+                        <i data-lucide="check"></i>
+                    </button>
+                    <button id="btn-back-to-phone" class="btn btn-secondary btn-block">
+                        <i data-lucide="arrow-left"></i> ย้อนกลับเพื่อแก้ไขอีเมล
+                    </button>
+                </div>
+            </div>
+
+            <!-- Toast Messages -->
+            <div id="login-message" class="toast hidden"></div>
+        </div>
+    </div>
+
+    <!-- ================= MAIN DASHBOARD APPLICATION ================= -->
+    <div id="app-container" class="app-layout hidden">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="sidebar glass">
+            <div class="sidebar-brand" style="justify-content: center; padding: 20px 10px; margin-bottom: 24px;">
+                <span class="brand-name" style="font-size: 1.05rem; white-space: nowrap; letter-spacing: -0.2px;">NPT Consultant And Service</span>
+            </div>
+
+            <!-- User Status Info -->
+            <div class="user-profile-section">
+                <div class="avatar"><i data-lucide="user"></i></div>
+                <div class="user-meta">
+                    <span id="user-role-badge" class="badge badge-admin">ผู้ดูแลระบบ</span>
+                    <span id="user-display-email" class="user-phone">npt.admin@gmail.com</span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item active" data-tab="dashboard">
+                        <a href="#"><i data-lucide="layout-dashboard"></i><span>ภาพรวม</span></a>
+                    </li>
+                    <li class="nav-item" data-tab="tasks">
+                        <a href="#"><i data-lucide="calendar"></i><span>ตารางงาน</span></a>
+                    </li>
+                    <li class="nav-item admin-only" data-tab="assign-tasks">
+                        <a href="#"><i data-lucide="calendar-check"></i><span>การมอบหมายงาน</span></a>
+                    </li>
+                    <li class="nav-item" data-tab="quotations">
+                        <a href="#"><i data-lucide="file-text"></i><span>ใบเสนอราคา</span></a>
+                    </li>
+                    <li class="nav-item" data-tab="staff">
+                        <a href="#"><i data-lucide="users-2"></i><span>รายชื่อบุคลากร</span></a>
+                    </li>
+                    <li class="nav-item admin-only" data-tab="settings">
+                        <a href="#"><i data-lucide="settings"></i><span>ตั้งค่า Gmail SMTP</span></a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Sidebar Footer Controls -->
+            <div class="sidebar-footer">
+                <!-- Theme switch -->
+                <button id="theme-toggle" class="btn btn-icon-text">
+                    <i id="theme-icon" data-lucide="sun"></i>
+                    <span id="theme-text">โหมดสว่าง</span>
+                </button>
+                <!-- Log out -->
+                <button id="btn-logout" class="btn btn-danger btn-icon-text">
+                    <i data-lucide="log-out"></i>
+                    <span>ออกจากระบบ</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="header-title">
+                    <h1 id="page-title">ภาพรวมระบบ</h1>
+                    <p id="page-subtitle" class="text-muted">ยินดีต้อนรับสู่ศูนย์กลางการจัดการงาน</p>
+                </div>
+                <div class="header-actions">
+                    <span id="current-date" class="date-badge">15 กรกฎาคม 2026</span>
+                </div>
+            </header>
+
+            <div class="content-body">
+                
+                <!-- 1. DASHBOARD VIEW -->
+                <section id="tab-dashboard" class="tab-panel active">
+                    <!-- Statistics Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card glass">
+                            <div class="stat-icon bg-primary-soft"><i data-lucide="list-todo"></i></div>
+                            <div class="stat-details">
+                                <h3>งานทั้งหมด</h3>
+                                <span class="stat-value" id="stat-total-tasks">0</span>
+                                <span class="stat-desc">รายการงานในระบบ</span>
+                            </div>
+                        </div>
+                        <div class="stat-card glass">
+                            <div class="stat-icon bg-warning-soft"><i data-lucide="clock"></i></div>
+                            <div class="stat-details">
+                                <h3>กำลังดำเนินการ</h3>
+                                <span class="stat-value text-warning" id="stat-pending-tasks">0</span>
+                                <span class="stat-desc">งานที่พนักงานกำลังทำ</span>
+                            </div>
+                        </div>
+                        <div class="stat-card glass">
+                            <div class="stat-icon bg-success-soft"><i data-lucide="check-circle-2"></i></div>
+                            <div class="stat-details">
+                                <h3>เสร็จสิ้นแล้ว</h3>
+                                <span class="stat-value text-success" id="stat-completed-tasks">0</span>
+                                <span class="stat-desc">งานที่ปิดเรียบร้อย</span>
+                            </div>
+                        </div>
+                        <div class="stat-card glass">
+                            <div class="stat-icon bg-info-soft"><i data-lucide="file-text"></i></div>
+                            <div class="stat-details">
+                                <h3>ใบเสนอราคา</h3>
+                                <span class="stat-value text-info" id="stat-total-quotations">0</span>
+                                <span class="stat-desc">จำนวนใบเสนอราคาทั้งหมด</span>
+                            </div>
+                        </div>
+                        <div class="stat-card glass admin-only">
+                            <div class="stat-icon bg-info-soft"><i data-lucide="users"></i></div>
+                            <div class="stat-details">
+                                <h3>พนักงานทั้งหมด</h3>
+                                <span class="stat-value text-info" id="stat-total-staff">0</span>
+                                <span class="stat-desc">จำนวนพนักงานในบริษัท</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Layout: Two Columns (Recent Tasks & Staff Quick View) -->
+                    <div class="dashboard-layouts">
+                        <div class="layout-card glass">
+                            <div class="card-header">
+                                <h2><i data-lucide="clock-3"></i> งานล่าสุดในระบบ</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>ชื่องาน</th>
+                                                <th>ผู้รับผิดชอบ</th>
+                                                <th>สถานะ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="recent-tasks-list">
+                                            <!-- Tasks injected by JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="layout-card glass">
+                            <div class="card-header">
+                                <h2><i data-lucide="user-check"></i> รายการพนักงานว่าง/ติดงาน</h2>
+                            </div>
+                            <div class="card-body">
+                                <div id="staff-availability-list" class="activity-feed">
+                                    <!-- Staff status injected by JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. WORK SCHEDULE VIEW (Visible to Everyone) -->
+                <section id="tab-tasks" class="tab-panel">
+                    <div class="layout-card glass mt-4">
+                        <div class="card-header flex-between">
+                            <h2>ตารางงานพนักงานและความรับผิดชอบ</h2>
+                            <div class="filters">
+                                <select id="filter-task-status" class="form-control-inline">
+                                    <option value="all">สถานะงานทั้งหมด</option>
+                                    <option value="pending">ยังไม่ดำเนินการ</option>
+                                    <option value="ongoing">กำลังดำเนินการ</option>
+                                    <option value="completed">เสร็จสิ้นแล้ว</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ชื่องาน</th>
+                                            <th>รายละเอียดงาน</th>
+                                            <th>ผู้รับผิดชอบ</th>
+                                            <th>สถานะ</th>
+                                            <th>การจัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tasks-table-body">
+                                        <!-- Injected by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2.5. TASK ASSIGNMENT VIEW (Admin Only) -->
+                <section id="tab-assign-tasks" class="tab-panel admin-only">
+                    <div class="panel-actions">
+                        <button class="btn btn-primary" id="btn-open-task-modal">
+                            <i data-lucide="plus"></i> มอบหมายงานใหม่
+                        </button>
+                    </div>
+
+                    <div class="layout-card glass mt-4">
+                        <div class="card-header flex-between">
+                            <h2>การมอบหมายงานและควบคุม</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ชื่องาน</th>
+                                            <th>รายละเอียดงาน</th>
+                                            <th>ผู้รับผิดชอบ</th>
+                                            <th>การจัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="assign-tasks-table-body">
+                                        <!-- Injected by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. QUOTATIONS VIEW -->
+                <section id="tab-quotations" class="tab-panel">
+                    <div class="panel-actions">
+                        <button class="btn btn-primary" id="btn-open-quotation-modal">
+                            <i data-lucide="file-plus"></i> สร้างใบเสนอราคาใหม่
+                        </button>
+                    </div>
+
+                    <div class="layout-card glass mt-4">
+                        <div class="card-header">
+                            <h2>รายการเอกสารใบเสนอราคา (Quotation Documents)</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>เลขที่ใบเสนอราคา</th>
+                                            <th>ชื่อลูกค้า / บริษัท</th>
+                                            <th>วันที่ออกเอกสาร</th>
+                                            <th>ราคาสุทธิ (บาท)</th>
+                                            <th>การจัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="quotations-table-body">
+                                        <!-- Injected by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. STAFF DIRECTORY VIEW -->
+                <section id="tab-staff" class="tab-panel">
+                    <div class="panel-actions admin-only">
+                        <button class="btn btn-primary" id="btn-open-staff-modal">
+                            <i data-lucide="user-plus"></i> เพิ่มพนักงานใหม่
+                        </button>
+                    </div>
+
+                    <div class="layout-card glass mt-4">
+                        <div class="card-header">
+                            <h2>รายชื่อบุคลากร</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ชื่อพนักงาน</th>
+                                            <th>ชื่อเล่น</th>
+                                            <th>ตำแหน่ง</th>
+                                            <th>Gmail / อีเมล</th>
+                                            <th>เบอร์โทรศัพท์</th>
+                                            <th>LINE ID</th>
+                                            <th>การทำงานขณะนี้</th>
+                                            <th class="admin-only">การจัดการ</th>
+                                                <tbody id="staff-table-body">
+                                        <!-- Injected by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. SETTINGS VIEW (Admin Only) -->
+                <section id="tab-settings" class="tab-panel admin-only">
+                    <div class="layout-card glass">
+                        <div class="card-header">
+                            <h2><i data-lucide="mail"></i> ตั้งค่าการเชื่อมต่อ Gmail SMTP</h2>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-4">เชื่อมต่อบัญชี Gmail สำหรับส่งรหัส OTP และอีเมลแจ้งเตือนมอบหมายงานพนักงานโดยอัตโนมัติ (หากไม่ได้กรอก ระบบจะทำงานในโหมดจำลอง Pop-up เสมอ)</p>
+                            
+                            <div class="form-group">
+                                <label for="smtp-user">แอดมิน Gmail Address</label>
+                                <input type="email" id="smtp-user" class="form-control" placeholder="ตัวอย่าง: yourname@gmail.com">
+                            </div>
+
+                            <div class="form-group mt-3">
+                                <label for="smtp-pass">Gmail App Password (รหัสผ่านแอป 16 หลัก)</label>
+                                <input type="password" id="smtp-pass" class="form-control" placeholder="ใส่รหัสผ่านแอป 16 หลัก...">
+                                <small class="form-hint">
+                                    คุณต้องเปิดการยืนยันตัวตนแบบ 2 ขั้นตอนใน Google Account ของคุณก่อน จากนั้นสร้างรหัสผ่านแอป (App Password) ในหน้าความปลอดภัยของบัญชี แล้วนำมาใส่ที่นี่ 
+                                    <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer">สร้าง App Password</a>
+                                </small>
+                            </div>
+
+                            <div class="form-actions mt-4">
+                                <button id="btn-save-settings" class="btn btn-primary">
+                                    <i data-lucide="save"></i> บันทึกการตั้งค่า
+                                </button>
+                                <button id="btn-test-smtp" class="btn btn-secondary">
+                                    <i data-lucide="bell"></i> ทดสอบส่งอีเมลจำลอง / จริง
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ================= MODALS ================= -->
+    
+    <!-- A. Task Modal (Create & Edit) -->
+    <div id="task-modal" class="modal-overlay hidden">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2 id="task-modal-title">มอบหมายงานใหม่</h2>
+                <button class="btn-close modal-close-btn"><i data-lucide="x"></i></button>
+            </div>
+            <form id="task-form">
+                <input type="hidden" id="task-id">
+                <div class="form-group">
+                    <label for="task-title">ชื่องาน</label>
+                    <input type="text" id="task-title" class="form-control" placeholder="ระบุหัวข้อหรือชื่องาน" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-desc">รายละเอียดงาน / คำสั่ง</label>
+                    <textarea id="task-desc" class="form-control" rows="4" placeholder="ระบุขั้นตอนการทำงาน อุปกรณ์ที่ต้องใช้ หรือข้อความสำคัญ..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="task-assignee">ผู้รับผิดชอบงาน</label>
+                    <select id="task-assignee" class="form-control" required>
+                        <!-- Injected by JS with current staff list -->
+                    </select>
+                </div>
+
+                <div class="form-group flex-row gap-2 align-center mt-3 text-muted" style="display:flex; font-size: 0.85rem;">
+                    <i data-lucide="bell" style="width: 16px; height: 16px; color: #4f46e5;"></i>
+                    <span>ระบบจะส่งอีเมลแจ้งเตือนภารกิจไปยังผู้รับผิดชอบโดยอัตโนมัติเมื่อกดบันทึก</span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close-btn">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- B. Staff Modal (Create & Edit) -->
+    <div id="staff-modal" class="modal-overlay hidden">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2 id="staff-modal-title">เพิ่มพนักงานใหม่</h2>
+                <button class="btn-close modal-close-btn"><i data-lucide="x"></i></button>
+            </div>
+            <form id="staff-form">
+                <input type="hidden" id="staff-id">
+                <div class="form-group">
+                    <label for="staff-name">ชื่อ-นามสกุลพนักงาน</label>
+                    <input type="text" id="staff-name" class="form-control" placeholder="ระบุชื่อและนามสกุล" required>
+                </div>
+                <div class="form-group mt-3">
+                    <label for="staff-nickname">ชื่อเล่น</label>
+                    <input type="text" id="staff-nickname" class="form-control" placeholder="ระบุชื่อเล่น">
+                </div>
+                <div class="form-group">
+                    <label for="staff-position">ตำแหน่ง</label>
+                    <select id="staff-position" class="form-control" required>
+                        <option value="ผู้จัดการ">ผู้จัดการ</option>
+                        <option value="ผู้ช่วยผู้จัดการ">ผู้ช่วยผู้จัดการ</option>
+                        <option value="ช่างเทคนิค">ช่างเทคนิค</option>
+                        <option value="นักศึกษาฝึกงาน">นักศึกษาฝึกงาน</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="staff-email">Gmail / อีเมลติดต่อ (ใช้เข้าระบบและแจ้งงาน)</label>
+                    <input type="email" id="staff-email" class="form-control" placeholder="ตัวอย่าง: somchai@gmail.com" required>
+                    <small class="form-hint">ระบุ Gmail สำหรับพนักงานเพื่อใช้รับรหัส OTP เข้าสู่ระบบและรับข้อมูลมอบหมายงาน</small>
+                </div>
+                <div class="form-group mt-3">
+                    <label for="staff-phone">เบอร์โทรศัพท์ / ข้อมูลติดต่อ</label>
+                    <input type="text" id="staff-phone" class="form-control" placeholder="เช่น 081-996-5444 , 089-113-8844" maxlength="100">
+                </div>
+                <div class="form-group mt-3">
+                    <label for="staff-line">LINE ID</label>
+                    <input type="text" id="staff-line" class="form-control" placeholder="ใส่ LINE ID ของพนักงาน">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close-btn">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">บันทึกพนักงาน</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- C. Quotation Modal (Create & Edit) -->
+    <div id="quotation-modal" class="modal-overlay hidden">
+        <div class="modal-content glass modal-large">
+            <div class="modal-header">
+                <h2>สร้างใบเสนอราคา</h2>
+                <button class="btn-close modal-close-btn"><i data-lucide="x"></i></button>
+            </div>
+            <form id="quotation-form">
+                <input type="hidden" id="quotation-id">
+                
+                <div class="form-row">
+                    <div class="form-group col">
+                        <label for="quote-customer">ชื่อลูกค้า / บริษัท</label>
+                        <input type="text" id="quote-customer" class="form-control" placeholder="ชื่อบุคคลหรือชื่อนิติบุคคล" required>
+                    </div>
+                    <div class="form-group col">
+                        <label for="quote-date">วันที่เสนอราคา</label>
+                        <input type="date" id="quote-date" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="quote-address">ที่อยู่ลูกค้า</label>
+                    <input type="text" id="quote-address" class="form-control" placeholder="เลขที่, ถนน, ตำบล, อำเภอ, จังหวัด">
+                </div>
+
+                <div class="form-group">
+                    <label>รายการรายละเอียดงาน / สินค้าและบริการ</label>
+                    <div id="quote-items-container" class="quote-items-container">
+                        <!-- Standard Item Input Rows -->
+                        <div class="quote-item-row">
+                            <input type="text" class="form-control item-desc" placeholder="คำอธิบายงาน / สินค้า / บริการ" required>
+                            <input type="number" class="form-control item-qty" placeholder="จำนวน" min="0.01" step="any" required>
+                            <input type="text" class="form-control item-unit" placeholder="หน่วย (เช่น วัน, งาน, ชิ้น)">
+                        </div>
+                    </div>
+                    <button type="button" id="btn-add-quote-row" class="btn btn-secondary btn-small mt-2">
+                        <i data-lucide="plus-circle"></i> เพิ่มแถวรายการ
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label for="quote-total">ราคาสุทธิทั้งสิ้น (บาท)</label>
+                    <input type="number" id="quote-total" class="form-control" placeholder="ระบุจำนวนเงินสุทธิ" step="any" required>
+                    <small class="form-hint">ระบุราคาสุทธิโดยตรงโดยไม่ต้องใช้สูตรคำนวณอัตโนมัติ</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="quote-notes">หมายเหตุเพิ่มเติม</label>
+                    <textarea id="quote-notes" class="form-control" rows="2" placeholder="เช่น กำหนดยืนราคา 30 วัน, มัดจำ 50% เป็นต้น"></textarea>
+                </div>
+
+                <div class="form-group mt-3">
+                    <label for="quote-file"><i data-lucide="file-up"></i> อัปโหลดไฟล์ใบเสนอราคา / เอกสารแนบ (เช่น PDF, รูปภาพ)</label>
+                    <input type="file" id="quote-file" class="form-control" accept=".pdf,image/*">
+                    <small class="form-hint" id="quote-file-status">เลือกไฟล์ที่ต้องการแนบเข้ากับใบเสนอราคานี้ (ขนาดไม่เกิน 5MB)</small>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close-btn">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">บันทึกใบเสนอราคา</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- D. Quotation View/Print Modal -->
+    <div id="print-modal" class="modal-overlay hidden">
+        <div class="modal-content print-document glass">
+            <div class="modal-header no-print">
+                <h2>พิมพ์เอกสารใบเสนอราคา</h2>
+                <div class="header-actions">
+                    <button class="btn btn-success" onclick="window.print()">
+                        <i data-lucide="printer"></i> พิมพ์เอกสาร (Print / PDF)
+                    </button>
+                    <button class="btn btn-secondary modal-close-btn">ปิด</button>
+                </div>
+            </div>
+            
+            <!-- PRINTABLE AREA -->
+            <div id="quotation-print-area" class="quotation-print-body">
+                <!-- Injected dynamically by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- E. Global Dialog Box (Toast/Notification) -->
+    <div id="global-toast" class="toast hidden"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

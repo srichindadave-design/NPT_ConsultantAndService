@@ -1,0 +1,253 @@
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
+const nodemailer = require('nodemailer');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Enable CORS and JSON body parsing
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Serve static frontend files from the current directory
+app.use(express.static(__dirname));
+
+const dbPath = path.join(__dirname, 'db.json');
+const otpStore = new Map();
+
+// Helper to create nodemailer transporter dynamically
+function getTransporter(smtpConfig) {
+  if (!smtpConfig || !smtpConfig.user || !smtpConfig.pass) {
+    return null;
+  }
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: smtpConfig.user,
+      pass: smtpConfig.pass // Gmail App Password
+    }
+  });
+}
+
+// --- DATABASE JSON ENDPOINTS ---
+
+// 1. Get database data
+app.get('/api/db', (req, res) => {
+  if (fs.existsSync(dbPath)) {
+    try {
+      const data = fs.readFileSync(dbPath, 'utf8');
+      return res.json(JSON.parse(data));
+    } catch (e) {
+      console.error('[Database] อ่านไฟล์ db.json ล้มเหลว:', e);
+      return res.status(500).json({ success: false, message: 'อ่านฐานข้อมูลล้มเหลว' });
+    }
+  } else {
+    // Return null if file database does not exist yet (let client upload initial localStorage data)
+    return res.json(null);
+  }
+});
+
+// 2. Save database data
+app.post('/api/db', (req, res) => {
+  const data = req.body;
+  try {
+    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf8');
+    console.log('[Database] บันทึกข้อมูลลงไฟล์ db.json เรียบร้อยแล้ว');
+    return res.json({ success: true, message: 'บันทึกฐานข้อมูลสำเร็จ' });
+  } catch (e) {
+    console.error('[Database] เขียนไฟล์ db.json ล้มเหลว:', e);
+    return res.status(500).json({ success: false, message: 'เขียนไฟล์ฐานข้อมูลล้มเหลว' });
+  }
+});
+
+// --- OTP & EMAIL ENDPOINTS ---
+
+// Send OTP
+app.post('/api/send-otp', async (req, res) => {
+  const { email, smtpConfig } = req.body;
+
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ success: false, message: 'กรุณากรอก Gmail/Email ให้ถูกต้อง' });
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expires = Date.now() + 5 * 60 * 1000; // Expires in 5 minutes
+
+  otpStore.set(email.toLowerCase(), { otp, expires });
+
+  console.log(`[OTP Email] อีเมล: ${email} | รหัส OTP: ${otp} (หมดอายุใน 5 นาที)`);
+
+  let sentRealEmail = false;
+  const transporter = getTransporter(smtpConfig);
+  if (transporter) {
+    try {
+      await transporter.sendMail({
+        from: `"NPT Portal" <${smtpConfig.user}>`,
+        to: email,
+        subject: 'NPT Portal: รหัส OTP สำหรับเข้าใช้งานระบบ',
+        html: `
+          <div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <h2 style="color: #4f46e5; margin-bottom: 20px;">NPT Portal OTP</h2>
+            <p>คุณได้ทำการขอรหัส OTP สำหรับเข้าใช้งานระบบบริหารจัดการงาน NPT Portal</p>
+            <div style="background: #f1f5f9; padding: 16px; border-radius: 6px; text-align: center; margin: 20px 0;">
+              <span style="font-size: 24px; font-weight: 700; letter-spacing: 4px; color: #1e293b;">${otp}</span>
+            </div>
+            <p style="font-size: 13px; color: #64748b;">รหัสนี้มีอายุการใช้งาน 5 นาที หากคุณไม่ได้ทำรายการนี้ โปรดละเลยอีเมลฉบับนี้</p>
+          </div>
+        `
+      });
+      sentRealEmail = true;
+      console.log(`[OTP Email] ส่งรหัส OTP ไปยังอีเมลจริง ${email} สำเร็จ`);
+    } catch (e) {
+      console.error('[OTP Email] ล้มเหลวในการส่งอีเมลจริง:', e.message);
+    }
+  }
+
+  return res.json({
+    success: true,
+    message: sentRealEmail ? 'ส่งรหัส OTP ไปยัง Gmail ของคุณเรียบร้อยแล้ว' : 'ส่งรหัส OTP เรียบร้อยแล้ว (จำลองการส่ง)',
+    mockOtp: otp
+  });
+});
+
+// Verify OTP
+app.post('/api/verify-otp', (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({ success: false, message: 'กรุณาระบุอีเมลและรหัส OTP' });
+  }
+
+  const record = otpStore.get(email.toLowerCase());
+
+  if (!record) {
+    return res.status(400).json({ success: false, message: 'ไม่พบรหัส OTP หรือกรุณากดขอรหัสอีกครั้ง' });
+  }
+
+  if (Date.now() > record.expires) {
+    otpStore.delete(email.toLowerCase());
+    return res.status(400).json({ success: false, message: 'รหัส OTP หมดอายุแล้ว กรุณาขอรหัสใหม่' });
+  }
+
+  if (record.otp === otp) {
+    otpStore.delete(email.toLowerCase());
+    const isAdmin = email.toLowerCase() === 'nptconsultant2017@gmail.com' || email.toLowerCase() === 'davezaa1642@gmail.com' || email.toLowerCase() === 'srichindadave@gmail.com';
+
+    return res.json({
+      success: true,
+      message: 'เข้าสู่ระบบสำเร็จ',
+      isAdmin: isAdmin,
+      email: email.toLowerCase()
+    });
+  } else {
+    return res.status(400).json({ success: false, message: 'รหัส OTP ไม่ถูกต้อง' });
+  }
+});
+
+// Ping endpoint to test backend online status
+app.get('/api/ping', (req, res) => {
+  res.json({ success: true });
+});
+
+// Direct passwordless email login
+app.post('/api/login-direct', (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ success: false, message: 'กรุณาระบุอีเมล' });
+  }
+
+  const emailLower = email.toLowerCase();
+  
+  // Verify if email exists in db.json
+  if (fs.existsSync(dbPath)) {
+    try {
+      const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+      const staffList = db.staff || [];
+      
+      const isAdmin = emailLower === 'nptconsultant2017@gmail.com' || emailLower === 'davezaa1642@gmail.com' || emailLower === 'srichindadave@gmail.com';
+      const isStaff = staffList.some(s => s.email.toLowerCase() === emailLower);
+      
+      if (isAdmin || isStaff) {
+        return res.json({
+          success: true,
+          message: 'เข้าสู่ระบบสำเร็จ',
+          isAdmin: isAdmin,
+          email: emailLower
+        });
+      } else {
+        return res.status(400).json({ success: false, message: 'ไม่พบอีเมลนี้ในระบบสิทธิ์แอดมินหรือพนักงาน' });
+      }
+    } catch (e) {
+      console.error('[Login] Error:', e);
+      return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการโหลดระบบ' });
+    }
+  } else {
+    const isAdmin = emailLower === 'nptconsultant2017@gmail.com' || emailLower === 'davezaa1642@gmail.com' || emailLower === 'srichindadave@gmail.com';
+    if (isAdmin) {
+      return res.json({
+        success: true,
+        message: 'เข้าสู่ระบบสำเร็จ',
+        isAdmin: true,
+        email: emailLower
+      });
+    } else {
+      return res.status(400).json({ success: false, message: 'ไม่พบอีเมลนี้ในระบบสิทธิ์แอดมินหรือพนักงาน' });
+    }
+  }
+});
+
+// Send Email Notification Proxy
+app.post('/api/send-email', async (req, res) => {
+  const { to, subject, html, smtpConfig } = req.body;
+
+  if (!to) {
+    return res.status(400).json({ success: false, message: 'กรุณาระบุอีเมลผู้รับ' });
+  }
+  if (!subject || !html) {
+    return res.status(400).json({ success: false, message: 'ข้อมูลข้อความอีเมลไม่ครบถ้วน' });
+  }
+
+  console.log(`[Email Notification] ส่งไปยัง: ${to} | หัวข้อ: "${subject}"`);
+
+  const transporter = getTransporter(smtpConfig);
+  if (!transporter) {
+    return res.json({
+      success: true,
+      message: 'จำลองการส่งอีเมล (เปิดคอนโซลเพื่อตรวจสอบ หรือตั้งค่า Gmail SMTP)'
+    });
+  }
+
+  try {
+    await transporter.sendMail({
+      from: `"NPT Portal" <${smtpConfig.user}>`,
+      to: to,
+      subject: subject,
+      html: html
+    });
+    return res.json({
+      success: true,
+      message: 'ส่งอีเมลแจ้งเตือนไปยังพนักงานสำเร็จ'
+    });
+  } catch (error) {
+    console.error('[Email Notification] Error sending email via SMTP:', error);
+    return res.status(500).json({
+      success: false,
+      message: `ไม่สามารถส่งอีเมลแจ้งเตือนได้: ${error.message}`
+    });
+  }
+});
+
+// Serve frontend index.html for all other routes to support SPA routing if needed
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.listen(PORT, () => {
+  console.log(`==================================================`);
+  console.log(` เซิร์ฟเวอร์เริ่มต้นแล้วที่: http://localhost:${PORT}`);
+  console.log(` อีเมลผู้ดูแลระบบแอดมิน: nptconsultant2017@gmail.com, davezaa1642@gmail.com`);
+  console.log(`==================================================`);
+});

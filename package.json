@@ -1,0 +1,16 @@
+{
+  "name": "npt-database-portal",
+  "version": "1.0.0",
+  "description": "Company Operations Portal with OTP Login and Gmail Notification",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "nodemailer": "^6.9.13"
+  },
+  "private": true
+}

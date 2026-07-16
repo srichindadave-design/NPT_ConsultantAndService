@@ -1,0 +1,119 @@
+{
+  "staff": [
+    {
+      "id": "st-admin",
+      "name": "ดร.ณภัทร ปุญศิริ",
+      "nickname": "แชมป์",
+      "position": "ผู้จัดการ",
+      "email": "nptconsultant2017@gmail.com",
+      "phone": "0891138844",
+      "lineId": "Champ0891138844",
+      "status": "ว่าง"
+    },
+    {
+      "id": "st-1784167807870",
+      "name": "นายชญานนท์ รอกระโทก",
+      "nickname": "ตี๋",
+      "position": "นักศึกษาฝึกงาน",
+      "email": "rokatogchayanon@gmail.com",
+      "phone": "0979516798",
+      "lineId": "0979516798",
+      "status": "ว่าง"
+    },
+    {
+      "id": "st-1784168150406",
+      "name": "นายพัชรพล ศรีจินดา",
+      "nickname": "เดฟ",
+      "position": "นักศึกษาฝึกงาน",
+      "email": "srichindadave@gmail.com",
+      "phone": "0817401354",
+      "lineId": "0993381624",
+      "status": "ว่าง"
+    },
+    {
+      "id": "st-1784168180694",
+      "name": "นายจักรพงศ์ ชาวราษฎร์",
+      "nickname": "มาร์ค",
+      "position": "ช่างเทคนิค",
+      "email": "c.chaowarach@gmail.com",
+      "phone": "0897489496",
+      "lineId": "mark2245",
+      "status": "ว่าง"
+    },
+    {
+      "id": "st-1784168210738",
+      "name": "นายสุทธิมงคล ชัยวงษ",
+      "nickname": "คิง",
+      "position": "ช่างเทคนิค",
+      "email": "smilemelody0305@gmail.com",
+      "phone": "0991173291",
+      "lineId": "myking078",
+      "status": "ว่าง"
+    },
+    {
+      "id": "st-1784168243946",
+      "name": "นายอิสระ สกุลรัตนะพรชัย",
+      "nickname": "ฟรี",
+      "position": "ช่างเทคนิค",
+      "email": "free07xo@gmail.com",
+      "phone": "0936591376",
+      "lineId": "0947809300",
+      "status": "ว่าง"
+    },
+    {
+      "id": "st-1784168295478",
+      "name": "นายกรภัทร พรหมรักษา",
+      "nickname": "มิกซ์",
+      "position": "ช่างเทคนิค",
+      "email": "korapatp221@gmail.com",
+      "phone": "0969918723",
+      "lineId": "mixzaza1235",
+      "status": "ว่าง"
+    },
+    {
+      "id": "st-1784168334170",
+      "name": "นายเกียรติศักดิ์ สวยสม",
+      "nickname": "ตั้ม",
+      "position": "ช่างเทคนิค",
+      "email": "vccxzzz3541@gmail.com",
+      "phone": "0823762808",
+      "lineId": "tum123454",
+      "status": "ว่าง"
+    },
+    {
+      "id": "st-1784168362882",
+      "name": "นายฐนกร จุมพิต",
+      "nickname": "ปีใหม่",
+      "position": "นักศึกษาฝึกงาน",
+      "email": "tanakornjoompis@gmail.com",
+      "phone": "0930204042",
+      "lineId": "ttxnxa",
+      "status": "ว่าง"
+    },
+    {
+      "id": "st-1784168388470",
+      "name": "นายณชพล กอบบุญ",
+      "nickname": "เพรช",
+      "position": "นักศึกษาฝึกงาน",
+      "email": "mupazaa@gmail.com",
+      "phone": "0646475871",
+      "lineId": "peah999",
+      "status": "ว่าง"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "tk-1784176573623",
+      "title": "ทดสอบถังใต้ดิน01",
+      "desc": "ทดสอบถังใต้ดิน01",
+      "assigneeEmail": "rokatogchayanon@gmail.com",
+      "assigneeName": "นายชญานนท์ รอกระโทก",
+      "status": "pending"
+    }
+  ],
+  "quotations": [],
+  "smtpConfig": {
+    "user": "srichindadave@gmail.com",
+    "pass": "zpux ziwz yhbx umeq"
+  }
+}
