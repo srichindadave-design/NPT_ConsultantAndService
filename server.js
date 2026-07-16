@@ -25,7 +25,7 @@ function getTransporter(smtpConfig) {
   }
  return nodemailer.createTransport({
     host: 'smtp-relay.brevo.com', // ใช้ Host ของ Brevo
-    port: 2525,                    // ใช้ Port 587
+    port: 587,                    // ใช้ Port 587
     secure: false,                // false สำหรับ port 587
     auth: {
         user: smtpConfig.user,    // ใส่ค่าอีเมล Login ของ Brevo
