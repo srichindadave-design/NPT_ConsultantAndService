@@ -23,13 +23,15 @@ function getTransporter(smtpConfig) {
   if (!smtpConfig || !smtpConfig.user || !smtpConfig.pass) {
     return null;
   }
-  return nodemailer.createTransport({
-    service: 'gmail',
+ return nodemailer.createTransport({
+    host: 'smtp-relay.brevo.com', // ใช้ Host ของ Brevo
+    port: 587,                    // ใช้ Port 587
+    secure: false,                // false สำหรับ port 587
     auth: {
-      user: smtpConfig.user,
-      pass: smtpConfig.pass // Gmail App Password
+        user: smtpConfig.user,    // ใส่ค่าอีเมล Login ของ Brevo
+        pass: smtpConfig.pass     // ใส่ค่า SMTP Key ของ Brevo
     }
-  });
+});
 }
 
 // --- DATABASE JSON ENDPOINTS ---
