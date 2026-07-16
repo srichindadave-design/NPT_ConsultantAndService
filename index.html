@@ -422,10 +422,10 @@
                     <textarea id="task-desc" class="form-control" rows="4" placeholder="ระบุขั้นตอนการทำงาน อุปกรณ์ที่ต้องใช้ หรือข้อความสำคัญ..."></textarea>
                 </div>
                 <div class="form-group">
-                    <label for="task-assignee">ผู้รับผิดชอบงาน</label>
-                    <select id="task-assignee" class="form-control" required>
-                        <!-- Injected by JS with current staff list -->
-                    </select>
+                    <label style="font-weight: 600;">ผู้รับผิดชอบงาน (เลือกได้สูงสุด 5 คน)</label>
+                    <div id="task-assignees-list" style="max-height: 150px; overflow-y: auto; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-top: 4px; border: 1px solid var(--border-color);">
+                        <!-- Checkboxes injected by JS -->
+                    </div>
                 </div>
                 <div class="form-group mt-3">
                     <label for="task-qty">จำนวนงานทั้งหมด (ใส่ 0 หรือเว้นว่างหากไม่ระบุจำนวน)</label>

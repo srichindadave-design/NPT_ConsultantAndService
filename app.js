@@ -9,47 +9,12 @@ const STORAGE_KEYS = {
 
 // ================= DEFAULT MOCK DATA =================
 const DEFAULT_STAFF = [
-    { id: 'st-admin', name: 'ดร.ณภัทร ปุญศิริ', nickname: 'แชมป์', position: 'ผู้จัดการ', email: 'nptconsultant2017@gmail.com', phone: '089-113-8844', lineId: 'Champ0891138844', status: 'ว่าง' },
-    { id: 'st-1', name: 'ชูชาติ รักดี', nickname: 'ชาติ', position: 'ช่างเทคนิค', email: 'choochart@gmail.com', phone: '0811112222', lineId: 'choochart.line', status: 'ว่าง' },
-    { id: 'st-2', name: 'วันเพ็ญ สุขใจ', nickname: 'เพ็ญ', position: 'ช่างเทคนิค', email: 'wanpen@gmail.com', phone: '0822223333', lineId: 'wanpen.line', status: 'ว่าง' },
-    { id: 'st-3', name: 'ประยุทธ์ สู้ชีวิต', nickname: 'ยุทธ์', position: 'ช่างเทคนิค', email: 'prayut@gmail.com', phone: '0833334444', lineId: 'prayut.line', status: 'กำลังทำงาน' },
-    { id: 'st-4', name: 'ธรรม ร่วมใจ', nickname: 'ธรรม', position: 'ช่างเทคนิค', email: 'tham@gmail.com', phone: '0837735828', lineId: 'tham.line', status: 'ว่าง' }
+    { id: 'st-admin', name: 'ดร.ณภัทร ปุญศิริ', nickname: 'แชมป์', position: 'ผู้จัดการ', email: 'nptconsultant2017@gmail.com', phone: '089-113-8844', lineId: 'Champ0891138844', status: 'ว่าง' }
 ];
 
-const DEFAULT_TASKS = [
-    { 
-        id: 'tk-1', 
-        title: 'ซ่อมบำรุงปั๊มน้ำอาคาร A', 
-        desc: 'ตรวจสอบระบบไฟฟ้าควบคุมปั๊มน้ำและเช็ครอยรั่วที่วาล์วปั๊มน้ำหลักด้านหลังอาคาร', 
-        assigneeEmail: 'prayut@gmail.com', 
-        assigneeName: 'ประยุทธ์ สู้ชีวิต', 
-        status: 'ongoing' 
-    },
-    { 
-        id: 'tk-2', 
-        title: 'เดินสายแลนและกล่องไฟห้องประชุมใหม่', 
-        desc: 'ติดตั้งสาย LAN Cat6 และสายเต้ารับระบบไฟฟ้าใต้โต๊ะประชุมหลัก จำนวน 10 จุด', 
-        assigneeEmail: 'choochart@gmail.com', 
-        assigneeName: 'ชูชาติ รักดี', 
-        status: 'pending' 
-    }
-];
+const DEFAULT_TASKS = [];
 
-const DEFAULT_QUOTATIONS = [
-    {
-        id: 'qt-1',
-        code: 'QT-2026-001',
-        customer: 'บริษัท ก้าวหน้า เอ็นจิเนียริ่ง จำกัด',
-        date: '2026-07-15',
-        address: '123/45 ถนนพหลโยธิน แขวงสามเสนใน เขตพญาไท กรุงเทพฯ 10400',
-        items: [
-            { desc: 'ค่าบริการติดตั้งระบบตู้ควบคุมไฟ (MDB) ประจำปี', qty: 1, unit: 'งาน' },
-            { desc: 'อุปกรณ์ตัดไฟลัดวงจร 50A', qty: 2, unit: 'ชิ้น' }
-        ],
-        total: 18500,
-        notes: 'กำหนดยืนราคา 30 วัน นับจากวันที่ระบุในเอกสาร\nเงื่อนไขการชำระเงิน: มัดจำล่วงหน้า 50% ก่อนเริ่มดำเนินการ'
-    }
-];
+const DEFAULT_QUOTATIONS = [];
 
 const API_BASE = '/api';
 
@@ -699,6 +664,8 @@ function renderDashboard() {
                 qtyText = `<br><small class="text-muted">ความคืบหน้า: ${t.completedQty || 0} / ${t.qty} หน่วย</small>`;
             }
 
+            const displayNames = t.assigneeNames ? t.assigneeNames.join(', ') : t.assigneeName;
+
             const tr = document.createElement('tr');
             tr.style.cursor = 'pointer';
             tr.title = 'คลิกเพื่อดูรายละเอียดงาน';
@@ -707,7 +674,7 @@ function renderDashboard() {
             });
             tr.innerHTML = `
                 <td><strong>${escapeHtml(t.title)}</strong>${qtyText}</td>
-                <td>${escapeHtml(t.assigneeName)}</td>
+                <td>${escapeHtml(displayNames)}</td>
                 <td>
                     <span class="status-indicator">
                         <span class="status-dot ${statusClass}"></span>
@@ -725,7 +692,11 @@ function renderDashboard() {
 
     getSortedStaff().forEach(s => {
         // Calculate status from assigned ongoing tasks
-        const hasOngoingTask = state.tasks.some(t => t.assigneeEmail === s.email && t.status === 'ongoing');
+        const hasOngoingTask = state.tasks.some(t => {
+            if (t.status !== 'ongoing') return false;
+            const emails = t.assigneeEmails || (t.assigneeEmail ? [t.assigneeEmail.toLowerCase()] : []);
+            return emails.map(e => e.toLowerCase()).includes(s.email.toLowerCase());
+        });
         const statusText = hasOngoingTask ? 'ติดงาน' : 'ว่าง';
 
         const isManager = s.position && s.position.includes('ผู้จัดการ');
@@ -756,7 +727,10 @@ function renderTasks() {
     
     // If not Admin, filter to show only tasks assigned to the logged-in staff member
     if (!state.currentUser.isAdmin) {
-        filteredTasks = filteredTasks.filter(t => t.assigneeEmail === state.currentUser.email);
+        filteredTasks = filteredTasks.filter(t => {
+            const emails = t.assigneeEmails || (t.assigneeEmail ? [t.assigneeEmail.toLowerCase()] : []);
+            return emails.map(e => e.toLowerCase()).includes(state.currentUser.email.toLowerCase());
+        });
     }
 
     // Filter by status filter dropdown
@@ -806,10 +780,12 @@ function renderTasks() {
             qtyText = `<br><small class="text-muted">ความคืบหน้า: ${t.completedQty || 0} / ${t.qty} หน่วย</small>`;
         }
 
+        const displayNames = t.assigneeNames ? t.assigneeNames.join(', ') : t.assigneeName;
+
         tr.innerHTML = `
             <td><strong>${escapeHtml(t.title)}</strong>${qtyText}</td>
             <td>${escapeHtml(t.desc || '-')}</td>
-            <td style="white-space: nowrap;">${escapeHtml(t.assigneeName)}</td>
+            <td style="white-space: nowrap;">${escapeHtml(displayNames)}</td>
             <td>
                 <span class="status-indicator">
                     <span class="status-dot ${statusClass}"></span>
@@ -848,10 +824,12 @@ function renderAssignTasks() {
             qtyText = `<br><small class="text-muted">ความคืบหน้า: ${t.completedQty || 0} / ${t.qty} หน่วย</small>`;
         }
 
+        const displayNames = t.assigneeNames ? t.assigneeNames.join(', ') : t.assigneeName;
+
         tr.innerHTML = `
             <td><strong>${escapeHtml(t.title)}</strong>${qtyText}</td>
             <td>${escapeHtml(t.desc || '-')}</td>
-            <td style="white-space: nowrap;">${escapeHtml(t.assigneeName)}</td>
+            <td style="white-space: nowrap;">${escapeHtml(displayNames)}</td>
             <td><div class="gap-2 display-flex">${actionButtons}</div></td>
         `;
         tbody.appendChild(tr);
@@ -859,18 +837,35 @@ function renderAssignTasks() {
     lucide.createIcons();
 }
 
-function updateAssigneeDropdown(selectedEmail = '') {
-    const select = document.getElementById('task-assignee');
-    select.innerHTML = '<option value="">-- เลือกผู้รับผิดชอบ --</option>';
+function updateAssigneeCheckboxes(selectedEmails = []) {
+    const container = document.getElementById('task-assignees-list');
+    if (!container) return;
+    container.innerHTML = '';
     
+    // Normalize emails to lowercase for comparison
+    const normalizedSelected = selectedEmails.map(e => e.toLowerCase());
+
     getSortedStaff().forEach(s => {
-        const option = document.createElement('option');
-        option.value = s.email;
-        option.textContent = `${s.name} (${s.position})`;
-        if (s.email === selectedEmail) {
-            option.selected = true;
-        }
-        select.appendChild(option);
+        const div = document.createElement('div');
+        div.className = 'display-flex align-center gap-2 mt-1';
+        
+        const isChecked = normalizedSelected.includes(s.email.toLowerCase());
+        
+        div.innerHTML = `
+            <input type="checkbox" class="task-assignee-checkbox" value="${s.email}" id="chk-assignee-${s.id}" ${isChecked ? 'checked' : ''} style="width: auto; margin-right: 8px;">
+            <label for="chk-assignee-${s.id}" class="cursor-pointer" style="margin: 0; font-size: 0.9rem; font-weight: normal; color: inherit;">${s.name} (${s.position})</label>
+        `;
+        
+        const checkbox = div.querySelector('input');
+        checkbox.addEventListener('change', () => {
+            const checkedCount = container.querySelectorAll('.task-assignee-checkbox:checked').length;
+            if (checkedCount > 5) {
+                checkbox.checked = false;
+                showToast('เลือกผู้รับผิดชอบได้สูงสุด 5 คน', 'error');
+            }
+        });
+        
+        container.appendChild(div);
     });
 }
 
@@ -885,7 +880,11 @@ function renderStaff() {
     }
 
     getSortedStaff().forEach(s => {
-        const hasOngoingTask = state.tasks.some(t => t.assigneeEmail === s.email && t.status === 'ongoing');
+        const hasOngoingTask = state.tasks.some(t => {
+            if (t.status !== 'ongoing') return false;
+            const emails = t.assigneeEmails || (t.assigneeEmail ? [t.assigneeEmail.toLowerCase()] : []);
+            return emails.map(e => e.toLowerCase()).includes(s.email.toLowerCase());
+        });
         const statusText = hasOngoingTask ? 'กำลังปฏิบัติงาน' : 'ว่าง';
         const statusBadgeClass = hasOngoingTask ? 'bg-warning-soft text-warning' : 'bg-success-soft text-success';
 
@@ -1069,7 +1068,9 @@ window.editTask = function(id) {
     document.getElementById('task-desc').value = task.desc || '';
     document.getElementById('task-qty').value = task.qty || 0;
     
-    updateAssigneeDropdown(task.assigneeEmail);
+    const emails = task.assigneeEmails || (task.assigneeEmail ? [task.assigneeEmail.toLowerCase()] : []);
+    updateAssigneeCheckboxes(emails);
+    
     const notifyCheck = document.getElementById('task-notify-email');
     if (notifyCheck) notifyCheck.checked = false; // default false on edit to avoid spam
 
@@ -1200,7 +1201,8 @@ window.viewTaskDetail = function(id) {
 
     document.getElementById('detail-task-title').textContent = task.title;
     document.getElementById('detail-task-desc').textContent = task.desc || 'ไม่มีรายละเอียดเพิ่มเติม';
-    document.getElementById('detail-task-assignee').textContent = task.assigneeName;
+    const displayNames = task.assigneeNames ? task.assigneeNames.join(', ') : task.assigneeName;
+    document.getElementById('detail-task-assignee').textContent = displayNames;
 
     const qtySection = document.getElementById('detail-task-qty-section');
     if (task.qty && task.qty >= 1) {
@@ -1456,7 +1458,7 @@ function setupEventListeners() {
         document.getElementById('task-form').reset();
         document.getElementById('task-id').value = '';
         document.getElementById('task-qty').value = 0;
-        updateAssigneeDropdown();
+        updateAssigneeCheckboxes([]);
         document.getElementById('task-modal-title').textContent = 'มอบหมายงานใหม่';
         const notifyCheck = document.getElementById('task-notify-email');
         if (notifyCheck) notifyCheck.checked = true;
@@ -1531,14 +1533,26 @@ async function handleTaskSubmit(e) {
     const id = document.getElementById('task-id').value;
     const title = document.getElementById('task-title').value.trim();
     const desc = document.getElementById('task-desc').value.trim();
-    const assigneeEmail = document.getElementById('task-assignee').value;
-    const notifyEmail = true;
+    
+    // Get checked assignees from checkboxes
+    const checkedCheckboxes = document.querySelectorAll('.task-assignee-checkbox:checked');
+    const assigneeEmails = Array.from(checkedCheckboxes).map(chk => chk.value.toLowerCase());
+    
+    if (assigneeEmails.length === 0) {
+        showToast('กรุณาเลือกผู้รับผิดชอบงานอย่างน้อย 1 คน', 'error');
+        return;
+    }
+    
+    const assigneeNames = assigneeEmails.map(email => {
+        const staffMember = state.staff.find(s => s.email.toLowerCase() === email);
+        return staffMember ? staffMember.name : email;
+    });
+
+    // Single-assignee fallbacks for backward compatibility
+    const assigneeEmail = assigneeEmails[0];
+    const assigneeName = assigneeNames[0];
 
     const qty = parseInt(document.getElementById('task-qty').value) || 0;
-
-    // Get assignee name from email
-    const staffMember = state.staff.find(s => s.email === assigneeEmail);
-    const assigneeName = staffMember ? staffMember.name : 'ไม่ระบุ';
 
     if (id) {
         // Edit Mode
@@ -1548,6 +1562,8 @@ async function handleTaskSubmit(e) {
             task.desc = desc;
             task.assigneeEmail = assigneeEmail;
             task.assigneeName = assigneeName;
+            task.assigneeEmails = assigneeEmails;
+            task.assigneeNames = assigneeNames;
             task.qty = qty;
             if (task.completedQty === undefined) task.completedQty = 0;
         }
@@ -1559,6 +1575,8 @@ async function handleTaskSubmit(e) {
             desc,
             assigneeEmail,
             assigneeName,
+            assigneeEmails,
+            assigneeNames,
             status: 'pending',
             qty: qty,
             completedQty: 0
@@ -1566,14 +1584,15 @@ async function handleTaskSubmit(e) {
         state.tasks.push(newTask);
     }
 
-    // Notify via email (always send)
-    if (assigneeEmail) {
+    // Notify all assigned staff via email
+    assigneeEmails.forEach((email, idx) => {
+        const name = assigneeNames[idx];
         const subject = `NPT Portal: มีการมอบหมายงานใหม่ [${title}]`;
         const currentOrigin = 'https://npt-consultantandservice.onrender.com';
         const html = `
             <div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; border: 1px solid #e2e8f0; border-radius: 8px;">
                 <h3 style="color: #4f46e5; margin-bottom: 16px;">มอบหมายภารกิจใหม่</h3>
-                <p>เรียนคุณ <strong>${assigneeName}</strong>,</p>
+                <p>เรียนคุณ <strong>${name}</strong>,</p>
                 <p>คุณได้รับมอบหมายภารกิจใหม่ในระบบ NPT Portal ดังรายละเอียดด้านล่าง:</p>
                 <div style="background: #f8fafc; padding: 14px; border-radius: 6px; border-left: 4px solid #4f46e5; margin: 15px 0;">
                     <p style="margin: 0 0 6px 0;"><strong>ชื่องาน:</strong> ${title}</p>
@@ -1584,8 +1603,8 @@ async function handleTaskSubmit(e) {
                 </p>
             </div>
         `;
-        sendEmailNotificationTrigger(assigneeEmail, subject, html);
-    }
+        sendEmailNotificationTrigger(email, subject, html);
+    });
 
     saveDataToLocalStorage();
     closeAllModals();
