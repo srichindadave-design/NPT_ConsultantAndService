@@ -67,10 +67,29 @@ app.post('/api/db', (req, res) => {
 
 // Send OTP
 app.post('/api/send-otp', async (req, res) => {
-  const { email, smtpConfig } = req.body;
+  const { email } = req.body;
+  let smtpConfig = req.body.smtpConfig;
 
   if (!email || !email.includes('@')) {
     return res.status(400).json({ success: false, message: 'กรุณากรอก Gmail/Email ให้ถูกต้อง' });
+  }
+
+  // Fallback to server db.json config if not sent by client
+  if (!smtpConfig && fs.existsSync(dbPath)) {
+    try {
+      const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+      smtpConfig = db.smtpConfig;
+    } catch (e) {
+      console.error('[OTP Email] Error reading smtpConfig from db.json:', e);
+    }
+  }
+
+  // Fallback to default hardcoded config if still null
+  if (!smtpConfig || !smtpConfig.user || !smtpConfig.pass) {
+    smtpConfig = {
+      user: "srichindadave@gmail.com",
+      pass: "zpux ziwz yhbx umeq"
+    };
   }
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -201,13 +220,32 @@ app.post('/api/login-direct', (req, res) => {
 
 // Send Email Notification Proxy
 app.post('/api/send-email', async (req, res) => {
-  const { to, subject, html, smtpConfig } = req.body;
+  const { to, subject, html } = req.body;
+  let smtpConfig = req.body.smtpConfig;
 
   if (!to) {
     return res.status(400).json({ success: false, message: 'กรุณาระบุอีเมลผู้รับ' });
   }
   if (!subject || !html) {
     return res.status(400).json({ success: false, message: 'ข้อมูลข้อความอีเมลไม่ครบถ้วน' });
+  }
+
+  // Fallback to server db.json config if not sent by client
+  if (!smtpConfig && fs.existsSync(dbPath)) {
+    try {
+      const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+      smtpConfig = db.smtpConfig;
+    } catch (e) {
+      console.error('[Email Notification] Error reading smtpConfig from db.json:', e);
+    }
+  }
+
+  // Fallback to default hardcoded config if still null
+  if (!smtpConfig || !smtpConfig.user || !smtpConfig.pass) {
+    smtpConfig = {
+      user: "srichindadave@gmail.com",
+      pass: "zpux ziwz yhbx umeq"
+    };
   }
 
   console.log(`[Email Notification] ส่งไปยัง: ${to} | หัวข้อ: "${subject}"`);

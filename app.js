@@ -694,9 +694,19 @@ function renderDashboard() {
             if (t.status === 'ongoing') { statusText = 'กำลังทำ'; statusClass = 'ongoing'; }
             else if (t.status === 'completed') { statusText = 'เสร็จสิ้น'; statusClass = 'completed'; }
 
+            let qtyText = '';
+            if (t.qty && t.qty >= 1) {
+                qtyText = `<br><small class="text-muted">ความคืบหน้า: ${t.completedQty || 0} / ${t.qty} หน่วย</small>`;
+            }
+
             const tr = document.createElement('tr');
+            tr.style.cursor = 'pointer';
+            tr.title = 'คลิกเพื่อดูรายละเอียดงาน';
+            tr.addEventListener('click', () => {
+                window.viewTaskDetail(t.id);
+            });
             tr.innerHTML = `
-                <td><strong>${escapeHtml(t.title)}</strong></td>
+                <td><strong>${escapeHtml(t.title)}</strong>${qtyText}</td>
                 <td>${escapeHtml(t.assigneeName)}</td>
                 <td>
                     <span class="status-indicator">
@@ -775,14 +785,29 @@ function renderTasks() {
             if (t.status === 'pending') {
                 actionButtons = `<button class="btn btn-success btn-small" onclick="updateTaskStatus('${t.id}', 'ongoing')"><i data-lucide="play"></i> เริ่มงาน</button>`;
             } else if (t.status === 'ongoing') {
-                actionButtons = `<button class="btn btn-primary btn-small" onclick="updateTaskStatus('${t.id}', 'completed')"><i data-lucide="check-square"></i> เสร็จงาน</button>`;
+                if (t.qty && t.qty >= 1) {
+                    actionButtons = `
+                        <div class="display-flex align-center gap-1">
+                            <input type="number" id="progress-qty-${t.id}" class="form-control" style="width: 70px; height: 30px; padding: 2px 6px;" min="0" max="${t.qty}" value="${t.completedQty || 0}">
+                            <button class="btn btn-secondary btn-small" onclick="updateTaskProgress('${t.id}')">บันทึก</button>
+                            <button class="btn btn-primary btn-small" onclick="completeTaskWithQty('${t.id}')">เสร็จงาน</button>
+                        </div>
+                    `;
+                } else {
+                    actionButtons = `<button class="btn btn-primary btn-small" onclick="updateTaskStatus('${t.id}', 'completed')"><i data-lucide="check-square"></i> เสร็จงาน</button>`;
+                }
             } else {
                 actionButtons = `<span class="text-success"><i data-lucide="check-circle"></i> ปิดงานแล้ว</span>`;
             }
         }
 
+        let qtyText = '';
+        if (t.qty && t.qty >= 1) {
+            qtyText = `<br><small class="text-muted">ความคืบหน้า: ${t.completedQty || 0} / ${t.qty} หน่วย</small>`;
+        }
+
         tr.innerHTML = `
-            <td><strong>${escapeHtml(t.title)}</strong></td>
+            <td><strong>${escapeHtml(t.title)}</strong>${qtyText}</td>
             <td>${escapeHtml(t.desc || '-')}</td>
             <td style="white-space: nowrap;">${escapeHtml(t.assigneeName)}</td>
             <td>
@@ -818,8 +843,13 @@ function renderAssignTasks() {
             <button class="btn btn-danger btn-small btn-icon-only" onclick="deleteTask('${t.id}')" title="ลบงาน"><i data-lucide="trash-2"></i></button>
         `;
 
+        let qtyText = '';
+        if (t.qty && t.qty >= 1) {
+            qtyText = `<br><small class="text-muted">ความคืบหน้า: ${t.completedQty || 0} / ${t.qty} หน่วย</small>`;
+        }
+
         tr.innerHTML = `
-            <td><strong>${escapeHtml(t.title)}</strong></td>
+            <td><strong>${escapeHtml(t.title)}</strong>${qtyText}</td>
             <td>${escapeHtml(t.desc || '-')}</td>
             <td style="white-space: nowrap;">${escapeHtml(t.assigneeName)}</td>
             <td><div class="gap-2 display-flex">${actionButtons}</div></td>
@@ -1037,6 +1067,7 @@ window.editTask = function(id) {
     document.getElementById('task-id').value = task.id;
     document.getElementById('task-title').value = task.title;
     document.getElementById('task-desc').value = task.desc || '';
+    document.getElementById('task-qty').value = task.qty || 0;
     
     updateAssigneeDropdown(task.assigneeEmail);
     const notifyCheck = document.getElementById('task-notify-email');
@@ -1105,6 +1136,93 @@ window.updateTaskStatus = function(id, newStatus) {
         `;
         sendEmailNotificationTrigger(adminEmail, subject, html);
     }
+};
+
+window.updateTaskProgress = function(id) {
+    const task = state.tasks.find(t => t.id === id);
+    if (!task) return;
+
+    const inputVal = parseInt(document.getElementById(`progress-qty-${id}`).value) || 0;
+    if (inputVal < 0) {
+        showToast('จำนวนที่ทำแล้วต้องไม่ติดลบ', 'error');
+        return;
+    }
+    if (inputVal > task.qty) {
+        showToast(`จำนวนที่ทำแล้วต้องไม่เกินจำนวนทั้งหมด (${task.qty})`, 'error');
+        return;
+    }
+
+    const oldStatus = task.status;
+    task.completedQty = inputVal;
+
+    if (task.completedQty >= task.qty) {
+        task.status = 'completed';
+        showToast('อัปเดตความคืบหน้าสำเร็จ และเสร็จสิ้นงานเรียบร้อย', 'success');
+        
+        // Trigger completed email notification to admin
+        const adminEmail = 'nptconsultant2017@gmail.com';
+        const subject = `NPT Portal: พนักงานเสร็จสิ้นภารกิจ [${task.title}]`;
+        const html = `
+            <div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <h3 style="color: #10b981; margin-bottom: 16px;">พนักงานได้ปิดภารกิจแล้ว</h3>
+                <p>เรียนผู้ดูแลระบบ,</p>
+                <p>พนักงาน <strong>${task.assigneeName}</strong> ได้ปิดภารกิจที่ได้รับมอบหมายเรียบร้อยแล้ว:</p>
+                <div style="background: #f8fafc; padding: 14px; border-radius: 6px; border-left: 4px solid #10b981; margin: 15px 0;">
+                    <p style="margin: 0 0 6px 0;"><strong>ชื่องาน:</strong> ${task.title}</p>
+                    <p style="margin: 0;"><strong>สถานะปัจจุบัน:</strong> เสร็จสิ้นเรียบร้อยแล้ว (Completed) - ${task.completedQty}/${task.qty} หน่วย</p>
+                </div>
+                <p style="font-size: 13px; color: #64748b; margin-top: 20px;">อีเมลนี้ส่งอัตโนมัติจากระบบ NPT Portal</p>
+            </div>
+        `;
+        sendEmailNotificationTrigger(adminEmail, subject, html);
+    } else {
+        showToast(`บันทึกความคืบหน้าแล้ว (${task.completedQty}/${task.qty})`, 'success');
+    }
+
+    saveDataToLocalStorage();
+    renderTasks();
+    if (document.getElementById('assign-tasks-table-body')) {
+        renderAssignTasks();
+    }
+};
+
+window.completeTaskWithQty = function(id) {
+    const task = state.tasks.find(t => t.id === id);
+    if (!task) return;
+    
+    task.completedQty = task.qty;
+    window.updateTaskStatus(id, 'completed');
+};
+
+window.viewTaskDetail = function(id) {
+    const task = state.tasks.find(t => t.id === id);
+    if (!task) return;
+
+    document.getElementById('detail-task-title').textContent = task.title;
+    document.getElementById('detail-task-desc').textContent = task.desc || 'ไม่มีรายละเอียดเพิ่มเติม';
+    document.getElementById('detail-task-assignee').textContent = task.assigneeName;
+
+    const qtySection = document.getElementById('detail-task-qty-section');
+    if (task.qty && task.qty >= 1) {
+        qtySection.style.display = 'block';
+        document.getElementById('detail-task-qty').textContent = `${task.completedQty || 0} / ${task.qty} หน่วย`;
+    } else {
+        qtySection.style.display = 'none';
+    }
+
+    let statusText = 'ยังไม่ดำเนินการ';
+    let statusClass = 'pending';
+    if (task.status === 'ongoing') { statusText = 'กำลังดำเนินการ'; statusClass = 'ongoing'; }
+    else if (task.status === 'completed') { statusText = 'เสร็จสิ้นแล้ว'; statusClass = 'completed'; }
+
+    document.getElementById('detail-task-status').innerHTML = `
+        <span class="status-indicator">
+            <span class="status-dot ${statusClass}"></span>
+            <span>${statusText}</span>
+        </span>
+    `;
+
+    openModal('task-detail-modal');
 };
 
 // ================= CRUD: STAFF =================
@@ -1337,6 +1455,7 @@ function setupEventListeners() {
     document.getElementById('btn-open-task-modal').addEventListener('click', () => {
         document.getElementById('task-form').reset();
         document.getElementById('task-id').value = '';
+        document.getElementById('task-qty').value = 0;
         updateAssigneeDropdown();
         document.getElementById('task-modal-title').textContent = 'มอบหมายงานใหม่';
         const notifyCheck = document.getElementById('task-notify-email');
@@ -1415,6 +1534,8 @@ async function handleTaskSubmit(e) {
     const assigneeEmail = document.getElementById('task-assignee').value;
     const notifyEmail = true;
 
+    const qty = parseInt(document.getElementById('task-qty').value) || 0;
+
     // Get assignee name from email
     const staffMember = state.staff.find(s => s.email === assigneeEmail);
     const assigneeName = staffMember ? staffMember.name : 'ไม่ระบุ';
@@ -1427,6 +1548,8 @@ async function handleTaskSubmit(e) {
             task.desc = desc;
             task.assigneeEmail = assigneeEmail;
             task.assigneeName = assigneeName;
+            task.qty = qty;
+            if (task.completedQty === undefined) task.completedQty = 0;
         }
     } else {
         // Add Mode
@@ -1436,7 +1559,9 @@ async function handleTaskSubmit(e) {
             desc,
             assigneeEmail,
             assigneeName,
-            status: 'pending'
+            status: 'pending',
+            qty: qty,
+            completedQty: 0
         };
         state.tasks.push(newTask);
     }

@@ -103,12 +103,14 @@
   ],
   "tasks": [
     {
-      "id": "tk-1784176573623",
-      "title": "ทดสอบถังใต้ดิน01",
-      "desc": "ทดสอบถังใต้ดิน01",
+      "id": "tk-1784178579206",
+      "title": "ทดสอบถังใต้ดิน9",
+      "desc": "ทดสอบถังใต้ดิน9",
       "assigneeEmail": "rokatogchayanon@gmail.com",
       "assigneeName": "นายชญานนท์ รอกระโทก",
-      "status": "pending"
+      "status": "pending",
+      "qty": 8,
+      "completedQty": 0
     }
   ],
   "quotations": [],
