@@ -1472,3 +1472,24 @@ body.light-mode select option {
         gap: 16px !important;
     }
 }
+
+/* Date badge clickability */
+.date-badge {
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+.date-badge:hover {
+    background: var(--accent-soft) !important;
+    color: var(--accent-color) !important;
+    border-color: var(--accent-color) !important;
+    transform: translateY(-1px);
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}

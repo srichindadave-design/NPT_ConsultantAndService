@@ -2359,6 +2359,30 @@ function setupEventListeners() {
             });
         });
     }
+
+    // Calendar & Weather Modal Events
+    const currentDateBtn = document.getElementById('current-date');
+    if (currentDateBtn) {
+        currentDateBtn.addEventListener('click', () => {
+            calCurrentDate = new Date();
+            renderThaiCalendar();
+            fetchCurrentWeather();
+            openModal('calendar-weather-modal');
+        });
+    }
+
+    const prevMonthBtn = document.getElementById('cal-prev-month');
+    const nextMonthBtn = document.getElementById('cal-next-month');
+    if (prevMonthBtn && nextMonthBtn) {
+        prevMonthBtn.addEventListener('click', () => {
+            calCurrentDate.setMonth(calCurrentDate.getMonth() - 1);
+            renderThaiCalendar();
+        });
+        nextMonthBtn.addEventListener('click', () => {
+            calCurrentDate.setMonth(calCurrentDate.getMonth() + 1);
+            renderThaiCalendar();
+        });
+    }
 }
 
 // ================= FORM SUBMISSION HANDLERS =================
@@ -2945,6 +2969,187 @@ function notifyTaskCompletionViaLine(task) {
 
         const msg = `✅ [เสร็จสิ้นภารกิจกลุ่ม]\n\n📌 ชื่องาน: ${task.title}\n👥 ผู้รับผิดชอบ: ${assigneeNamesStr}\n📝 รายละเอียด: ${task.desc || '-'}\n📅 เสร็จสิ้นภารกิจแล้ว${websiteUrl}`;
         sendLineNotification(state.lineConfig.lineGroupId, msg);
+    }
+}
+
+// ================= THAI CALENDAR & WEATHER SYSTEM =================
+let calCurrentDate = new Date(); // Current date in AD
+
+const THAI_HOLIDAYS = {
+    '01-01': 'วันขึ้นปีใหม่ 🎆',
+    '04-06': 'วันจักรี 👑',
+    '04-13': 'วันสงกรานต์ 💦',
+    '04-14': 'วันสงกรานต์ 💦',
+    '04-15': 'วันสงกรานต์ 💦',
+    '05-01': 'วันแรงงานแห่งชาติ 🛠️',
+    '05-04': 'วันฉัตรมงคล 👑',
+    '06-03': 'วันเฉลิมพระชนมพรรษาพระราชินี 👸',
+    '07-28': 'วันเฉลิมพระชนมพรรษา ร.10 👑',
+    '08-12': 'วันแม่แห่งชาติ 👩',
+    '10-13': 'วันคล้ายวันสวรรคต ร.9 👑',
+    '10-23': 'วันปิยมหาราช 👑',
+    '12-05': 'วันพ่อแห่งชาติ 🧔',
+    '12-10': 'วันรัฐธรรมนูญ 📜',
+    '12-31': 'วันสิ้นปี 🎆'
+};
+
+function getThaiMonthName(monthIdx) {
+    const months = [
+        'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+        'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+    ];
+    return months[monthIdx];
+}
+
+function renderThaiCalendar() {
+    const year = calCurrentDate.getFullYear();
+    const month = calCurrentDate.getMonth(); // 0-11
+    
+    // Set header
+    const thaiYear = year + 543;
+    document.getElementById('cal-month-year').textContent = `${getThaiMonthName(month)} ${thaiYear}`;
+    
+    // Calendar math
+    const firstDay = new Date(year, month, 1).getDay(); // Day of week (0-6)
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    const grid = document.getElementById('cal-days-grid');
+    grid.innerHTML = '';
+    
+    let date = 1;
+    let html = '';
+    
+    const today = new Date();
+    
+    // Generate 6 rows max
+    for (let i = 0; i < 6; i++) {
+        let rowHtml = '<tr>';
+        let rowHasDate = false;
+        
+        for (let j = 0; j < 7; j++) {
+            if (i === 0 && j < firstDay) {
+                rowHtml += '<td style="padding: 10px; opacity: 0.2;"></td>';
+            } else if (date > daysInMonth) {
+                rowHtml += '<td style="padding: 10px; opacity: 0.2;"></td>';
+            } else {
+                rowHasDate = true;
+                const isToday = (date === today.getDate() && month === today.getMonth() && year === today.getFullYear());
+                const dayKey = `${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+                const isHoliday = THAI_HOLIDAYS[dayKey];
+                
+                let tdStyle = 'padding: 10px; position: relative; font-weight: 500; border-radius: 6px;';
+                if (isToday) {
+                    tdStyle += ' background: var(--accent-color); color: white; font-weight: 700;';
+                } else if (isHoliday) {
+                    tdStyle += ' color: #ef4444; font-weight: 700; cursor: pointer;';
+                } else if (j === 0) {
+                    tdStyle += ' color: #ef4444;'; // Sunday
+                } else if (j === 6) {
+                    tdStyle += ' color: #3b82f6;'; // Saturday
+                }
+                
+                const titleAttr = isHoliday ? `title="${isHoliday}"` : '';
+                const holidayDot = isHoliday && !isToday ? '<span style="position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: #ef4444; border-radius: 50%;"></span>' : '';
+                
+                rowHtml += `<td style="${tdStyle}" ${titleAttr}>${date}${holidayDot}</td>`;
+                date++;
+            }
+        }
+        rowHtml += '</tr>';
+        
+        if (rowHasDate) {
+            html += rowHtml;
+        }
+    }
+    grid.innerHTML = html;
+    
+    // Thai Details text
+    const todayFormatted = `วัน${new Date().toLocaleDateString('th-TH', { weekday: 'long' })}ที่ ${today.getDate()} ${getThaiMonthName(today.getMonth())} พ.ศ. ${today.getFullYear() + 543}`;
+    
+    // Find holidays in current month
+    const currentMonthStr = String(month + 1).padStart(2, '0');
+    let holidaysThisMonth = [];
+    for (const [key, val] of Object.entries(THAI_HOLIDAYS)) {
+        if (key.startsWith(currentMonthStr)) {
+            const dayNum = parseInt(key.split('-')[1]);
+            holidaysThisMonth.push(`วันที่ ${dayNum}: ${val}`);
+        }
+    }
+    
+    let detailHtml = `<strong>วันนี้:</strong> ${todayFormatted}<br>`;
+    if (holidaysThisMonth.length > 0) {
+        detailHtml += `<strong style="color: #ef4444; display:block; margin-top:6px;">วันสำคัญและวันหยุดเดือนนี้:</strong>` + holidaysThisMonth.join('<br>');
+    } else {
+        detailHtml += `<br><span class="text-muted">ไม่มีวันหยุดนักขัตฤกษ์หลักในเดือนนี้</span>`;
+    }
+    
+    document.getElementById('cal-thai-detail').innerHTML = detailHtml;
+}
+
+async function fetchCurrentWeather() {
+    const tempEl = document.getElementById('weather-temp');
+    const descEl = document.getElementById('weather-desc');
+    const humidityEl = document.getElementById('weather-humidity');
+    const windEl = document.getElementById('weather-wind');
+    const iconEl = document.getElementById('weather-icon-large');
+    
+    try {
+        // Fetch weather for Bangkok
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=13.7563&longitude=100.5018&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=Asia%2FBangkok');
+        if (!res.ok) throw new Error('Network response was not ok');
+        const data = await res.json();
+        const current = data.current;
+        
+        if (current) {
+            const temp = Math.round(current.temperature_2m);
+            const humidity = current.relative_humidity_2m;
+            const wind = current.wind_speed_10m;
+            const code = current.weather_code;
+            
+            // Map code to Thai desc and emoji icon
+            let weatherDesc = 'ท้องฟ้าโปร่ง';
+            let weatherIcon = '☀️';
+            
+            if (code === 0) {
+                weatherDesc = 'ท้องฟ้าโปร่ง';
+                weatherIcon = '☀️';
+            } else if ([1, 2, 3].includes(code)) {
+                weatherDesc = 'มีเมฆบางส่วน';
+                weatherIcon = '⛅';
+            } else if ([45, 48].includes(code)) {
+                weatherDesc = 'หมอกลง';
+                weatherIcon = '🌫️';
+            } else if ([51, 53, 55, 56, 57].includes(code)) {
+                weatherDesc = 'ฝนละออง';
+                weatherIcon = '🌦️';
+            } else if ([61, 63, 65, 66, 67].includes(code)) {
+                weatherDesc = 'ฝนตก';
+                weatherIcon = '🌧️';
+            } else if ([71, 73, 75, 77, 85, 86].includes(code)) {
+                weatherDesc = 'หิมะตก';
+                weatherIcon = '❄️';
+            } else if ([80, 81, 82].includes(code)) {
+                weatherDesc = 'ฝนตกหนัก';
+                weatherIcon = '⛈️';
+            } else if ([95, 96, 99].includes(code)) {
+                weatherDesc = 'พายุฝนฟ้าคะนอง';
+                weatherIcon = '⚡';
+            }
+            
+            tempEl.textContent = `${temp}°C`;
+            descEl.textContent = weatherDesc;
+            humidityEl.textContent = `${humidity}%`;
+            windEl.textContent = `${wind} กม./ชม.`;
+            iconEl.textContent = weatherIcon;
+        }
+    } catch (e) {
+        console.warn('[Weather API] Failed to fetch current weather:', e);
+        // Fallback mock values
+        tempEl.textContent = '31°C';
+        descEl.textContent = 'มีเมฆบางส่วน (จำลอง)';
+        humidityEl.textContent = '72%';
+        windEl.textContent = '10 กม./ชม.';
+        iconEl.textContent = '⛅';
     }
 }
 

@@ -526,6 +526,95 @@
 
     <!-- ================= MODALS ================= -->
     
+    <!-- Calendar & Weather Modal -->
+    <div id="calendar-weather-modal" class="modal-overlay hidden">
+        <div class="modal-content glass modal-large" style="max-width: 800px; padding: 24px;">
+            <div class="modal-header">
+                <h2><i data-lucide="calendar-days" style="vertical-align: middle; margin-right: 8px; color: var(--accent-color);"></i> ปฏิทินและสภาพอากาศหน้างาน</h2>
+                <button class="btn-close modal-close-btn"><i data-lucide="x"></i></button>
+            </div>
+            
+            <div class="modal-body" style="margin-top: 15px;">
+                <div class="form-row" style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    
+                    <!-- Left: Calendar Area -->
+                    <div style="flex: 1.2; min-width: 320px; background: rgba(255,255,255,0.03); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 id="cal-month-year" style="font-size: 1.15rem; font-weight: 600; color: var(--text-primary);">กรกฎาคม 2569</h3>
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" class="btn btn-secondary btn-small" id="cal-prev-month"><i data-lucide="chevron-left"></i></button>
+                                <button type="button" class="btn btn-secondary btn-small" id="cal-next-month"><i data-lucide="chevron-right"></i></button>
+                            </div>
+                        </div>
+                        
+                        <!-- Calendar Grid -->
+                        <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.9rem;">
+                            <thead>
+                                <tr style="color: var(--text-muted); font-weight: 600;">
+                                    <th style="padding: 8px; color: #ef4444;">อา</th>
+                                    <th style="padding: 8px;">จ</th>
+                                    <th style="padding: 8px;">อ</th>
+                                    <th style="padding: 8px;">พ</th>
+                                    <th style="padding: 8px;">พฤ</th>
+                                    <th style="padding: 8px;">ศ</th>
+                                    <th style="padding: 8px; color: #3b82f6;">ส</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cal-days-grid">
+                                <!-- Generated Dynamically -->
+                            </tbody>
+                        </table>
+                        
+                        <!-- Thai Buddhist details -->
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;" id="cal-thai-detail">
+                                <!-- Injected by JS -->
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Weather Area -->
+                    <div style="flex: 0.8; min-width: 250px; background: rgba(255,255,255,0.03); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: #06b6d4;">
+                                <i data-lucide="cloud-sun"></i> สภาพอากาศปัจจุบัน
+                            </h3>
+                            <div style="text-align: center; margin: 20px 0;">
+                                <div id="weather-icon-large" style="font-size: 3.5rem; margin-bottom: 8px; animation: bounce 2s infinite;">☀️</div>
+                                <div id="weather-temp" style="font-size: 2.2rem; font-weight: 700; color: var(--text-primary);">32°C</div>
+                                <div id="weather-desc" style="font-size: 1rem; color: var(--text-secondary); font-weight: 500; margin-top: 4px;">ท้องฟ้าโปร่ง</div>
+                            </div>
+                            
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 8px;">
+                                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
+                                    <span>ความชื้นสัมพัทธ์:</span>
+                                    <strong id="weather-humidity">70%</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
+                                    <span>ความเร็วลม:</span>
+                                    <strong id="weather-wind">12 กม./ชม.</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
+                                    <span>พิกัดหน้างาน:</span>
+                                    <strong>กรุงเทพมหานคร</strong>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 15px; font-size: 0.75rem; color: var(--text-muted); text-align: center; line-height: 1.4;">
+                            * ข้อมูลอัปเดตแบบเรียลไทม์ผ่าน Open-Meteo API
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="modal-footer" style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px; text-align: right;">
+                <button type="button" class="btn btn-secondary modal-close-btn">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+    </div>
+    
     <!-- A. Task Modal (Create & Edit) -->
     <div id="task-modal" class="modal-overlay hidden">
         <div class="modal-content glass">
