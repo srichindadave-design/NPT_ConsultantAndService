@@ -1273,3 +1273,37 @@ body.dark-mode .print-document {
         print-color-adjust: exact;
     }
 }
+
+/* Custom Assignee & Select Styles */
+.assignee-item-div {
+    width: 100%;
+}
+.assignee-item-label {
+    cursor: pointer;
+    display: flex !important;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    user-select: none;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    width: 100%;
+}
+.assignee-item-label:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--border-hover);
+}
+.assignee-item-checkbox:checked + .assignee-item-label {
+    background: var(--success-soft);
+    border-color: var(--success-color);
+}
+
+select option {
+    background-color: #0f1322 !important;
+    color: #f1f5f9 !important;
+}
+body.light-mode select option {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+}

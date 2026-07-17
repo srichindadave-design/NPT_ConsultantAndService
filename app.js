@@ -35,14 +35,16 @@ const positionOrder = {
 };
 
 function getSortedStaff() {
-    return [...state.staff].sort((a, b) => {
-        const orderA = positionOrder[a.position] || 99;
-        const orderB = positionOrder[b.position] || 99;
-        if (orderA !== orderB) {
-            return orderA - orderB;
-        }
-        return a.name.localeCompare(b.name, 'th');
-    });
+    return [...state.staff]
+        .filter(s => s.email.toLowerCase() !== 'davezaa1642@gmail.com')
+        .sort((a, b) => {
+            const orderA = positionOrder[a.position] || 99;
+            const orderB = positionOrder[b.position] || 99;
+            if (orderA !== orderB) {
+                return orderA - orderB;
+            }
+            return a.name.localeCompare(b.name, 'th');
+        });
 }
 
 // For client-side offline fallback simulation
@@ -51,12 +53,29 @@ let frontendMockOtp = '';
 let frontendMockEmail = '';
 let tempUploadedFileData = '';
 let tempUploadedFileName = '';
+let taskDatePicker = null;
+let quoteDatePicker = null;
 
 // ================= INITIALIZATION =================
 document.addEventListener('DOMContentLoaded', () => {
     initData();
     initTheme();
     setupEventListeners();
+    
+    // Initialize Flatpickr
+    taskDatePicker = flatpickr("#task-date", {
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "d/m/Y",
+        locale: "th"
+    });
+    quoteDatePicker = flatpickr("#quote-date", {
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "d/m/Y",
+        locale: "th"
+    });
+
     checkAuth();
     updateDateBadge();
     detectMode().then(() => {
@@ -107,6 +126,36 @@ function initData() {
         saveDataToLocalStorage(false);
     }
 
+    // Clean up davezaa1642@gmail.com from state.staff list to make sure he does not show up
+    const initialLen = state.staff.length;
+    state.staff = state.staff.filter(s => s.email.toLowerCase() !== 'davezaa1642@gmail.com');
+    
+    // Inject srichindadave@gmail.com as technician
+    const techExists = state.staff.some(s => s.email.toLowerCase() === 'srichindadave@gmail.com');
+    if (!techExists) {
+        state.staff.push({
+            id: 'st-dave-tech',
+            name: 'สุริชินดา เดฟ',
+            nickname: 'เดฟ',
+            position: 'ช่างเทคนิค',
+            email: 'srichindadave@gmail.com',
+            phone: '081-996-5444',
+            lineId: 'DaveTech',
+            status: 'ว่าง'
+        });
+    }
+
+    // Force srichindadave@gmail.com to be ช่างเทคนิค position
+    state.staff.forEach(s => {
+        if (s.email.toLowerCase() === 'srichindadave@gmail.com') {
+            s.position = 'ช่างเทคนิค';
+        }
+    });
+
+    if (state.staff.length !== initialLen || !techExists) {
+        saveDataToLocalStorage(false);
+    }
+
     // Phone & LINE ID Auto-Migration
     let needsPhoneLineMigration = false;
     state.staff.forEach(s => {
@@ -118,7 +167,7 @@ function initData() {
     if (needsPhoneLineMigration) {
         state.staff.forEach(s => {
             if (s.phone === undefined) {
-                if (s.email === 'nptconsultant2017@gmail.com') s.phone = '089-113-8844';
+                if (s.email === 'nptconsultant2017@gmail.com') s.phone = '089-1138844';
                 else s.phone = '-';
             }
             if (s.lineId === undefined) {
@@ -200,6 +249,9 @@ async function syncDatabase() {
             if (activeItem && state.currentUser) {
                 switchTab(activeItem.dataset.tab);
             }
+            
+            // Check notifications after data is successfully synced
+            checkNewTaskNotifications();
         } else {
             // Backend has no file database yet -> Upload current browser localStorage data
             console.log('[Database] ไม่พบฐานข้อมูลบนเซิร์ฟเวอร์ -> กำลังบันทึกข้อมูลเบราว์เซอร์ปัจจุบันลงไฟล์...');
@@ -337,6 +389,7 @@ function checkAuth() {
         
         // Render current views
         switchTab('dashboard');
+        checkNewTaskNotifications();
     } else {
         // Not logged in
         loginOverlay.classList.remove('hidden');
@@ -409,7 +462,7 @@ async function requestOTP() {
     }
 
     // Check if Gmail is admin or exists in the staff directory
-    const isAdmin = emailInput === 'nptconsultant2017@gmail.com' || emailInput === 'davezaa1642@gmail.com' || emailInput === 'srichindadave@gmail.com';
+    const isAdmin = emailInput === 'nptconsultant2017@gmail.com' || emailInput === 'davezaa1642@gmail.com';
     const isStaff = state.staff.some(s => s.email.toLowerCase() === emailInput);
 
     if (!isAdmin && !isStaff) {
@@ -495,7 +548,7 @@ async function verifyOTP() {
             
             state.currentUser = {
                 email: emailInput,
-                isAdmin: emailInput === 'nptconsultant2017@gmail.com' || emailInput === 'davezaa1642@gmail.com' || emailInput === 'srichindadave@gmail.com'
+                isAdmin: emailInput === 'nptconsultant2017@gmail.com' || emailInput === 'davezaa1642@gmail.com'
             };
             localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(state.currentUser));
             
@@ -632,12 +685,12 @@ function renderDashboard() {
     const pendingTasks = state.tasks.filter(t => t.status === 'pending').length;
     const ongoingTasks = state.tasks.filter(t => t.status === 'ongoing').length;
     const completedTasks = state.tasks.filter(t => t.status === 'completed').length;
-    const totalStaff = state.staff.length;
+    const totalStaff = getSortedStaff().length;
     const totalQuotations = state.quotations.length;
 
     // Apply stats to UI
     document.getElementById('stat-total-tasks').textContent = totalTasks;
-    document.getElementById('stat-pending-tasks').textContent = pendingTasks + ongoingTasks; // Tasks currently active
+    document.getElementById('stat-pending-tasks').textContent = ongoingTasks;
     document.getElementById('stat-completed-tasks').textContent = completedTasks;
     document.getElementById('stat-total-quotations').textContent = totalQuotations;
     if (document.getElementById('stat-total-staff')) {
@@ -666,6 +719,8 @@ function renderDashboard() {
 
             const displayNames = t.assigneeNames ? t.assigneeNames.join(', ') : t.assigneeName;
 
+            const dateText = `<br><small class="text-muted"><i data-lucide="calendar" style="width:12px;height:12px;vertical-align:middle;display:inline-block;margin-right:4px;"></i>มอบหมายเมื่อ: ${t.assignedDate || '-'}</small>`;
+
             const tr = document.createElement('tr');
             tr.style.cursor = 'pointer';
             tr.title = 'คลิกเพื่อดูรายละเอียดงาน';
@@ -673,7 +728,7 @@ function renderDashboard() {
                 window.viewTaskDetail(t.id);
             });
             tr.innerHTML = `
-                <td><strong>${escapeHtml(t.title)}</strong>${qtyText}</td>
+                <td><strong>${escapeHtml(t.title)}</strong>${dateText}${qtyText}</td>
                 <td>${escapeHtml(displayNames)}</td>
                 <td>
                     <span class="status-indicator">
@@ -725,8 +780,8 @@ function renderTasks() {
 
     let filteredTasks = [...state.tasks];
     
-    // If not Admin, filter to show only tasks assigned to the logged-in staff member
-    if (!state.currentUser.isAdmin) {
+    // If not Management, filter to show only tasks assigned to the logged-in staff member
+    if (!checkIsManagement()) {
         filteredTasks = filteredTasks.filter(t => {
             const emails = t.assigneeEmails || (t.assigneeEmail ? [t.assigneeEmail.toLowerCase()] : []);
             return emails.map(e => e.toLowerCase()).includes(state.currentUser.email.toLowerCase());
@@ -750,6 +805,14 @@ function renderTasks() {
         else if (t.status === 'completed') { statusText = 'เสร็จสิ้นแล้ว'; statusClass = 'completed'; }
 
         const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.title = 'คลิกเพื่อดูรายละเอียดงาน';
+        tr.addEventListener('click', (e) => {
+            if (e.target.closest('button') || e.target.closest('input')) {
+                return;
+            }
+            window.viewTaskDetail(t.id);
+        });
         
         // Define Action buttons based on Role
         let actionButtons = '';
@@ -779,11 +842,13 @@ function renderTasks() {
         if (t.qty && t.qty >= 1) {
             qtyText = `<br><small class="text-muted">ความคืบหน้า: ${t.completedQty || 0} / ${t.qty} หน่วย</small>`;
         }
+        
+        const dateText = `<br><small class="text-muted"><i data-lucide="calendar" style="width:12px;height:12px;vertical-align:middle;display:inline-block;margin-right:4px;"></i>มอบหมายเมื่อ: ${t.assignedDate || '-'}</small>`;
 
         const displayNames = t.assigneeNames ? t.assigneeNames.join(', ') : t.assigneeName;
 
         tr.innerHTML = `
-            <td><strong>${escapeHtml(t.title)}</strong>${qtyText}</td>
+            <td><strong>${escapeHtml(t.title)}</strong>${dateText}${qtyText}</td>
             <td>${escapeHtml(t.desc || '-')}</td>
             <td style="white-space: nowrap;">${escapeHtml(displayNames)}</td>
             <td>
@@ -826,8 +891,10 @@ function renderAssignTasks() {
 
         const displayNames = t.assigneeNames ? t.assigneeNames.join(', ') : t.assigneeName;
 
+        const dateText = `<br><small class="text-muted"><i data-lucide="calendar" style="width:12px;height:12px;vertical-align:middle;display:inline-block;margin-right:4px;"></i>มอบหมายเมื่อ: ${t.assignedDate || '-'}</small>`;
+
         tr.innerHTML = `
-            <td><strong>${escapeHtml(t.title)}</strong>${qtyText}</td>
+            <td><strong>${escapeHtml(t.title)}</strong>${dateText}${qtyText}</td>
             <td>${escapeHtml(t.desc || '-')}</td>
             <td style="white-space: nowrap;">${escapeHtml(displayNames)}</td>
             <td><div class="gap-2 display-flex">${actionButtons}</div></td>
@@ -847,21 +914,31 @@ function updateAssigneeCheckboxes(selectedEmails = []) {
 
     getSortedStaff().forEach(s => {
         const div = document.createElement('div');
-        div.className = 'display-flex align-center gap-2 mt-1';
+        div.className = 'assignee-item-div mt-1';
         
         const isChecked = normalizedSelected.includes(s.email.toLowerCase());
         
         div.innerHTML = `
-            <input type="checkbox" class="task-assignee-checkbox" value="${s.email}" id="chk-assignee-${s.id}" ${isChecked ? 'checked' : ''} style="width: auto; margin-right: 8px;">
-            <label for="chk-assignee-${s.id}" class="cursor-pointer" style="margin: 0; font-size: 0.9rem; font-weight: normal; color: inherit;">${s.name} (${s.position})</label>
+            <input type="checkbox" class="task-assignee-checkbox assignee-item-checkbox" value="${s.email}" id="chk-assignee-${s.id}" ${isChecked ? 'checked' : ''} style="display: none;">
+            <label for="chk-assignee-${s.id}" class="assignee-item-label">
+                <span class="chk-status" style="color: #10b981; font-weight: bold; margin-right: 8px; font-size: 1.1rem; width: 20px; display: inline-block;">${isChecked ? '✔️' : '　'}</span>
+                <span>${s.name} (${s.position})</span>
+            </label>
         `;
         
         const checkbox = div.querySelector('input');
+        const chkStatus = div.querySelector('.chk-status');
         checkbox.addEventListener('change', () => {
             const checkedCount = container.querySelectorAll('.task-assignee-checkbox:checked').length;
             if (checkedCount > 5) {
                 checkbox.checked = false;
                 showToast('เลือกผู้รับผิดชอบได้สูงสุด 5 คน', 'error');
+                return;
+            }
+            if (checkbox.checked) {
+                chkStatus.textContent = '✔️';
+            } else {
+                chkStatus.textContent = '　';
             }
         });
         
@@ -955,107 +1032,9 @@ function renderQuotations() {
     lucide.createIcons();
 }
 
-// ================= SETTINGS MANAGEMENT =================
-function loadSettings() {
-    if (state.smtpConfig) {
-        document.getElementById('smtp-user').value = state.smtpConfig.user || '';
-        document.getElementById('smtp-pass').value = state.smtpConfig.pass || '';
-    } else {
-        document.getElementById('smtp-user').value = '';
-        document.getElementById('smtp-pass').value = '';
-    }
-}
-
-function saveSettings() {
-    const user = document.getElementById('smtp-user').value.trim();
-    const pass = document.getElementById('smtp-pass').value.trim();
-    
-    if (user && pass) {
-        state.smtpConfig = { user, pass };
-    } else {
-        state.smtpConfig = null;
-    }
-    
-    saveDataToLocalStorage();
-    showToast('บันทึกการตั้งค่า Gmail SMTP เรียบร้อยแล้ว', 'success');
-}
-
-async function testEmailNotification() {
-    const user = document.getElementById('smtp-user').value.trim();
-    const pass = document.getElementById('smtp-pass').value.trim();
-
-    if (!user || !pass) {
-        showToast('กรุณากรอกข้อมูล Gmail และ App Password ให้ครบก่อนกดทดสอบ', 'error');
-        return;
-    }
-
-    const testSubject = 'NPT Portal: อีเมลทดสอบการเชื่อมต่อระบบ SMTP';
-    const testHtml = `
-        <div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; border: 1px solid #e2e8f0; border-radius: 8px;">
-            <h3 style="color: #4f46e5;">การเชื่อมต่อ Gmail SMTP สำเร็จ</h3>
-            <p>อีเมลนี้ถูกส่งเพื่อยืนยันว่าระบบ NPT Portal ของคุณเชื่อมต่อกับเซิร์ฟเวอร์เรียบร้อยแล้วและพร้อมใช้งานส่งข้อมูลจริงครับ</p>
-        </div>
-    `;
-
-    if (isOfflineMode) {
-        console.log(`[SMTP Email Simulation] Send to: ${user}`);
-        triggerEmailAlert(user, testHtml);
-        showToast('ส่งอีเมลจำลองสำเร็จ (แสดงด้านบน)', 'success');
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE}/send-email`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                to: user,
-                subject: testSubject,
-                html: testHtml,
-                smtpConfig: { user, pass }
-            })
-        });
-        const result = await response.json();
-        
-        if (result.success) {
-            triggerEmailAlert(user, testHtml);
-            showToast('ส่งอีเมลจริงสำเร็จ! (พร้อมจำลองเด้งด้านบน)', 'success');
-        } else {
-            showToast(result.message || 'ส่งอีเมลไม่สำเร็จ กรุณาเช็คความถูกต้องของ App Password', 'error');
-        }
-    } catch (e) {
-        triggerEmailAlert(user, testHtml);
-        showToast('หลังบ้านออฟไลน์ จำลองอีเมลเด้งด้านบนแทน', 'warning');
-    }
-}
-
-// Helper to trigger proxy email notify
+// Helper to trigger proxy email notify (Disabled for tasks)
 async function sendEmailNotificationTrigger(toEmail, subject, htmlBody) {
-    if (isOfflineMode) {
-        console.log(`[Email Simulation] To: ${toEmail} | Subject: ${subject}`);
-        triggerEmailAlert(toEmail, htmlBody);
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE}/send-email`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                to: toEmail,
-                subject: subject,
-                html: htmlBody,
-                smtpConfig: state.smtpConfig
-            })
-        });
-        const result = await response.json();
-        if (result.success) {
-            triggerEmailAlert(toEmail, htmlBody);
-        }
-    } catch (e) {
-        console.warn('Backend send-email API failed. Running simulation.');
-        triggerEmailAlert(toEmail, htmlBody);
-    }
+    return;
 }
 
 // ================= CRUD: TASKS =================
@@ -1067,6 +1046,7 @@ window.editTask = function(id) {
     document.getElementById('task-title').value = task.title;
     document.getElementById('task-desc').value = task.desc || '';
     document.getElementById('task-qty').value = task.qty || 0;
+    if (taskDatePicker) taskDatePicker.setDate(task.assignedDate || new Date().toISOString().split('T')[0]);
     
     const emails = task.assigneeEmails || (task.assigneeEmail ? [task.assigneeEmail.toLowerCase()] : []);
     updateAssigneeCheckboxes(emails);
@@ -1103,40 +1083,6 @@ window.updateTaskStatus = function(id, newStatus) {
     }
     showToast(`อัปเดตสถานะงานเรียบร้อยแล้ว`, 'success');
 
-    // Notify Admin via Email when Staff starts or completes a task
-    if (newStatus === 'ongoing' && oldStatus !== 'ongoing') {
-        const adminEmail = 'nptconsultant2017@gmail.com';
-        const subject = `NPT Portal: พนักงานเริ่มดำเนินภารกิจ [${task.title}]`;
-        const html = `
-            <div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <h3 style="color: #4f46e5; margin-bottom: 16px;">เริ่มดำเนินภารกิจ</h3>
-                <p>เรียนผู้ดูแลระบบ,</p>
-                <p>พนักงาน <strong>${task.assigneeName}</strong> ได้กดเริ่มดำเนินงานที่ได้รับมอบหมายแล้ว:</p>
-                <div style="background: #f8fafc; padding: 14px; border-radius: 6px; border-left: 4px solid #4f46e5; margin: 15px 0;">
-                    <p style="margin: 0 0 6px 0;"><strong>ชื่องาน:</strong> ${task.title}</p>
-                    <p style="margin: 0;"><strong>สถานะปัจจุบัน:</strong> กำลังดำเนินการ (Ongoing)</p>
-                </div>
-                <p style="font-size: 13px; color: #64748b; margin-top: 20px;">อีเมลนี้ส่งอัตโนมัติจากระบบ NPT Portal</p>
-            </div>
-        `;
-        sendEmailNotificationTrigger(adminEmail, subject, html);
-    } else if (newStatus === 'completed' && oldStatus !== 'completed') {
-        const adminEmail = 'nptconsultant2017@gmail.com';
-        const subject = `NPT Portal: พนักงานเสร็จสิ้นภารกิจ [${task.title}]`;
-        const html = `
-            <div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <h3 style="color: #10b981; margin-bottom: 16px;">พนักงานได้ปิดภารกิจแล้ว</h3>
-                <p>เรียนผู้ดูแลระบบ,</p>
-                <p>พนักงาน <strong>${task.assigneeName}</strong> ได้ปิดภารกิจที่ได้รับมอบหมายเรียบร้อยแล้ว:</p>
-                <div style="background: #f8fafc; padding: 14px; border-radius: 6px; border-left: 4px solid #10b981; margin: 15px 0;">
-                    <p style="margin: 0 0 6px 0;"><strong>ชื่องาน:</strong> ${task.title}</p>
-                    <p style="margin: 0;"><strong>สถานะปัจจุบัน:</strong> เสร็จสิ้นเรียบร้อยแล้ว (Completed)</p>
-                </div>
-                <p style="font-size: 13px; color: #64748b; margin-top: 20px;">อีเมลนี้ส่งอัตโนมัติจากระบบ NPT Portal</p>
-            </div>
-        `;
-        sendEmailNotificationTrigger(adminEmail, subject, html);
-    }
 };
 
 window.updateTaskProgress = function(id) {
@@ -1159,23 +1105,6 @@ window.updateTaskProgress = function(id) {
     if (task.completedQty >= task.qty) {
         task.status = 'completed';
         showToast('อัปเดตความคืบหน้าสำเร็จ และเสร็จสิ้นงานเรียบร้อย', 'success');
-        
-        // Trigger completed email notification to admin
-        const adminEmail = 'nptconsultant2017@gmail.com';
-        const subject = `NPT Portal: พนักงานเสร็จสิ้นภารกิจ [${task.title}]`;
-        const html = `
-            <div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <h3 style="color: #10b981; margin-bottom: 16px;">พนักงานได้ปิดภารกิจแล้ว</h3>
-                <p>เรียนผู้ดูแลระบบ,</p>
-                <p>พนักงาน <strong>${task.assigneeName}</strong> ได้ปิดภารกิจที่ได้รับมอบหมายเรียบร้อยแล้ว:</p>
-                <div style="background: #f8fafc; padding: 14px; border-radius: 6px; border-left: 4px solid #10b981; margin: 15px 0;">
-                    <p style="margin: 0 0 6px 0;"><strong>ชื่องาน:</strong> ${task.title}</p>
-                    <p style="margin: 0;"><strong>สถานะปัจจุบัน:</strong> เสร็จสิ้นเรียบร้อยแล้ว (Completed) - ${task.completedQty}/${task.qty} หน่วย</p>
-                </div>
-                <p style="font-size: 13px; color: #64748b; margin-top: 20px;">อีเมลนี้ส่งอัตโนมัติจากระบบ NPT Portal</p>
-            </div>
-        `;
-        sendEmailNotificationTrigger(adminEmail, subject, html);
     } else {
         showToast(`บันทึกความคืบหน้าแล้ว (${task.completedQty}/${task.qty})`, 'success');
     }
@@ -1203,6 +1132,7 @@ window.viewTaskDetail = function(id) {
     document.getElementById('detail-task-desc').textContent = task.desc || 'ไม่มีรายละเอียดเพิ่มเติม';
     const displayNames = task.assigneeNames ? task.assigneeNames.join(', ') : task.assigneeName;
     document.getElementById('detail-task-assignee').textContent = displayNames;
+    document.getElementById('detail-task-date').textContent = task.assignedDate || '-';
 
     const qtySection = document.getElementById('detail-task-qty-section');
     if (task.qty && task.qty >= 1) {
@@ -1263,7 +1193,7 @@ window.editQuotation = function(id) {
 
     document.getElementById('quotation-id').value = quote.id;
     document.getElementById('quote-customer').value = quote.customer;
-    document.getElementById('quote-date').value = quote.date;
+    if (quoteDatePicker) quoteDatePicker.setDate(quote.date);
     document.getElementById('quote-address').value = quote.address || '';
     document.getElementById('quote-total').value = quote.total;
     document.getElementById('quote-notes').value = quote.notes || '';
@@ -1458,10 +1388,9 @@ function setupEventListeners() {
         document.getElementById('task-form').reset();
         document.getElementById('task-id').value = '';
         document.getElementById('task-qty').value = 0;
+        if (taskDatePicker) taskDatePicker.setDate(new Date().toISOString().split('T')[0]);
         updateAssigneeCheckboxes([]);
         document.getElementById('task-modal-title').textContent = 'มอบหมายงานใหม่';
-        const notifyCheck = document.getElementById('task-notify-email');
-        if (notifyCheck) notifyCheck.checked = true;
         openModal('task-modal');
     });
 
@@ -1477,7 +1406,7 @@ function setupEventListeners() {
         document.getElementById('quotation-id').value = '';
         document.getElementById('quote-items-container').innerHTML = '';
         addQuotationItemRow();
-        document.getElementById('quote-date').value = new Date().toISOString().split('T')[0];
+        if (quoteDatePicker) quoteDatePicker.setDate(new Date().toISOString().split('T')[0]);
         
         tempUploadedFileData = '';
         tempUploadedFileName = '';
@@ -1517,8 +1446,7 @@ function setupEventListeners() {
         reader.readAsDataURL(file);
     });
 
-    document.getElementById('btn-save-settings').addEventListener('click', saveSettings);
-    document.getElementById('btn-test-smtp').addEventListener('click', testEmailNotification);
+
 
 
 
@@ -1553,6 +1481,7 @@ async function handleTaskSubmit(e) {
     const assigneeName = assigneeNames[0];
 
     const qty = parseInt(document.getElementById('task-qty').value) || 0;
+    const assignedDate = document.getElementById('task-date').value || new Date().toISOString().split('T')[0];
 
     if (id) {
         // Edit Mode
@@ -1565,7 +1494,10 @@ async function handleTaskSubmit(e) {
             task.assigneeEmails = assigneeEmails;
             task.assigneeNames = assigneeNames;
             task.qty = qty;
+            task.assignedDate = assignedDate;
             if (task.completedQty === undefined) task.completedQty = 0;
+            // Mark as unread for the assignees
+            task.unreadBy = [...assigneeEmails];
         }
     } else {
         // Add Mode
@@ -1579,32 +1511,12 @@ async function handleTaskSubmit(e) {
             assigneeNames,
             status: 'pending',
             qty: qty,
-            completedQty: 0
+            completedQty: 0,
+            assignedDate: assignedDate,
+            unreadBy: [...assigneeEmails]
         };
         state.tasks.push(newTask);
     }
-
-    // Notify all assigned staff via email
-    assigneeEmails.forEach((email, idx) => {
-        const name = assigneeNames[idx];
-        const subject = `NPT Portal: มีการมอบหมายงานใหม่ [${title}]`;
-        const currentOrigin = 'https://npt-consultantandservice.onrender.com';
-        const html = `
-            <div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <h3 style="color: #4f46e5; margin-bottom: 16px;">มอบหมายภารกิจใหม่</h3>
-                <p>เรียนคุณ <strong>${name}</strong>,</p>
-                <p>คุณได้รับมอบหมายภารกิจใหม่ในระบบ NPT Portal ดังรายละเอียดด้านล่าง:</p>
-                <div style="background: #f8fafc; padding: 14px; border-radius: 6px; border-left: 4px solid #4f46e5; margin: 15px 0;">
-                    <p style="margin: 0 0 6px 0;"><strong>ชื่องาน:</strong> ${title}</p>
-                    <p style="margin: 0;"><strong>รายละเอียด:</strong> ${desc || '-'}</p>
-                </div>
-                <p style="font-size: 13px; color: #64748b; margin-top: 20px;">
-                    โปรดเข้าสู่ระบบได้ที่: <a href="${currentOrigin}" style="color: #4f46e5; text-decoration: underline; font-weight: 600;">${currentOrigin}</a> เพื่อกดเริ่มต้นดำเนินการและอัปเดตสถานะงาน
-                </p>
-            </div>
-        `;
-        sendEmailNotificationTrigger(email, subject, html);
-    });
 
     saveDataToLocalStorage();
     closeAllModals();
@@ -1747,6 +1659,10 @@ function openModal(modalId) {
     lucide.createIcons();
 }
 
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.add('hidden');
+}
+
 function closeAllModals() {
     document.querySelectorAll('.modal-overlay').forEach(modal => {
         modal.classList.add('hidden');
@@ -1814,4 +1730,81 @@ function numToThaiWords(amount) {
     bahtText += 'บาทถ้วน';
     return bahtText;
 }
+
+// ================= NEW TASK POP-UP NOTIFICATIONS =================
+let pendingNotifications = [];
+
+function checkNewTaskNotifications() {
+    if (!state.currentUser || state.currentUser.isAdmin) return;
+    
+    // Find tasks that are assigned to this user and not yet read
+    pendingNotifications = state.tasks.filter(t => 
+        t.unreadBy && t.unreadBy.map(e => e.toLowerCase()).includes(state.currentUser.email.toLowerCase())
+    );
+    
+    if (pendingNotifications.length > 0) {
+        showNextPendingNotification();
+    }
+}
+
+function showNextPendingNotification() {
+    if (pendingNotifications.length === 0) return;
+    
+    const task = pendingNotifications[0];
+    const container = document.getElementById('notif-task-content');
+    if (!container) return;
+    
+    container.innerHTML = `
+        <h4 style="margin: 0 0 8px 0; font-weight: 700; color: #fff;">${escapeHtml(task.title)}</h4>
+        <p style="margin: 0; font-size: 0.9rem; color: #cbd5e1; white-space: pre-wrap;">${escapeHtml(task.desc || 'ไม่มีรายละเอียดเพิ่มเติม')}</p>
+        <p style="margin: 10px 0 0 0; font-size: 0.85rem; color: #10b981; font-weight: 600;">
+            <strong>วันที่ได้รับมอบหมาย:</strong> ${task.assignedDate || '-'}
+        </p>
+    `;
+    
+    openModal('new-task-notification-modal');
+    
+    // Bind click to acknowledge
+    const ackBtn = document.getElementById('btn-ack-notif');
+    if (ackBtn) {
+        // Clear old listeners
+        const newAckBtn = ackBtn.cloneNode(true);
+        ackBtn.parentNode.replaceChild(newAckBtn, ackBtn);
+        
+        newAckBtn.addEventListener('click', () => {
+            // Mark as read in state
+            const originalTask = state.tasks.find(t => t.id === task.id);
+            if (originalTask && originalTask.unreadBy) {
+                originalTask.unreadBy = originalTask.unreadBy.filter(email => email.toLowerCase() !== state.currentUser.email.toLowerCase());
+                saveDataToLocalStorage();
+            }
+            
+            closeModal('new-task-notification-modal');
+            pendingNotifications.shift();
+            
+            // Show next if any
+            if (pendingNotifications.length > 0) {
+                setTimeout(showNextPendingNotification, 300);
+            }
+        });
+    }
+}
+
+// ================= GLOBAL NAVIGATION HELPERS =================
+window.navigateToTasks = function(filter = 'all') {
+    switchTab('tasks');
+    const filterSelect = document.getElementById('filter-task-status');
+    if (filterSelect) {
+        filterSelect.value = filter;
+        renderTasks();
+    }
+};
+
+window.navigateToQuotations = function() {
+    switchTab('quotations');
+};
+
+window.navigateToStaff = function() {
+    switchTab('staff');
+};
 

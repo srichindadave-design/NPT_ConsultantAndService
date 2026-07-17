@@ -10,6 +10,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Flatpickr Datepicker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/th.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="dark-mode"> <!-- Defaults to dark-mode for premium look, can be toggled to light-mode -->
@@ -29,8 +34,9 @@
     <div id="login-overlay" class="login-container">
         <div class="login-card glass">
             <div class="login-header">
-                <div class="logo-area">
-                    <h2>NPT Consultant And Service</h2>
+                <div class="logo-area" style="text-align: center;">
+                    <h2 style="font-size: 2.2rem; font-weight: 800; line-height: 1.2; margin-bottom: 2px;">NPT</h2>
+                    <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; font-family: var(--font-primary);">Consultant And Service</h3>
                     <p>ระบบบริหารงานและบุคลากรภายในบริษัท</p>
                 </div>
             </div>
@@ -39,7 +45,7 @@
             <div id="phone-view" class="login-form-view">
                 <div class="form-group">
                     <label for="login-email"><i data-lucide="mail"></i> อีเมลผู้ใช้งาน</label>
-                    <input type="email" id="login-email" placeholder="กรอกอีเมลของคุณ" autocomplete="off">
+                    <input type="email" id="login-email" class="form-control" placeholder="กรอกอีเมลของคุณ" autocomplete="off">
                     <small class="form-hint">ระบุ Gmail ของคุณเพื่อเข้าใช้งานระบบ</small>
                 </div>
                 <button id="btn-request-otp" class="btn btn-primary btn-block">
@@ -56,7 +62,7 @@
                 <div class="form-group">
                     <label for="login-otp"><i data-lucide="key-round"></i> รหัส OTP (6 หลัก)</label>
                     <div class="otp-input-wrapper">
-                        <input type="text" id="login-otp" placeholder="กรอกรหัส 6 หลัก" maxlength="6" autocomplete="off" pattern="\d*">
+                        <input type="text" id="login-otp" class="form-control" placeholder="กรอกรหัส 6 หลัก" maxlength="6" autocomplete="off" pattern="\d*">
                     </div>
                 </div>
                 <div class="otp-actions">
@@ -111,9 +117,6 @@
                     <li class="nav-item" data-tab="staff">
                         <a href="#"><i data-lucide="users-2"></i><span>รายชื่อบุคลากร</span></a>
                     </li>
-                    <li class="nav-item admin-only" data-tab="settings">
-                        <a href="#"><i data-lucide="settings"></i><span>ตั้งค่า Gmail SMTP</span></a>
-                    </li>
                 </ul>
             </nav>
 
@@ -150,7 +153,7 @@
                 <section id="tab-dashboard" class="tab-panel active">
                     <!-- Statistics Grid -->
                     <div class="stats-grid">
-                        <div class="stat-card glass">
+                        <div class="stat-card glass" style="cursor: pointer;" onclick="navigateToTasks('all')">
                             <div class="stat-icon bg-primary-soft"><i data-lucide="list-todo"></i></div>
                             <div class="stat-details">
                                 <h3>งานทั้งหมด</h3>
@@ -158,7 +161,7 @@
                                 <span class="stat-desc">รายการงานในระบบ</span>
                             </div>
                         </div>
-                        <div class="stat-card glass">
+                        <div class="stat-card glass" style="cursor: pointer;" onclick="navigateToTasks('ongoing')">
                             <div class="stat-icon bg-warning-soft"><i data-lucide="clock"></i></div>
                             <div class="stat-details">
                                 <h3>กำลังดำเนินการ</h3>
@@ -166,7 +169,7 @@
                                 <span class="stat-desc">งานที่พนักงานกำลังทำ</span>
                             </div>
                         </div>
-                        <div class="stat-card glass">
+                        <div class="stat-card glass" style="cursor: pointer;" onclick="navigateToTasks('completed')">
                             <div class="stat-icon bg-success-soft"><i data-lucide="check-circle-2"></i></div>
                             <div class="stat-details">
                                 <h3>เสร็จสิ้นแล้ว</h3>
@@ -174,7 +177,7 @@
                                 <span class="stat-desc">งานที่ปิดเรียบร้อย</span>
                             </div>
                         </div>
-                        <div class="stat-card glass">
+                        <div class="stat-card glass" style="cursor: pointer;" onclick="navigateToQuotations()">
                             <div class="stat-icon bg-info-soft"><i data-lucide="file-text"></i></div>
                             <div class="stat-details">
                                 <h3>ใบเสนอราคา</h3>
@@ -182,7 +185,7 @@
                                 <span class="stat-desc">จำนวนใบเสนอราคาทั้งหมด</span>
                             </div>
                         </div>
-                        <div class="stat-card glass admin-only">
+                        <div class="stat-card glass admin-only" style="cursor: pointer;" onclick="navigateToStaff()">
                             <div class="stat-icon bg-info-soft"><i data-lucide="users"></i></div>
                             <div class="stat-details">
                                 <h3>พนักงานทั้งหมด</h3>
@@ -288,7 +291,6 @@
                                         </tr>
                                     </thead>
                                     <tbody id="assign-tasks-table-body">
-                                        <!-- Injected by JS -->
                                     </tbody>
                                 </table>
                             </div>
@@ -354,45 +356,12 @@
                                             <th>LINE ID</th>
                                             <th>การทำงานขณะนี้</th>
                                             <th class="admin-only">การจัดการ</th>
-                                                <tbody id="staff-table-body">
+                                        </tr>
+                                    </thead>
+                                    <tbody id="staff-table-body">
                                         <!-- Injected by JS -->
                                     </tbody>
                                 </table>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 5. SETTINGS VIEW (Admin Only) -->
-                <section id="tab-settings" class="tab-panel admin-only">
-                    <div class="layout-card glass">
-                        <div class="card-header">
-                            <h2><i data-lucide="mail"></i> ตั้งค่าการเชื่อมต่อ Gmail SMTP</h2>
-                        </div>
-                        <div class="card-body">
-                            <p class="text-muted mb-4">เชื่อมต่อบัญชี Gmail สำหรับส่งรหัส OTP และอีเมลแจ้งเตือนมอบหมายงานพนักงานโดยอัตโนมัติ (หากไม่ได้กรอก ระบบจะทำงานในโหมดจำลอง Pop-up เสมอ)</p>
-                            
-                            <div class="form-group">
-                                <label for="smtp-user">แอดมิน Gmail Address</label>
-                                <input type="email" id="smtp-user" class="form-control" placeholder="ตัวอย่าง: yourname@gmail.com">
-                            </div>
-
-                            <div class="form-group mt-3">
-                                <label for="smtp-pass">Gmail App Password (รหัสผ่านแอป 16 หลัก)</label>
-                                <input type="password" id="smtp-pass" class="form-control" placeholder="ใส่รหัสผ่านแอป 16 หลัก...">
-                                <small class="form-hint">
-                                    คุณต้องเปิดการยืนยันตัวตนแบบ 2 ขั้นตอนใน Google Account ของคุณก่อน จากนั้นสร้างรหัสผ่านแอป (App Password) ในหน้าความปลอดภัยของบัญชี แล้วนำมาใส่ที่นี่ 
-                                    <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer">สร้าง App Password</a>
-                                </small>
-                            </div>
-
-                            <div class="form-actions mt-4">
-                                <button id="btn-save-settings" class="btn btn-primary">
-                                    <i data-lucide="save"></i> บันทึกการตั้งค่า
-                                </button>
-                                <button id="btn-test-smtp" class="btn btn-secondary">
-                                    <i data-lucide="bell"></i> ทดสอบส่งอีเมลจำลอง / จริง
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -431,11 +400,11 @@
                     <label for="task-qty">จำนวนงานทั้งหมด (ใส่ 0 หรือเว้นว่างหากไม่ระบุจำนวน)</label>
                     <input type="number" id="task-qty" class="form-control" placeholder="เช่น 10 (เพื่อระบุเป้าหมายจำนวนชิ้น/จุด)" min="0" value="0">
                 </div>
-
-                <div class="form-group flex-row gap-2 align-center mt-3 text-muted" style="display:flex; font-size: 0.85rem;">
-                    <i data-lucide="bell" style="width: 16px; height: 16px; color: #4f46e5;"></i>
-                    <span>ระบบจะส่งอีเมลแจ้งเตือนภารกิจไปยังผู้รับผิดชอบโดยอัตโนมัติเมื่อกดบันทึก</span>
+                <div class="form-group mt-3">
+                    <label for="task-date">วันที่ได้รับมอบหมาย</label>
+                    <input type="text" id="task-date" class="form-control" placeholder="เลือกวันที่" required>
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary modal-close-btn">ยกเลิก</button>
                     <button type="submit" class="btn btn-primary">บันทึกข้อมูล</button>
@@ -508,7 +477,7 @@
                     </div>
                     <div class="form-group col">
                         <label for="quote-date">วันที่เสนอราคา</label>
-                        <input type="date" id="quote-date" class="form-control" required>
+                        <input type="text" id="quote-date" class="form-control" placeholder="เลือกวันที่" required>
                     </div>
                 </div>
 
@@ -579,12 +548,12 @@
 
     <!-- F. Task Detail Modal -->
     <div id="task-detail-modal" class="modal-overlay hidden">
-        <div class="modal-content glass">
+        <div class="modal-content glass modal-large">
             <div class="modal-header">
                 <h2>รายละเอียดภารกิจ</h2>
                 <button class="btn-close modal-close-btn"><i data-lucide="x"></i></button>
             </div>
-            <div class="modal-body" style="padding: 16px 0; text-align: left;">
+            <div class="modal-body" style="padding: 16px 24px; text-align: left;">
                 <div class="form-group">
                     <label style="font-weight: 600;">ชื่องาน</label>
                     <div id="detail-task-title" style="padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; font-weight: 700; margin-top: 4px;"></div>
@@ -597,6 +566,10 @@
                     <label style="font-weight: 600;">ผู้รับผิดชอบงาน</label>
                     <div id="detail-task-assignee" style="padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-top: 4px;"></div>
                 </div>
+                <div class="form-group mt-3">
+                    <label style="font-weight: 600;">วันที่ได้รับมอบหมาย</label>
+                    <div id="detail-task-date" style="padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-top: 4px;"></div>
+                </div>
                 <div class="form-group mt-3" id="detail-task-qty-section">
                     <label style="font-weight: 600;">ความคืบหน้าของงาน</label>
                     <div id="detail-task-qty" style="padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-top: 4px;"></div>
@@ -608,6 +581,22 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary modal-close-btn">ปิด</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- G. New Task Notification Modal -->
+    <div id="new-task-notification-modal" class="modal-overlay hidden" style="z-index: 1100;">
+        <div class="modal-content glass" style="max-width: 400px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.15);">
+            <div style="font-size: 3rem; color: #4f46e5; margin-bottom: 12px; animation: bounce 2s infinite;">
+                <i data-lucide="bell" style="width: 56px; height: 56px; display: inline-block; color: #10b981;"></i>
+            </div>
+            <h2 style="color: #10b981; margin-bottom: 8px;">คุณได้รับมอบหมายงานใหม่!</h2>
+            <div id="notif-task-content" style="padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px; margin: 15px 0; text-align: left; max-height: 200px; overflow-y: auto;">
+                <!-- Dynamically populated -->
+            </div>
+            <div class="modal-footer" style="justify-content: center; padding: 0;">
+                <button type="button" class="btn btn-primary" id="btn-ack-notif" style="width: 100%; padding: 12px 20px;">รับทราบ</button>
             </div>
         </div>
     </div>

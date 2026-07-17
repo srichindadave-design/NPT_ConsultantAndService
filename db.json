@@ -42,7 +42,7 @@
     },
     {
       "id": "st-1784168210738",
-      "name": "นายสุทธิมงคล ชัยวงษ",
+      "name": "นายสุทธิมงคล ชัยวงษ์",
       "nickname": "คิง",
       "position": "ช่างเทคนิค",
       "email": "smilemelody0305@gmail.com",
@@ -103,14 +103,24 @@
   ],
   "tasks": [
     {
-      "id": "tk-1784178579206",
-      "title": "ทดสอบถังใต้ดิน9",
-      "desc": "ทดสอบถังใต้ดิน9",
+      "id": "tk-1784196621992",
+      "title": "ทดสอบถังใต้ดิน",
+      "desc": "ทดสอบถังใต้ดิน",
       "assigneeEmail": "rokatogchayanon@gmail.com",
       "assigneeName": "นายชญานนท์ รอกระโทก",
+      "assigneeEmails": [
+        "rokatogchayanon@gmail.com"
+      ],
+      "assigneeNames": [
+        "นายชญานนท์ รอกระโทก"
+      ],
       "status": "pending",
       "qty": 8,
-      "completedQty": 0
+      "completedQty": 0,
+      "assignedDate": "2026-07-18",
+      "unreadBy": [
+        "rokatogchayanon@gmail.com"
+      ]
     }
   ],
   "quotations": [],

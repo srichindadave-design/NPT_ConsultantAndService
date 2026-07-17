@@ -155,7 +155,7 @@ app.post('/api/verify-otp', (req, res) => {
 
   if (record.otp === otp) {
     otpStore.delete(email.toLowerCase());
-    const isAdmin = email.toLowerCase() === 'nptconsultant2017@gmail.com' || email.toLowerCase() === 'davezaa1642@gmail.com' || email.toLowerCase() === 'srichindadave@gmail.com';
+    const isAdmin = email.toLowerCase() === 'nptconsultant2017@gmail.com' || email.toLowerCase() === 'davezaa1642@gmail.com';
 
     return res.json({
       success: true,
@@ -188,7 +188,7 @@ app.post('/api/login-direct', (req, res) => {
       const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
       const staffList = db.staff || [];
       
-      const isAdmin = emailLower === 'nptconsultant2017@gmail.com' || emailLower === 'davezaa1642@gmail.com' || emailLower === 'srichindadave@gmail.com';
+      const isAdmin = emailLower === 'nptconsultant2017@gmail.com' || emailLower === 'davezaa1642@gmail.com';
       const isStaff = staffList.some(s => s.email.toLowerCase() === emailLower);
       
       if (isAdmin || isStaff) {
