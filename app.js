@@ -740,6 +740,25 @@ function updateDateBadge() {
     const options = { year: 'numeric', month: 'long', day: 'numeric', locale: 'th-TH' };
     const dateStr = new Date().toLocaleDateString('th-TH', options);
     document.getElementById('current-date').textContent = dateStr;
+
+    // Start live clock ticking
+    updateClock();
+    setInterval(updateClock, 1000);
+}
+
+function updateClock() {
+    const timeEl = document.getElementById('current-time');
+    if (!timeEl) return;
+    
+    const options = {
+        timeZone: 'Asia/Bangkok',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    };
+    const timeStr = new Date().toLocaleTimeString('th-TH', options);
+    timeEl.textContent = `${timeStr} น.`;
 }
 
 // ================= RENDER: DASHBOARD =================

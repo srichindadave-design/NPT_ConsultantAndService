@@ -483,13 +483,21 @@ body.light-mode .login-container {
     letter-spacing: -0.5px;
 }
 
-.date-badge {
+.date-badge, .time-badge {
     padding: 8px 16px;
     background: var(--bg-surface);
     border-radius: 50px;
     border: 1px solid var(--border-color);
     font-size: 0.88rem;
     font-weight: 500;
+}
+
+.time-badge {
+    color: #06b6d4;
+    border-color: rgba(6, 182, 212, 0.2);
+    background: rgba(6, 182, 212, 0.05);
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 600;
 }
 
 .content-body {
