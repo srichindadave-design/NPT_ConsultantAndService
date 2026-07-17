@@ -1029,7 +1029,7 @@ function renderStaff() {
         const statusText = hasOngoingTask ? 'กำลังปฏิบัติงาน' : 'ว่าง';
         const statusBadgeClass = hasOngoingTask ? 'bg-warning-soft text-warning' : 'bg-success-soft text-success';
 
-        const isManager = s.position && s.position.includes('ผู้จัดการ');
+        const isManager = s.position === 'ผู้จัดการ';
         const statusCell = isManager ? '-' : `<span class="badge ${statusBadgeClass}">${statusText}</span>`;
 
         const isMgmt = checkIsManagement();
@@ -2898,12 +2898,23 @@ async function sendLineNotification(toUserId, messageText) {
 function notifyAssigneesViaLine(assigneeEmails, taskTitle, taskDesc, taskDate, isUpdate = false) {
     if (!state.lineConfig || !state.lineConfig.channelAccessToken) return;
     
+    // Format date to DD/MM/YYYY
+    let formattedDate = taskDate;
+    if (taskDate && taskDate.includes('-')) {
+        const parts = taskDate.split('-');
+        if (parts.length === 3) {
+            formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+    }
+
+    const websiteUrl = '\n🔗 เข้าสู่ระบบได้ที่: https://npt-consultantandservice.onrender.com';
+
     // 1. Notify individual assignees privately
     assigneeEmails.forEach(email => {
         const member = state.staff.find(s => s.email.toLowerCase() === email.toLowerCase());
         if (member && member.lineUserId) {
             const prefix = isUpdate ? '🔔 มีการอัปเดตภารกิจ!' : '🔔 คุณได้รับมอบหมายภารกิจใหม่!';
-            const msg = `${prefix}\n\n📌 ชื่องาน: ${taskTitle}\n📝 รายละเอียด: ${taskDesc || '-'}\n📅 วันที่มอบหมาย: ${taskDate}`;
+            const msg = `${prefix}\n\n📌 ชื่องาน: ${taskTitle}\n📝 รายละเอียด: ${taskDesc || '-'}\n📅 วันที่มอบหมาย: ${formattedDate}${websiteUrl}`;
             sendLineNotification(member.lineUserId, msg);
         }
     });
@@ -2916,7 +2927,7 @@ function notifyAssigneesViaLine(assigneeEmails, taskTitle, taskDesc, taskDate, i
         }).join(', ');
 
         const prefix = isUpdate ? '🔔 [อัปเดตภารกิจกลุ่ม]' : '🔔 [มอบหมายภารกิจใหม่]';
-        const msg = `${prefix}\n\n📌 ชื่องาน: ${taskTitle}\n👥 ผู้รับผิดชอบ: ${assigneeNamesStr}\n📝 รายละเอียด: ${taskDesc || '-'}\n📅 วันที่มอบหมาย: ${taskDate}`;
+        const msg = `${prefix}\n\n📌 ชื่องาน: ${taskTitle}\n👥 ผู้รับผิดชอบ: ${assigneeNamesStr}\n📝 รายละเอียด: ${taskDesc || '-'}\n📅 วันที่มอบหมาย: ${formattedDate}${websiteUrl}`;
         sendLineNotification(state.lineConfig.lineGroupId, msg);
     }
 }
@@ -2926,12 +2937,13 @@ function notifyTaskCompletionViaLine(task) {
     if (!state.lineConfig || !state.lineConfig.channelAccessToken) return;
     
     const emails = task.assigneeEmails || (task.assigneeEmail ? [task.assigneeEmail.toLowerCase()] : []);
+    const websiteUrl = '\n🔗 เข้าสู่ระบบได้ที่: https://npt-consultantandservice.onrender.com';
     
     // 1. Notify individual assignees privately
     emails.forEach(email => {
         const member = state.staff.find(s => s.email.toLowerCase() === email.toLowerCase());
         if (member && member.lineUserId) {
-            const msg = `✅ ภารกิจเสร็จสิ้นเรียบร้อย!\n\n📌 ชื่องาน: ${task.title}\n📝 รายละเอียด: ${task.desc || '-'}\n📅 เสร็จสิ้นภารกิจแล้ว`;
+            const msg = `✅ ภารกิจเสร็จสิ้นเรียบร้อย!\n\n📌 ชื่องาน: ${task.title}\n📝 รายละเอียด: ${task.desc || '-'}\n📅 เสร็จสิ้นภารกิจแล้ว${websiteUrl}`;
             sendLineNotification(member.lineUserId, msg);
         }
     });
@@ -2943,7 +2955,7 @@ function notifyTaskCompletionViaLine(task) {
             return s ? s.name : email;
         }).join(', ');
 
-        const msg = `✅ [เสร็จสิ้นภารกิจกลุ่ม]\n\n📌 ชื่องาน: ${task.title}\n👥 ผู้รับผิดชอบ: ${assigneeNamesStr}\n📝 รายละเอียด: ${task.desc || '-'}\n📅 เสร็จสิ้นภารกิจแล้ว`;
+        const msg = `✅ [เสร็จสิ้นภารกิจกลุ่ม]\n\n📌 ชื่องาน: ${task.title}\n👥 ผู้รับผิดชอบ: ${assigneeNamesStr}\n📝 รายละเอียด: ${task.desc || '-'}\n📅 เสร็จสิ้นภารกิจแล้ว${websiteUrl}`;
         sendLineNotification(state.lineConfig.lineGroupId, msg);
     }
 }
