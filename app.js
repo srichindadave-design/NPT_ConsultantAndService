@@ -2120,17 +2120,18 @@ window.viewPrintPO = function(id) {
 
         <div class="doc-signatures" style="margin-top: 50px;">
             <div class="sig-box">
-                <p>ผู้สั่งซื้อ (ดร.ณภัทร ปุญศิริ)</p>
+                <p>ผู้เสนอ ดร.ณภัทร ปุญศิริ</p>
                 <div class="sig-line"></div>
+                <p>ตำแหน่ง</p>
                 <p>General Manager</p>
-                <p>วันที่: ___/___/___</p>
+                <p>วันที่: ____/____/____</p>
             </div>
             <div class="sig-box">
                 <p>ผู้อนุมัติ</p>
                 <div class="sig-line"></div>
                 <p>ตำแหน่ง</p>
                 <div class="sig-line"></div>
-                <p>วันที่: ___/___/___</p>
+                <p>วันที่: ____/____/____</p>
             </div>
         </div>
     `;
