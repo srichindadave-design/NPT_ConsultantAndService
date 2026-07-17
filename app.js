@@ -2837,13 +2837,9 @@ async function handleEquipmentSubmit(e) {
 
 // ================= SYSTEM SETTINGS WORKFLOW =================
 function loadSettings() {
-    const smtpUser = document.getElementById('settings-smtp-user');
-    const smtpPass = document.getElementById('settings-smtp-pass');
     const lineToken = document.getElementById('settings-line-token');
     const lineGroup = document.getElementById('settings-line-group-id');
 
-    if (smtpUser) smtpUser.value = state.smtpConfig ? state.smtpConfig.user || '' : '';
-    if (smtpPass) smtpPass.value = state.smtpConfig ? state.smtpConfig.pass || '' : '';
     if (lineToken) lineToken.value = state.lineConfig ? state.lineConfig.channelAccessToken || '' : '';
     if (lineGroup) lineGroup.value = state.lineConfig ? state.lineConfig.lineGroupId || '' : '';
 }
@@ -2851,16 +2847,8 @@ function loadSettings() {
 async function handleSettingsSubmit(e) {
     e.preventDefault();
 
-    const smtpUser = document.getElementById('settings-smtp-user').value.trim();
-    const smtpPass = document.getElementById('settings-smtp-pass').value.trim();
     const lineToken = document.getElementById('settings-line-token').value.trim();
     const lineGroup = document.getElementById('settings-line-group-id').value.trim();
-
-    if (smtpUser && smtpPass) {
-        state.smtpConfig = { user: smtpUser, pass: smtpPass };
-    } else {
-        state.smtpConfig = null;
-    }
 
     if (lineToken || lineGroup) {
         state.lineConfig = { 
