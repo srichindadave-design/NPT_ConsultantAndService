@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบการทำงานภายในบริษัท | NPT Consultant And Service</title>
+    <title>NPT Consultant And Service</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -114,8 +114,17 @@
                     <li class="nav-item" data-tab="quotations">
                         <a href="#"><i data-lucide="file-text"></i><span>ใบเสนอราคา</span></a>
                     </li>
+                    <li class="nav-item" data-tab="pr">
+                        <a href="#"><i data-lucide="shopping-bag"></i><span>ใบขอซื้อ (PR)</span></a>
+                    </li>
+                    <li class="nav-item" data-tab="po">
+                        <a href="#"><i data-lucide="shopping-cart"></i><span>ใบสั่งซื้อ (PO)</span></a>
+                    </li>
                     <li class="nav-item" data-tab="staff">
                         <a href="#"><i data-lucide="users-2"></i><span>รายชื่อบุคลากร</span></a>
+                    </li>
+                    <li class="nav-item" data-tab="equipment">
+                        <a href="#"><i data-lucide="wrench"></i><span>รายการอุปกรณ์</span></a>
                     </li>
                 </ul>
             </nav>
@@ -331,6 +340,75 @@
                     </div>
                 </section>
 
+                <!-- 3.1 PURCHASE REQUISITION (PR) VIEW -->
+                <section id="tab-pr" class="tab-panel">
+                    <div class="panel-actions">
+                        <button class="btn btn-primary" id="btn-open-pr-modal">
+                            <i data-lucide="file-plus"></i> สร้างใบขอซื้อใหม่ (PR)
+                        </button>
+                    </div>
+
+                    <div class="layout-card glass mt-4">
+                        <div class="card-header">
+                            <h2>รายการเอกสารใบขอซื้อ (Purchase Requisition - PR)</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>เลขที่ใบขอซื้อ</th>
+                                            <th>ผู้ขอซื้อ</th>
+                                            <th>วันที่ขอซื้อ</th>
+                                            <th>ยอดรวมประมาณการ</th>
+                                            <th>สถานะ</th>
+                                            <th>การจัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="prs-table-body">
+                                        <!-- Injected by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3.2 PURCHASE ORDER (PO) VIEW -->
+                <section id="tab-po" class="tab-panel">
+                    <div class="panel-actions">
+                        <button class="btn btn-primary" id="btn-open-po-modal">
+                            <i data-lucide="file-plus"></i> สร้างใบสั่งซื้อใหม่ (PO)
+                        </button>
+                    </div>
+
+                    <div class="layout-card glass mt-4">
+                        <div class="card-header">
+                            <h2>รายการเอกสารใบสั่งซื้อ (Purchase Order - PO)</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>เลขที่ใบสั่งซื้อ</th>
+                                            <th>ผู้ขาย / ร้านค้า</th>
+                                            <th>วันที่สั่งซื้อ</th>
+                                            <th>ใบขอซื้ออ้างอิง</th>
+                                            <th>ราคาสุทธิ (บาท)</th>
+                                            <th>สถานะ</th>
+                                            <th>การจัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pos-table-body">
+                                        <!-- Injected by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- 4. STAFF DIRECTORY VIEW -->
                 <section id="tab-staff" class="tab-panel">
                     <div class="panel-actions admin-only">
@@ -359,6 +437,40 @@
                                         </tr>
                                     </thead>
                                     <tbody id="staff-table-body">
+                                        <!-- Injected by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. EQUIPMENT INVENTORY VIEW -->
+                <section id="tab-equipment" class="tab-panel">
+                    <div class="panel-actions admin-only">
+                        <button class="btn btn-primary" id="btn-open-equipment-modal">
+                            <i data-lucide="plus-circle"></i> เพิ่มอุปกรณ์ใหม่
+                        </button>
+                    </div>
+
+                    <div class="layout-card glass mt-4">
+                        <div class="card-header">
+                            <h2>รายการอุปกรณ์ของบริษัท</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ชื่ออุปกรณ์</th>
+                                            <th>จำนวน</th>
+                                            <th>สถานะ</th>
+                                            <th>สถานที่จัดเก็บ</th>
+                                            <th>หมายเหตุ</th>
+                                            <th class="admin-only">การจัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="equipment-table-body">
                                         <!-- Injected by JS -->
                                     </tbody>
                                 </table>
@@ -488,6 +600,12 @@
 
                 <div class="form-group">
                     <label>รายการรายละเอียดงาน / สินค้าและบริการ</label>
+                    <div class="quote-item-header" style="display: flex; gap: 12px; margin-bottom: 6px; padding: 0 4px; font-weight: 600; font-size: 0.8rem; color: var(--text-muted);">
+                        <div style="flex: 3;">คำอธิบายงาน / สินค้า / บริการ</div>
+                        <div style="flex: 1;">จำนวน</div>
+                        <div style="flex: 1;">หน่วย</div>
+                        <div style="width: 32px;"></div>
+                    </div>
                     <div id="quote-items-container" class="quote-items-container">
                         <!-- Standard Item Input Rows -->
                         <div class="quote-item-row">
@@ -526,11 +644,175 @@
         </div>
     </div>
 
-    <!-- D. Quotation View/Print Modal -->
+    <!-- C.1 Purchase Requisition (PR) Modal -->
+    <div id="pr-modal" class="modal-overlay hidden">
+        <div class="modal-content glass modal-large">
+            <div class="modal-header">
+                <h2 id="pr-modal-title">สร้างใบขอซื้อใหม่ (PR)</h2>
+                <button class="btn-close modal-close-btn"><i data-lucide="x"></i></button>
+            </div>
+            <form id="pr-form">
+                <input type="hidden" id="pr-id">
+                
+                <div class="form-row">
+                    <div class="form-group col">
+                        <label for="pr-code">เลขที่ใบขอซื้อ</label>
+                        <input type="text" id="pr-code" class="form-control" readonly placeholder="ระบบสร้างอัตโนมัติ">
+                    </div>
+                    <div class="form-group col">
+                        <label for="pr-date">วันที่ขอซื้อ</label>
+                        <input type="text" id="pr-date" class="form-control" placeholder="เลือกวันที่" required>
+                    </div>
+                </div>
+
+                <div class="form-group mt-3">
+                    <label>รายการที่ต้องการสั่งซื้อ</label>
+                    <div class="quote-item-header" style="display: flex; gap: 12px; margin-bottom: 6px; padding: 0 4px; font-weight: 600; font-size: 0.8rem; color: var(--text-muted);">
+                        <div style="flex: 2.5;">รายการสินค้า / อุปกรณ์ที่ประสงค์สั่งซื้อ</div>
+                        <div style="flex: 0.8;">จำนวน</div>
+                        <div style="flex: 0.8;">หน่วย</div>
+                        <div style="flex: 1;">ราคาต่อหน่วย</div>
+                        <div style="flex: 1.2;">ราคารวม</div>
+                        <div style="width: 32px;"></div>
+                    </div>
+                    <div id="pr-items-container" class="quote-items-container">
+                        <!-- Dynamically injected rows -->
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-small mt-2" id="btn-add-pr-row">
+                        <i data-lucide="plus-circle"></i> เพิ่มแถวรายการ
+                    </button>
+                </div>
+
+                <div class="form-row mt-3">
+                    <div class="form-group col-4">
+                        <label for="pr-vat-rate">ภาษีมูลค่าเพิ่ม (VAT)</label>
+                        <select id="pr-vat-rate" class="form-control">
+                            <option value="0">ไม่มี VAT (0%)</option>
+                            <option value="7">มี VAT (7%)</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-8" style="text-align: right; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; padding-top: 15px;">
+                        <div>รวมเป็นเงิน (Subtotal): <strong id="pr-subtotal-disp">0.00</strong> บาท</div>
+                        <div>ภาษีมูลค่าเพิ่ม (VAT): <strong id="pr-vat-disp">0.00</strong> บาท</div>
+                        <div class="mt-1" style="font-size: 1.1rem; font-weight: 700; color: #10b981;">ประมาณการราคาสุทธิทั้งสิ้น: <span id="pr-total-disp">0.00</span> บาท</div>
+                        <input type="hidden" id="pr-total" value="0">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="pr-notes">วัตถุประสงค์ / หมายเหตุเพิ่มเติม</label>
+                    <textarea id="pr-notes" class="form-control" rows="2" placeholder="ระบุเหตุผลความจำเป็นในการสั่งซื้อ หรือร้านค้าที่แนะนำ"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close-btn">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">บันทึกใบขอซื้อ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- C.2 Purchase Order (PO) Modal -->
+    <div id="po-modal" class="modal-overlay hidden">
+        <div class="modal-content glass modal-large">
+            <div class="modal-header">
+                <h2 id="po-modal-title">สร้างใบสั่งซื้อใหม่ (PO)</h2>
+                <button class="btn-close modal-close-btn"><i data-lucide="x"></i></button>
+            </div>
+            <form id="po-form">
+                <input type="hidden" id="po-id">
+                
+                <div class="form-row">
+                    <div class="form-group col">
+                        <label for="po-code">เลขที่ใบสั่งซื้อ</label>
+                        <input type="text" id="po-code" class="form-control" readonly placeholder="ระบบสร้างอัตโนมัติ">
+                    </div>
+                    <div class="form-group col">
+                        <label for="po-date">วันที่สั่งซื้อ</label>
+                        <input type="text" id="po-date" class="form-control" placeholder="เลือกวันที่" required>
+                    </div>
+                </div>
+
+                <div class="form-row mt-3">
+                    <div class="form-group col">
+                        <label for="po-vendor">ผู้ขาย / ร้านค้า</label>
+                        <input type="text" id="po-vendor" class="form-control" placeholder="ระบุชื่อบริษัทร้านค้า/ผู้ขาย" required>
+                    </div>
+                    <div class="form-group col">
+                        <label for="po-ref-pr">อ้างอิงใบขอซื้อ (PR)</label>
+                        <select id="po-ref-pr" class="form-control">
+                            <option value="">-- ไม่ต้องการอ้างอิง --</option>
+                            <!-- Injected dynamically with approved PRs -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group mt-3">
+                    <label for="po-address">ที่อยู่ผู้ขาย / ร้านค้า</label>
+                    <input type="text" id="po-address" class="form-control" placeholder="เลขที่, ถนน, ตำบล, อำเภอ, จังหวัด">
+                </div>
+
+                <div class="form-row mt-3">
+                    <div class="form-group col">
+                        <label for="po-payment-term">เงื่อนไขการชำระเงิน</label>
+                        <input type="text" id="po-payment-term" class="form-control" placeholder="เช่น เงินสด, เครดิต 30 วัน" value="เงินสด">
+                    </div>
+                    <div class="form-group col">
+                        <label for="po-delivery-date">กำหนดส่งมอบสินค้า</label>
+                        <input type="text" id="po-delivery-date" class="form-control" placeholder="เลือกวันที่ส่งมอบ">
+                    </div>
+                </div>
+
+                <div class="form-group mt-3">
+                    <label>รายการสินค้าและบริการ</label>
+                    <div class="quote-item-header" style="display: flex; gap: 12px; margin-bottom: 6px; padding: 0 4px; font-weight: 600; font-size: 0.8rem; color: var(--text-muted);">
+                        <div style="flex: 2.5;">รายละเอียดสินค้า / บริการ / อุปกรณ์</div>
+                        <div style="flex: 0.8;">จำนวน</div>
+                        <div style="flex: 0.8;">หน่วย</div>
+                        <div style="flex: 1;">ราคาต่อหน่วย</div>
+                        <div style="width: 32px;"></div>
+                    </div>
+                    <div id="po-items-container" class="quote-items-container">
+                        <!-- Dynamically injected rows -->
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-small mt-2" id="btn-add-po-row">
+                        <i data-lucide="plus-circle"></i> เพิ่มแถวรายการ
+                    </button>
+                </div>
+
+                <div class="form-row mt-3">
+                    <div class="form-group col-4">
+                        <label for="po-vat-rate">ภาษีมูลค่าเพิ่ม (VAT)</label>
+                        <select id="po-vat-rate" class="form-control">
+                            <option value="0">ไม่มี VAT (0%)</option>
+                            <option value="7">มี VAT (7%)</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-8" style="text-align: right; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 8px;">
+                        <div>รวมเป็นเงิน (Subtotal): <strong id="po-subtotal-disp">0.00</strong> บาท</div>
+                        <div>ภาษีมูลค่าเพิ่ม (VAT): <strong id="po-vat-disp">0.00</strong> บาท</div>
+                        <div style="font-size: 1.1rem; color: #10b981; font-weight: 700; margin-top: 4px;">ราคาสุทธิทั้งสิ้น: <strong id="po-total-disp">0.00</strong> บาท</div>
+                    </div>
+                </div>
+
+                <div class="form-group mt-3">
+                    <label for="po-notes">หมายเหตุเพิ่มเติม</label>
+                    <textarea id="po-notes" class="form-control" rows="2" placeholder="รายละเอียดอื่นๆ ของการสั่งซื้อ"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close-btn">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">บันทึกใบสั่งซื้อ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- D. Document View/Print Modal (Generic) -->
     <div id="print-modal" class="modal-overlay hidden">
         <div class="modal-content print-document glass">
             <div class="modal-header no-print">
-                <h2>พิมพ์เอกสารใบเสนอราคา</h2>
+                <h2 id="print-modal-title">พิมพ์เอกสาร</h2>
                 <div class="header-actions">
                     <button class="btn btn-success" onclick="window.print()">
                         <i data-lucide="printer"></i> พิมพ์เอกสาร (Print / PDF)
@@ -540,8 +822,8 @@
             </div>
             
             <!-- PRINTABLE AREA -->
-            <div id="quotation-print-area" class="quotation-print-body">
-                <!-- Injected dynamically by JS -->
+            <div id="print-area" class="quotation-print-body">
+                <!-- Injected dynamically by JS (handles Quotation, PR, and PO layouts) -->
             </div>
         </div>
     </div>
@@ -598,6 +880,54 @@
             <div class="modal-footer" style="justify-content: center; padding: 0;">
                 <button type="button" class="btn btn-primary" id="btn-ack-notif" style="width: 100%; padding: 12px 20px;">รับทราบ</button>
             </div>
+        </div>
+    </div>
+
+    <!-- H. Equipment Modal (Create & Edit) -->
+    <div id="equipment-modal" class="modal-overlay hidden">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2 id="equipment-modal-title">เพิ่มอุปกรณ์ใหม่</h2>
+                <button class="btn-close modal-close-btn"><i data-lucide="x"></i></button>
+            </div>
+            <form id="equipment-form">
+                <input type="hidden" id="equipment-id">
+                <div class="form-group">
+                    <label for="equipment-name">ชื่ออุปกรณ์</label>
+                    <input type="text" id="equipment-name" class="form-control" placeholder="ระบุชื่ออุปกรณ์" required>
+                </div>
+                <div class="form-row mt-3">
+                    <div class="form-group col">
+                        <label for="equipment-qty">จำนวน</label>
+                        <input type="number" id="equipment-qty" class="form-control" placeholder="ระบุจำนวน" min="1" required>
+                    </div>
+                </div>
+                <div class="form-row mt-3">
+                    <div class="form-group col">
+                        <label for="equipment-status">สถานะ</label>
+                        <select id="equipment-status" class="form-control" required>
+                            <option value="ปกติ">ปกติ</option>
+                            <option value="ชำรุด">ชำรุด</option>
+                        </select>
+                    </div>
+                    <div class="form-group col">
+                        <label for="equipment-location">สถานที่จัดเก็บ</label>
+                        <select id="equipment-location" class="form-control" required>
+                            <option value="คลัง">คลัง</option>
+                            <option value="หน้างาน">หน้างาน</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group mt-3">
+                    <label for="equipment-notes">หมายเหตุ</label>
+                    <textarea id="equipment-notes" class="form-control" rows="3" placeholder="ระบุหมายเหตุเพิ่มเติม (ถ้ามี)"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close-btn">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">บันทึกข้อมูล</button>
+                </div>
+            </form>
         </div>
     </div>
 

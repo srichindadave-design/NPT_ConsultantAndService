@@ -1222,6 +1222,11 @@ body.dark-mode .print-document {
 
 /* ================= PRINT MEDIA ================= */
 @media print {
+    @page {
+        size: A4 portrait;
+        margin: 0;
+    }
+
     body * {
         visibility: hidden;
     }
@@ -1238,11 +1243,12 @@ body.dark-mode .print-document {
         top: 0;
         width: 100%;
         height: auto;
-        background: white;
-        box-shadow: none;
-        backdrop-filter: none;
-        padding: 0;
-        margin: 0;
+        background: white !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+        padding: 15mm !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
     }
     
     .print-document {
@@ -1250,6 +1256,19 @@ body.dark-mode .print-document {
         height: auto;
         max-height: none;
         overflow: visible;
+        box-shadow: none !important;
+        border: none !important;
+        background: transparent !important;
+        filter: none !important;
+        backdrop-filter: none !important;
+    }
+
+    .modal-content {
+        box-shadow: none !important;
+        border: none !important;
+        background: transparent !important;
+        filter: none !important;
+        backdrop-filter: none !important;
     }
 
     .quotation-print-body {
@@ -1306,4 +1325,21 @@ select option {
 body.light-mode select option {
     background-color: #ffffff !important;
     color: #0f172a !important;
+}
+
+/* PR & PO Status Badge Styles */
+.badge-pending-approval { background-color: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.badge-approved { background-color: rgba(16, 185, 129, 0.15); color: #10b981; }
+.badge-rejected { background-color: rgba(239, 68, 68, 0.15); color: #ef4444; }
+.badge-pending-delivery { background-color: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.badge-completed { background-color: rgba(16, 185, 129, 0.15); color: #10b981; }
+.badge-cancelled { background-color: rgba(156, 163, 175, 0.15); color: #9ca3af; }
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    font-weight: 500;
 }
