@@ -2334,6 +2334,31 @@ function setupEventListeners() {
     document.getElementById('po-form').addEventListener('submit', handlePOSubmit);
     document.getElementById('equipment-form').addEventListener('submit', handleEquipmentSubmit);
     document.getElementById('settings-form').addEventListener('submit', handleSettingsSubmit);
+
+    // Mobile Sidebar Navigation Toggle
+    const mobileToggle = document.getElementById('mobile-sidebar-toggle');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const sidebar = document.querySelector('.sidebar');
+
+    if (mobileToggle && sidebar && sidebarOverlay) {
+        mobileToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+        });
+
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+        });
+
+        // Close sidebar when navigating tabs on mobile
+        document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+            });
+        });
+    }
 }
 
 // ================= FORM SUBMISSION HANDLERS =================
