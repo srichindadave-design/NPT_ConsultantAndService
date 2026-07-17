@@ -371,6 +371,87 @@ app.post('/api/send-line', async (req, res) => {
   }
 });
 
+// LINE Webhook Endpoint
+app.post('/webhook', (req, res) => {
+    console.log("LINE ส่งข้อมูลมาที่นี่:", JSON.stringify(req.body));
+    res.status(200).send('OK'); // ต้องตอบกลับด้วย 200 เพื่อบอก LINE ว่าได้รับแล้ว
+});
+
+// Broadcast news to LINE group and individual staff
+const handleSendNews = async (req, res) => {
+  const { message } = req.body;
+  let lineConfig = req.body.lineConfig;
+
+  if (!message) {
+    return res.status(400).json({ success: false, message: 'กรุณาระบุข้อความข่าวสาร (message)' });
+  }
+
+  // Fallback to server db.json config if not sent by client
+  if (!lineConfig && fs.existsSync(dbPath)) {
+    try {
+      const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+      lineConfig = db.lineConfig;
+    } catch (e) {
+      console.error('[LINE News] Error reading lineConfig from db.json:', e);
+    }
+  }
+
+  if (!lineConfig || !lineConfig.channelAccessToken) {
+    console.log(`[LINE News Simulation] Message: "${message}"`);
+    return res.json({
+      success: true,
+      message: 'จำลองการประกาศข่าวเนื่องจากไม่ได้ตั้งค่า LINE Channel Access Token'
+    });
+  }
+
+  const targets = [];
+  // 1. Add group ID if configured
+  if (lineConfig.lineGroupId) {
+    targets.push(lineConfig.lineGroupId);
+  }
+  // 2. Add all staff members with lineUserId
+  try {
+    if (fs.existsSync(dbPath)) {
+      const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+      const staffList = db.staff || [];
+      staffList.forEach(s => {
+        if (s.lineUserId && !targets.includes(s.lineUserId)) {
+          targets.push(s.lineUserId);
+        }
+      });
+    }
+  } catch (e) {
+    console.error('[LINE News] Error gathering staff IDs:', e);
+  }
+
+  if (targets.length === 0) {
+    return res.status(400).json({ success: false, message: 'ไม่พบ LINE Group ID หรือ LINE User ID ของพนักงานสำหรับการส่งข่าวสาร' });
+  }
+
+  console.log(`[LINE News] กำลังส่งข่าวสารไปยังผู้รับทั้งหมด ${targets.length} ช่องทาง...`);
+  
+  let successCount = 0;
+  let failCount = 0;
+
+  for (const targetId of targets) {
+    try {
+      await sendLinePushMessage(lineConfig.channelAccessToken, targetId, `📢 [ข่าวสารประชาสัมพันธ์]\n\n${message}`);
+      successCount++;
+    } catch (err) {
+      console.error(`[LINE News] ส่งไม่สำเร็จไปยัง ${targetId}:`, err.message);
+      failCount++;
+    }
+  }
+
+  return res.json({
+    success: true,
+    message: `ส่งประกาศข่าวสารเสร็จสิ้น (สำเร็จ: ${successCount}, ล้มเหลว: ${failCount})`
+  });
+};
+
+app.post('/send-news', handleSendNews);
+app.post('/api/send-news', handleSendNews);
+
 // Serve frontend index.html for all other routes to support SPA routing if needed
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
