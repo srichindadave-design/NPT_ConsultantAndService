@@ -280,6 +280,97 @@ app.post('/api/send-email', async (req, res) => {
   }
 });
 
+// Helper for LINE Push Message API using native https
+const https = require('https');
+function sendLinePushMessage(token, to, text) {
+  return new Promise((resolve, reject) => {
+    const payload = JSON.stringify({
+      to: to,
+      messages: [
+        {
+          type: 'text',
+          text: text
+        }
+      ]
+    });
+
+    const options = {
+      hostname: 'api.line.me',
+      path: '/v2/bot/message/push',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'Content-Length': Buffer.byteLength(payload)
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let body = '';
+      res.on('data', (chunk) => body += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(body);
+          if (res.statusCode === 200) {
+            resolve(parsed);
+          } else {
+            reject(new Error(parsed.message || `HTTP ${res.statusCode}`));
+          }
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+
+    req.on('error', (e) => reject(e));
+    req.write(payload);
+    req.end();
+  });
+}
+
+// Send LINE message via LINE Messaging API
+app.post('/api/send-line', async (req, res) => {
+  const { to, text } = req.body;
+  let lineConfig = req.body.lineConfig;
+
+  if (!to) {
+    return res.status(400).json({ success: false, message: 'กรุณาระบุ LINE User ID ผู้รับ' });
+  }
+  if (!text) {
+    return res.status(400).json({ success: false, message: 'กรุณาระบุข้อความที่ต้องการส่ง' });
+  }
+
+  // Fallback to server db.json config if not sent by client
+  if (!lineConfig && fs.existsSync(dbPath)) {
+    try {
+      const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+      lineConfig = db.lineConfig;
+    } catch (e) {
+      console.error('[LINE Notification] Error reading lineConfig from db.json:', e);
+    }
+  }
+
+  if (!lineConfig || !lineConfig.channelAccessToken) {
+    console.log(`[LINE Notification Simulation] To: ${to} | Text: "${text}"`);
+    return res.json({
+      success: true,
+      message: 'จำลองการส่งไลน์เนื่องจากไม่ได้ตั้งค่า LINE Channel Access Token'
+    });
+  }
+
+  try {
+    await sendLinePushMessage(lineConfig.channelAccessToken, to, text);
+    console.log(`[LINE Notification] ส่งข้อความสำเร็จไปยัง: ${to}`);
+    return res.json({ success: true, message: 'ส่งการแจ้งเตือนทาง LINE สำเร็จ' });
+  } catch (error) {
+    console.error('[LINE Notification] Connection Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: `ไม่สามารถส่งการแจ้งเตือน LINE ได้: ${error.message}`
+    });
+  }
+});
+
 // Serve frontend index.html for all other routes to support SPA routing if needed
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));

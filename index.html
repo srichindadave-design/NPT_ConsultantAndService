@@ -126,6 +126,9 @@
                     <li class="nav-item" data-tab="equipment">
                         <a href="#"><i data-lucide="wrench"></i><span>รายการอุปกรณ์</span></a>
                     </li>
+                    <li class="nav-item admin-only" data-tab="settings">
+                        <a href="#"><i data-lucide="settings"></i><span>การตั้งค่าระบบ</span></a>
+                    </li>
                 </ul>
             </nav>
 
@@ -479,6 +482,47 @@
                     </div>
                 </section>
 
+                <!-- 6. SYSTEM SETTINGS VIEW -->
+                <section id="tab-settings" class="tab-panel">
+                    <div class="layout-card glass">
+                        <div class="card-header">
+                            <h2>การตั้งค่าระบบส่งข้อความและแจ้งเตือน</h2>
+                        </div>
+                        <div class="card-body">
+                            <form id="settings-form">
+                                <h3 style="color: var(--accent-color); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 15px; font-size: 1.1rem;"><i data-lucide="mail" style="vertical-align: middle; margin-right: 8px; width: 18px; height: 18px;"></i> Gmail SMTP Configuration (ระบบ OTP และอีเมล)</h3>
+                                <div class="form-row">
+                                    <div class="form-group col">
+                                        <label for="settings-smtp-user">Gmail User / Email</label>
+                                        <input type="email" id="settings-smtp-user" class="form-control" placeholder="เช่น srichindadave@gmail.com">
+                                    </div>
+                                    <div class="form-group col">
+                                        <label for="settings-smtp-pass">Gmail App Password (รหัสผ่านแอป 16 หลัก)</label>
+                                        <input type="password" id="settings-smtp-pass" class="form-control" placeholder="เช่น zpux ziwz yhbx umeq">
+                                    </div>
+                                </div>
+                                <small class="form-hint mt-1 mb-4" style="display: block;">* ใช้สำหรับส่งเมลยืนยันตัวตนเข้าระบบ (OTP) และการส่งเมลรายละเอียดมอบหมายงานไปยังเมลของพนักงาน</small>
+
+                                <h3 style="color: #06b6d4; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; margin-top: 30px; margin-bottom: 15px; font-size: 1.1rem;"><i data-lucide="message-square" style="vertical-align: middle; margin-right: 8px; width: 18px; height: 18px;"></i> LINE Messaging API Configuration (ระบบแจ้งเตือนทาง LINE)</h3>
+                                <div class="form-group">
+                                    <label for="settings-line-token">LINE Channel Access Token (Long-lived)</label>
+                                    <textarea id="settings-line-token" class="form-control" rows="3" placeholder="ระบุ Channel Access Token ที่ได้มาจาก LINE Developers Console"></textarea>
+                                </div>
+                                <div class="form-group mt-3">
+                                    <label for="settings-line-group-id">LINE Group ID (รหัสกลุ่มไลน์ สำหรับส่งแจ้งเตือนเข้ากลุ่ม)</label>
+                                    <input type="text" id="settings-line-group-id" class="form-control" placeholder="ระบุ Group ID เริ่มต้นด้วยตัว C เช่น Cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+                                    <small class="form-hint" style="color: var(--accent-color);">* LINE Group ID เป็นรหัสเฉพาะของห้องแชทกลุ่ม (ได้มาจากบอทเมื่อถูกดึงเข้ากลุ่ม หรือดูจาก Webhook ของ LINE Developers)</small>
+                                </div>
+                                <small class="form-hint mt-1" style="display: block;">* ใช้สำหรับยิงส่ง Push Message แจ้งเตือนผู้ปฏิบัติงานโดยตรงเมื่อมีการมอบหมายหรือปิดงาน</small>
+
+                                <div style="margin-top: 30px; text-align: right;">
+                                    <button type="submit" class="btn btn-primary"><i data-lucide="save" style="vertical-align: middle; margin-right: 6px; width: 18px; height: 18px;"></i> บันทึกการตั้งค่าทั้งหมด</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
             </div>
         </main>
     </div>
@@ -563,6 +607,11 @@
                 <div class="form-group mt-3">
                     <label for="staff-line">LINE ID</label>
                     <input type="text" id="staff-line" class="form-control" placeholder="ใส่ LINE ID ของพนักงาน">
+                </div>
+                <div class="form-group mt-3">
+                    <label for="staff-line-user-id">LINE User ID (สำหรับยิง LINE Messaging API Push Message)</label>
+                    <input type="text" id="staff-line-user-id" class="form-control" placeholder="เช่น Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+                    <small class="form-hint" style="color: var(--accent-color);">LINE User ID เป็นรหัสเฉพาะเริ่มต้นด้วยตัว U เสมอ (ได้มาจากหน้า Developer หรือ Webhook ของ LINE)</small>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary modal-close-btn">ยกเลิก</button>

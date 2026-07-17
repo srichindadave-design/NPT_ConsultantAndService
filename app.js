@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
     POS: 'npt_portal_pos',
     EQUIPMENT: 'npt_portal_equipment',
     SMTP_CONFIG: 'npt_portal_smtp_config',
+    LINE_CONFIG: 'npt_portal_line_config',
     AUTH: 'npt_portal_auth_user'
 };
 
@@ -33,6 +34,7 @@ let state = {
     pos: [],
     equipments: [],
     smtpConfig: null, // { user, pass }
+    lineConfig: null, // { channelAccessToken }
     currentUser: null // { email, isAdmin }
 };
 
@@ -124,6 +126,7 @@ function initData() {
     state.pos = JSON.parse(localStorage.getItem(STORAGE_KEYS.POS)) || DEFAULT_POS;
     state.equipments = JSON.parse(localStorage.getItem(STORAGE_KEYS.EQUIPMENT)) || DEFAULT_EQUIPMENTS;
     state.smtpConfig = JSON.parse(localStorage.getItem(STORAGE_KEYS.SMTP_CONFIG)) || null;
+    state.lineConfig = JSON.parse(localStorage.getItem(STORAGE_KEYS.LINE_CONFIG)) || null;
     state.currentUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH)) || null;
 
     // Data Migration: Upgrade from old Phone number schema to Email schema
@@ -284,6 +287,7 @@ async function syncDatabase() {
             state.pos = serverDb.pos || DEFAULT_POS;
             state.equipments = serverDb.equipments || DEFAULT_EQUIPMENTS;
             state.smtpConfig = serverDb.smtpConfig || null;
+            state.lineConfig = serverDb.lineConfig || null;
             
             // Save loaded data to localStorage cache
             localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(state.staff));
@@ -294,6 +298,9 @@ async function syncDatabase() {
             localStorage.setItem(STORAGE_KEYS.EQUIPMENT, JSON.stringify(state.equipments));
             if (state.smtpConfig) {
                 localStorage.setItem(STORAGE_KEYS.SMTP_CONFIG, JSON.stringify(state.smtpConfig));
+            }
+            if (state.lineConfig) {
+                localStorage.setItem(STORAGE_KEYS.LINE_CONFIG, JSON.stringify(state.lineConfig));
             }
             
             // Re-render currently active tab
@@ -325,7 +332,8 @@ async function pushDatabaseToServer() {
         prs: state.prs,
         pos: state.pos,
         equipments: state.equipments,
-        smtpConfig: state.smtpConfig
+        smtpConfig: state.smtpConfig,
+        lineConfig: state.lineConfig
     };
     
     try {
@@ -354,6 +362,11 @@ function saveDataToLocalStorage(syncWithServer = true) {
         localStorage.setItem(STORAGE_KEYS.SMTP_CONFIG, JSON.stringify(state.smtpConfig));
     } else {
         localStorage.removeItem(STORAGE_KEYS.SMTP_CONFIG);
+    }
+    if (state.lineConfig) {
+        localStorage.setItem(STORAGE_KEYS.LINE_CONFIG, JSON.stringify(state.lineConfig));
+    } else {
+        localStorage.removeItem(STORAGE_KEYS.LINE_CONFIG);
     }
     
     // Auto sync with server JSON file database
@@ -1127,13 +1140,17 @@ window.updateTaskStatus = function(id, newStatus) {
 
     const oldStatus = task.status;
     task.status = newStatus;
+    
+    if (newStatus === 'completed' && oldStatus !== 'completed') {
+        notifyTaskCompletionViaLine(task);
+    }
+
     saveDataToLocalStorage();
     renderTasks();
     if (document.getElementById('assign-tasks-table-body')) {
         renderAssignTasks();
     }
     showToast(`อัปเดตสถานะงานเรียบร้อยแล้ว`, 'success');
-
 };
 
 window.updateTaskProgress = function(id) {
@@ -1155,6 +1172,9 @@ window.updateTaskProgress = function(id) {
 
     if (task.completedQty >= task.qty) {
         task.status = 'completed';
+        if (oldStatus !== 'completed') {
+            notifyTaskCompletionViaLine(task);
+        }
         showToast('อัปเดตความคืบหน้าสำเร็จ และเสร็จสิ้นงานเรียบร้อย', 'success');
     } else {
         showToast(`บันทึกความคืบหน้าแล้ว (${task.completedQty}/${task.qty})`, 'success');
@@ -1220,6 +1240,7 @@ window.editStaff = function(id) {
     document.getElementById('staff-email').value = member.email;
     document.getElementById('staff-phone').value = member.phone || '';
     document.getElementById('staff-line').value = member.lineId || '';
+    document.getElementById('staff-line-user-id').value = member.lineUserId || '';
 
     document.getElementById('staff-modal-title').textContent = 'แก้ไขข้อมูลพนักงาน';
     openModal('staff-modal');
@@ -2312,6 +2333,7 @@ function setupEventListeners() {
     document.getElementById('pr-form').addEventListener('submit', handlePRSubmit);
     document.getElementById('po-form').addEventListener('submit', handlePOSubmit);
     document.getElementById('equipment-form').addEventListener('submit', handleEquipmentSubmit);
+    document.getElementById('settings-form').addEventListener('submit', handleSettingsSubmit);
 }
 
 // ================= FORM SUBMISSION HANDLERS =================
@@ -2357,6 +2379,9 @@ async function handleTaskSubmit(e) {
             if (task.completedQty === undefined) task.completedQty = 0;
             // Mark as unread for the assignees
             task.unreadBy = [...assigneeEmails];
+
+            // Send LINE update notification
+            notifyAssigneesViaLine(assigneeEmails, title, desc, assignedDate, true);
         }
     } else {
         // Add Mode
@@ -2375,6 +2400,9 @@ async function handleTaskSubmit(e) {
             unreadBy: [...assigneeEmails]
         };
         state.tasks.push(newTask);
+
+        // Send LINE creation notification
+        notifyAssigneesViaLine(assigneeEmails, title, desc, assignedDate, false);
     }
 
     saveDataToLocalStorage();
@@ -2396,6 +2424,8 @@ function handleStaffSubmit(e) {
     const lineId = document.getElementById('staff-line').value.trim();
     const email = document.getElementById('staff-email').value.trim().toLowerCase();
 
+    const lineUserId = document.getElementById('staff-line-user-id').value.trim();
+
     if (!email || !email.includes('@')) {
         showToast('กรุณากรอก Gmail ให้ถูกต้อง', 'error');
         return;
@@ -2412,6 +2442,7 @@ function handleStaffSubmit(e) {
             member.email = email;
             member.phone = phone;
             member.lineId = lineId;
+            member.lineUserId = lineUserId;
 
             // Reflect email change in tasks
             state.tasks.forEach(t => {
@@ -2436,6 +2467,7 @@ function handleStaffSubmit(e) {
             email,
             phone,
             lineId,
+            lineUserId,
             status: 'ว่าง'
         };
         state.staff.push(newStaff);
@@ -2776,5 +2808,118 @@ async function handleEquipmentSubmit(e) {
     saveDataToLocalStorage();
     closeAllModals();
     renderEquipments();
+}
+
+// ================= SYSTEM SETTINGS WORKFLOW =================
+function loadSettings() {
+    const smtpUser = document.getElementById('settings-smtp-user');
+    const smtpPass = document.getElementById('settings-smtp-pass');
+    const lineToken = document.getElementById('settings-line-token');
+    const lineGroup = document.getElementById('settings-line-group-id');
+
+    if (smtpUser) smtpUser.value = state.smtpConfig ? state.smtpConfig.user || '' : '';
+    if (smtpPass) smtpPass.value = state.smtpConfig ? state.smtpConfig.pass || '' : '';
+    if (lineToken) lineToken.value = state.lineConfig ? state.lineConfig.channelAccessToken || '' : '';
+    if (lineGroup) lineGroup.value = state.lineConfig ? state.lineConfig.lineGroupId || '' : '';
+}
+
+async function handleSettingsSubmit(e) {
+    e.preventDefault();
+
+    const smtpUser = document.getElementById('settings-smtp-user').value.trim();
+    const smtpPass = document.getElementById('settings-smtp-pass').value.trim();
+    const lineToken = document.getElementById('settings-line-token').value.trim();
+    const lineGroup = document.getElementById('settings-line-group-id').value.trim();
+
+    if (smtpUser && smtpPass) {
+        state.smtpConfig = { user: smtpUser, pass: smtpPass };
+    } else {
+        state.smtpConfig = null;
+    }
+
+    if (lineToken || lineGroup) {
+        state.lineConfig = { 
+            channelAccessToken: lineToken,
+            lineGroupId: lineGroup
+        };
+    } else {
+        state.lineConfig = null;
+    }
+
+    saveDataToLocalStorage();
+    showToast('บันทึกการตั้งค่าระบบเรียบร้อยแล้ว', 'success');
+}
+
+// Send LINE notification through backend API
+async function sendLineNotification(toUserId, messageText) {
+    if (isOfflineMode || !toUserId) return;
+    
+    try {
+        await fetch(`${API_BASE}/send-line`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                to: toUserId,
+                text: messageText,
+                lineConfig: state.lineConfig
+            })
+        });
+    } catch (e) {
+        console.error('[LINE Notification] Failed to trigger notification:', e);
+    }
+}
+
+// Notify all assignees of a task
+function notifyAssigneesViaLine(assigneeEmails, taskTitle, taskDesc, taskDate, isUpdate = false) {
+    if (!state.lineConfig || !state.lineConfig.channelAccessToken) return;
+    
+    // 1. Notify individual assignees privately
+    assigneeEmails.forEach(email => {
+        const member = state.staff.find(s => s.email.toLowerCase() === email.toLowerCase());
+        if (member && member.lineUserId) {
+            const prefix = isUpdate ? '🔔 มีการอัปเดตภารกิจ!' : '🔔 คุณได้รับมอบหมายภารกิจใหม่!';
+            const msg = `${prefix}\n\n📌 ชื่องาน: ${taskTitle}\n📝 รายละเอียด: ${taskDesc || '-'}\n📅 วันที่มอบหมาย: ${taskDate}`;
+            sendLineNotification(member.lineUserId, msg);
+        }
+    });
+
+    // 2. Notify the LINE Group if configured
+    if (state.lineConfig.lineGroupId) {
+        const assigneeNamesStr = assigneeEmails.map(email => {
+            const s = state.staff.find(m => m.email.toLowerCase() === email.toLowerCase());
+            return s ? s.name : email;
+        }).join(', ');
+
+        const prefix = isUpdate ? '🔔 [อัปเดตภารกิจกลุ่ม]' : '🔔 [มอบหมายภารกิจใหม่]';
+        const msg = `${prefix}\n\n📌 ชื่องาน: ${taskTitle}\n👥 ผู้รับผิดชอบ: ${assigneeNamesStr}\n📝 รายละเอียด: ${taskDesc || '-'}\n📅 วันที่มอบหมาย: ${taskDate}`;
+        sendLineNotification(state.lineConfig.lineGroupId, msg);
+    }
+}
+
+// Notify task completion
+function notifyTaskCompletionViaLine(task) {
+    if (!state.lineConfig || !state.lineConfig.channelAccessToken) return;
+    
+    const emails = task.assigneeEmails || (task.assigneeEmail ? [task.assigneeEmail.toLowerCase()] : []);
+    
+    // 1. Notify individual assignees privately
+    emails.forEach(email => {
+        const member = state.staff.find(s => s.email.toLowerCase() === email.toLowerCase());
+        if (member && member.lineUserId) {
+            const msg = `✅ ภารกิจเสร็จสิ้นเรียบร้อย!\n\n📌 ชื่องาน: ${task.title}\n📝 รายละเอียด: ${task.desc || '-'}\n📅 เสร็จสิ้นภารกิจแล้ว`;
+            sendLineNotification(member.lineUserId, msg);
+        }
+    });
+
+    // 2. Notify the LINE Group if configured
+    if (state.lineConfig.lineGroupId) {
+        const assigneeNamesStr = emails.map(email => {
+            const s = state.staff.find(m => m.email.toLowerCase() === email.toLowerCase());
+            return s ? s.name : email;
+        }).join(', ');
+
+        const msg = `✅ [เสร็จสิ้นภารกิจกลุ่ม]\n\n📌 ชื่องาน: ${task.title}\n👥 ผู้รับผิดชอบ: ${assigneeNamesStr}\n📝 รายละเอียด: ${task.desc || '-'}\n📅 เสร็จสิ้นภารกิจแล้ว`;
+        sendLineNotification(state.lineConfig.lineGroupId, msg);
+    }
 }
 
