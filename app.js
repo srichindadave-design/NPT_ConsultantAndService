@@ -164,12 +164,12 @@ function initData() {
     if (!daveExists) {
         state.staff.push({
             id: 'st-dave-admin',
-            name: 'ผู้ดูแลระบบ (เดฟ)',
-            nickname: 'เดฟ',
+            name: 'ผู้ดูแลระบบ',
+            nickname: 'ADMIN',
             position: 'ผู้ดูแลระบบ',
             email: 'davezaa1642@gmail.com',
-            phone: '081-740-1354',
-            lineId: 'davezaa1642',
+            phone: 'ADMIN',
+            lineId: 'ADMIN',
             status: 'ว่าง'
         });
     }
@@ -465,7 +465,7 @@ function setupUserRoleUI() {
     } else {
         // Fallback / Admin names
         if (state.currentUser.email === 'davezaa1642@gmail.com') {
-            displayUserText = 'ผู้ดูแลระบบ (เดฟ)';
+            displayUserText = 'ผู้ดูแลระบบ';
         } else if (state.currentUser.email === 'nptconsultant2017@gmail.com') {
             displayUserText = 'ดร.ณภัทร ปุญศิริ';
         } else {
@@ -663,7 +663,7 @@ function switchTab(tabId) {
     
     switch (tabId) {
         case 'dashboard':
-            title.textContent = 'ภาพรวมระบบ (Dashboard)';
+            title.textContent = 'ภาพรวมระบบ';
             subtitle.textContent = 'ข้อมูลสถิติและการทำงานภาพรวมปัจจุบัน';
             renderDashboard();
             break;
@@ -693,7 +693,7 @@ function switchTab(tabId) {
             renderPOs();
             break;
         case 'staff':
-            title.textContent = 'ทำเนียบบุคลากร';
+            title.textContent = 'บุคลากร';
             subtitle.textContent = 'บันทึกรายชื่อ อีเมล และสถานะพนักงาน';
             renderStaff();
             break;

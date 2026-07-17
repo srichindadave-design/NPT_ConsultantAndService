@@ -101,98 +101,11 @@
       "status": "ว่าง"
     }
   ],
-  "tasks": [
-    {
-      "id": "tk-1784196621992",
-      "title": "ทดสอบถังใต้ดิน",
-      "desc": "ทดสอบถังใต้ดิน",
-      "assigneeEmail": "rokatogchayanon@gmail.com",
-      "assigneeName": "นายชญานนท์ รอกระโทก",
-      "assigneeEmails": [
-        "rokatogchayanon@gmail.com"
-      ],
-      "assigneeNames": [
-        "นายชญานนท์ รอกระโทก"
-      ],
-      "status": "completed",
-      "qty": 8,
-      "completedQty": 8,
-      "assignedDate": "2026-07-18",
-      "unreadBy": []
-    }
-  ],
+  "tasks": [],
   "quotations": [],
-  "prs": [
-    {
-      "id": "pr-1784253210065",
-      "code": "PR-2026-001",
-      "date": "2026-07-17",
-      "requesterEmail": "davezaa1642@gmail.com",
-      "requesterName": "ผู้ดูแลระบบ (เดฟ)",
-      "items": [
-        {
-          "desc": "NUT",
-          "qty": 20,
-          "unit": "ชิ้น",
-          "unitPrice": 30,
-          "total": 600
-        },
-        {
-          "desc": "BOLT",
-          "qty": 20,
-          "unit": "ชิ้น",
-          "unitPrice": 30,
-          "total": 600
-        }
-      ],
-      "total": 1200,
-      "notes": "ใช้ในการติดตั้งหน้าแปลน",
-      "status": "approved",
-      "approvedBy": "davezaa1642@gmail.com"
-    }
-  ],
-  "pos": [
-    {
-      "id": "po-1784254067647",
-      "code": "PO-2026-001",
-      "date": "2026-07-17",
-      "vendor": "JOTUN",
-      "refPrCode": "PR-2026-001",
-      "vendorAddress": "223/22",
-      "paymentTerm": "เงินสด",
-      "deliveryDate": "2026-07-18",
-      "vatRate": 7,
-      "subtotal": 1200,
-      "vatAmount": 84.00000000000001,
-      "total": 1284,
-      "items": [
-        {
-          "desc": "NUT",
-          "qty": 20,
-          "unit": "ชิ้น",
-          "unitPrice": 30
-        },
-        {
-          "desc": "BOLT",
-          "qty": 20,
-          "unit": "ชิ้น",
-          "unitPrice": 30
-        }
-      ],
-      "notes": "",
-      "status": "pending_delivery"
-    }
-  ],
-  "equipments": [
-    {
-      "id": "eq-1784256375769",
-      "name": "ประแจ",
-      "qty": 99999,
-      "status": "ปกติ",
-      "location": "คลัง",
-      "notes": ""
-    }
-  ],
+  "prs": [],
+  "pos": [],
+  "equipments": [],
   "smtpConfig": {
     "user": "srichindadave@gmail.com",
     "pass": "zpux ziwz yhbx umeq"
