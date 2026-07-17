@@ -3,6 +3,9 @@ const STORAGE_KEYS = {
     STAFF: 'npt_portal_staff',
     TASKS: 'npt_portal_tasks',
     QUOTATIONS: 'npt_portal_quotations',
+    PRS: 'npt_portal_prs',
+    POS: 'npt_portal_pos',
+    EQUIPMENT: 'npt_portal_equipment',
     SMTP_CONFIG: 'npt_portal_smtp_config',
     AUTH: 'npt_portal_auth_user'
 };
@@ -15,6 +18,9 @@ const DEFAULT_STAFF = [
 const DEFAULT_TASKS = [];
 
 const DEFAULT_QUOTATIONS = [];
+const DEFAULT_PRS = [];
+const DEFAULT_POS = [];
+const DEFAULT_EQUIPMENTS = [];
 
 const API_BASE = '/api';
 
@@ -23,6 +29,9 @@ let state = {
     staff: [],
     tasks: [],
     quotations: [],
+    prs: [],
+    pos: [],
+    equipments: [],
     smtpConfig: null, // { user, pass }
     currentUser: null // { email, isAdmin }
 };
@@ -55,6 +64,9 @@ let tempUploadedFileData = '';
 let tempUploadedFileName = '';
 let taskDatePicker = null;
 let quoteDatePicker = null;
+let prDatePicker = null;
+let poDatePicker = null;
+let poDeliveryDatePicker = null;
 
 // ================= INITIALIZATION =================
 document.addEventListener('DOMContentLoaded', () => {
@@ -75,6 +87,24 @@ document.addEventListener('DOMContentLoaded', () => {
         altFormat: "d/m/Y",
         locale: "th"
     });
+    prDatePicker = flatpickr("#pr-date", {
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "d/m/Y",
+        locale: "th"
+    });
+    poDatePicker = flatpickr("#po-date", {
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "d/m/Y",
+        locale: "th"
+    });
+    poDeliveryDatePicker = flatpickr("#po-delivery-date", {
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "d/m/Y",
+        locale: "th"
+    });
 
     checkAuth();
     updateDateBadge();
@@ -90,6 +120,9 @@ function initData() {
     state.staff = JSON.parse(localStorage.getItem(STORAGE_KEYS.STAFF)) || DEFAULT_STAFF;
     state.tasks = JSON.parse(localStorage.getItem(STORAGE_KEYS.TASKS)) || DEFAULT_TASKS;
     state.quotations = JSON.parse(localStorage.getItem(STORAGE_KEYS.QUOTATIONS)) || DEFAULT_QUOTATIONS;
+    state.prs = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRS)) || DEFAULT_PRS;
+    state.pos = JSON.parse(localStorage.getItem(STORAGE_KEYS.POS)) || DEFAULT_POS;
+    state.equipments = JSON.parse(localStorage.getItem(STORAGE_KEYS.EQUIPMENT)) || DEFAULT_EQUIPMENTS;
     state.smtpConfig = JSON.parse(localStorage.getItem(STORAGE_KEYS.SMTP_CONFIG)) || null;
     state.currentUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH)) || null;
 
@@ -126,9 +159,22 @@ function initData() {
         saveDataToLocalStorage(false);
     }
 
-    // Clean up davezaa1642@gmail.com from state.staff list to make sure he does not show up
+    // Inject davezaa1642@gmail.com as admin staff (kept in state but hidden from display by getSortedStaff)
+    const daveExists = state.staff.some(s => s.email.toLowerCase() === 'davezaa1642@gmail.com');
+    if (!daveExists) {
+        state.staff.push({
+            id: 'st-dave-admin',
+            name: 'ผู้ดูแลระบบ (เดฟ)',
+            nickname: 'เดฟ',
+            position: 'ผู้ดูแลระบบ',
+            email: 'davezaa1642@gmail.com',
+            phone: '081-740-1354',
+            lineId: 'davezaa1642',
+            status: 'ว่าง'
+        });
+    }
+
     const initialLen = state.staff.length;
-    state.staff = state.staff.filter(s => s.email.toLowerCase() !== 'davezaa1642@gmail.com');
     
     // Inject srichindadave@gmail.com as technician
     const techExists = state.staff.some(s => s.email.toLowerCase() === 'srichindadave@gmail.com');
@@ -152,7 +198,7 @@ function initData() {
         }
     });
 
-    if (state.staff.length !== initialLen || !techExists) {
+    if (!daveExists || !techExists) {
         saveDataToLocalStorage(false);
     }
 
@@ -234,12 +280,18 @@ async function syncDatabase() {
             state.staff = serverDb.staff || DEFAULT_STAFF;
             state.tasks = serverDb.tasks || DEFAULT_TASKS;
             state.quotations = serverDb.quotations || DEFAULT_QUOTATIONS;
+            state.prs = serverDb.prs || DEFAULT_PRS;
+            state.pos = serverDb.pos || DEFAULT_POS;
+            state.equipments = serverDb.equipments || DEFAULT_EQUIPMENTS;
             state.smtpConfig = serverDb.smtpConfig || null;
             
             // Save loaded data to localStorage cache
             localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(state.staff));
             localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(state.tasks));
             localStorage.setItem(STORAGE_KEYS.QUOTATIONS, JSON.stringify(state.quotations));
+            localStorage.setItem(STORAGE_KEYS.PRS, JSON.stringify(state.prs));
+            localStorage.setItem(STORAGE_KEYS.POS, JSON.stringify(state.pos));
+            localStorage.setItem(STORAGE_KEYS.EQUIPMENT, JSON.stringify(state.equipments));
             if (state.smtpConfig) {
                 localStorage.setItem(STORAGE_KEYS.SMTP_CONFIG, JSON.stringify(state.smtpConfig));
             }
@@ -270,6 +322,9 @@ async function pushDatabaseToServer() {
         staff: state.staff,
         tasks: state.tasks,
         quotations: state.quotations,
+        prs: state.prs,
+        pos: state.pos,
+        equipments: state.equipments,
         smtpConfig: state.smtpConfig
     };
     
@@ -292,6 +347,9 @@ function saveDataToLocalStorage(syncWithServer = true) {
     localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(state.staff));
     localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(state.tasks));
     localStorage.setItem(STORAGE_KEYS.QUOTATIONS, JSON.stringify(state.quotations));
+    localStorage.setItem(STORAGE_KEYS.PRS, JSON.stringify(state.prs));
+    localStorage.setItem(STORAGE_KEYS.POS, JSON.stringify(state.pos));
+    localStorage.setItem(STORAGE_KEYS.EQUIPMENT, JSON.stringify(state.equipments));
     if (state.smtpConfig) {
         localStorage.setItem(STORAGE_KEYS.SMTP_CONFIG, JSON.stringify(state.smtpConfig));
     } else {
@@ -309,23 +367,9 @@ async function detectMode() {
     if (window.location.protocol === 'file:') {
         isOfflineMode = true;
         console.log('[Mode] รันผ่านไฟล์โดยตรง (File Protocol) -> เปิดใช้งานโหมดจำลองฝั่งเบราว์เซอร์อัตโนมัติ');
-        return;
-    }
-
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1500); // 1.5s timeout
-        
-        const response = await fetch(`${API_BASE}/ping`, {
-            method: 'GET',
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
+    } else {
         isOfflineMode = false;
-        console.log('[Mode] เชื่อมต่อกับ Backend Server สำเร็จ -> ใช้โหมดออนไลน์จริง');
-    } catch (e) {
-        isOfflineMode = true;
-        console.log('[Mode] ไม่พบเซิร์ฟเวอร์รันอยู่ -> เปิดใช้งานโหมดจำลองฝั่งเบราว์เซอร์อัตโนมัติ');
+        console.log('[Mode] รันผ่านเซิร์ฟเวอร์ออนไลน์ -> ใช้โหมดออนไลน์จริง');
     }
 }
 
@@ -461,60 +505,52 @@ async function requestOTP() {
         return;
     }
 
-    // Check if Gmail is admin or exists in the staff directory
+    // If online mode, call backend directly and let it validate
+    if (!isOfflineMode) {
+        try {
+            const response = await fetch(`${API_BASE}/login-direct`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    email: emailInput
+                })
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                state.currentUser = {
+                    email: result.email,
+                    isAdmin: result.isAdmin
+                };
+                localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(state.currentUser));
+                
+                checkAuth();
+                showToast('เข้าสู่ระบบสำเร็จ ยินดีต้อนรับครับ', 'success');
+            } else {
+                showToast(result.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ', 'error', 'login-message');
+            }
+            return;
+        } catch (e) {
+            console.error('[Login] Backend error, falling back to local verification...', e);
+        }
+    }
+
+    // Local / Offline Simulation
     const isAdmin = emailInput === 'nptconsultant2017@gmail.com' || emailInput === 'davezaa1642@gmail.com';
-    const isStaff = state.staff.some(s => s.email.toLowerCase() === emailInput);
+    const isStaff = state.staff.some(s => s.email && s.email.toLowerCase() === emailInput);
 
     if (!isAdmin && !isStaff) {
         showToast('ไม่พบอีเมลนี้ในระบบสิทธิ์แอดมินหรือพนักงาน', 'error', 'login-message');
         return;
     }
 
-    // If offline mode, perform local simulation
-    if (isOfflineMode) {
-        state.currentUser = {
-            email: emailInput,
-            isAdmin: isAdmin
-        };
-        localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(state.currentUser));
-        
-        checkAuth();
-        showToast('เข้าสู่ระบบสำเร็จ (โหมดจำลองออฟไลน์)', 'success');
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE}/login-direct`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                email: emailInput
-            })
-        });
-        const result = await response.json();
-
-        if (result.success) {
-            state.currentUser = {
-                email: result.email,
-                isAdmin: result.isAdmin
-            };
-            localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(state.currentUser));
-            
-            checkAuth();
-            showToast('เข้าสู่ระบบสำเร็จ ยินดีต้อนรับครับ', 'success');
-        } else {
-            showToast(result.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ', 'error', 'login-message');
-        }
-    } catch (e) {
-        // Failover to offline simulation in case of network errors
-        state.currentUser = {
-            email: emailInput,
-            isAdmin: isAdmin
-        };
-        localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(state.currentUser));
-        checkAuth();
-        showToast('เข้าสู่ระบบสำเร็จ (โหมดจำลองออฟไลน์)', 'success');
-    }
+    state.currentUser = {
+        email: emailInput,
+        isAdmin: isAdmin
+    };
+    localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(state.currentUser));
+    checkAuth();
+    showToast('เข้าสู่ระบบสำเร็จ (โหมดจำลองออฟไลน์)', 'success');
 }
 
 function triggerEmailAlert(email, htmlContent) {
@@ -646,10 +682,25 @@ function switchTab(tabId) {
             subtitle.textContent = 'จัดทำ ค้นหา และพิมพ์ใบเสนอราคาเสนอผู้ซื้อ';
             renderQuotations();
             break;
+        case 'pr':
+            title.textContent = 'ระบบใบขอซื้อ (PR)';
+            subtitle.textContent = 'พนักงานจัดทำใบขอซื้อ เพื่อขออนุมัติจัดซื้อสินค้าและอุปกรณ์';
+            renderPRs();
+            break;
+        case 'po':
+            title.textContent = 'ระบบใบสั่งซื้อ (PO)';
+            subtitle.textContent = 'สร้าง บริหารจัดการ และพิมพ์ใบสั่งซื้อส่งไปยังร้านค้า/ผู้ขาย';
+            renderPOs();
+            break;
         case 'staff':
             title.textContent = 'ทำเนียบบุคลากร';
             subtitle.textContent = 'บันทึกรายชื่อ อีเมล และสถานะพนักงาน';
             renderStaff();
+            break;
+        case 'equipment':
+            title.textContent = 'รายการอุปกรณ์';
+            subtitle.textContent = 'บริหารจัดการ และบันทึกสถานะเครื่องมือ/อุปกรณ์ของบริษัท';
+            renderEquipments();
             break;
         case 'settings':
             title.textContent = 'การตั้งค่าระบบ';
@@ -1259,7 +1310,8 @@ window.viewPrintQuotation = function(id) {
         return;
     }
 
-    const printArea = document.getElementById('quotation-print-area');
+    const printArea = document.getElementById('print-area');
+    document.getElementById('print-modal-title').textContent = 'พิมพ์เอกสารใบเสนอราคา';
     const totalThaiWords = numToThaiWords(quote.total);
 
     let tableRows = '';
@@ -1279,7 +1331,8 @@ window.viewPrintQuotation = function(id) {
             <div class="company-info" style="text-align: left;">
                 <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700;">บริษัท เอ็นพีที คอนซัลแทนท์ แอนด์ เซอร์วิส จำกัด</h2>
                 <p style="margin: 4px 0 0 0; font-size: 0.85rem; font-weight: 600; color: #475569;">NPT Consultant and Service Co., Ltd.</p>
-                <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #64748b;">เลขที่ 456/78 ถนนวิภาวดีรังสิต แขวงดอนเมือง เขตดอนเมือง กรุงเทพฯ 10210</p>
+                <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #64748b;">เลขประจำตัวผู้เสียภาษี: 0215560002974</p>
+                <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #64748b;">ที่อยู่ : 131/60 หมู่ที่ 2 ต.ทับมา อ.เมืองระยอง จ.ระยอง 21000</p>
                 <p style="margin: 2px 0 0 0; font-size: 0.8rem; color: #64748b;">โทรศัพท์: 081-996-5444 , 089-113-8844 | อีเมล: nptconsultant2017@gmail.com</p>
             </div>
             <div class="doc-meta" style="text-align: right;">
@@ -1340,6 +1393,743 @@ window.viewPrintQuotation = function(id) {
                 <div class="sig-line"></div>
                 <p>ผู้มีอำนาจลงนาม / สั่งซื้อ</p>
                 <p>วันที่ตกลง: ___/___/___</p>
+            </div>
+        </div>
+    `;
+
+    openModal('print-modal');
+};
+
+// ================= CRUD: PURCHASE REQUISITION (PR) =================
+function renderPRs() {
+    const tbody = document.getElementById('prs-table-body');
+    tbody.innerHTML = '';
+
+    if (state.prs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-muted" style="text-align:center;">ไม่มีข้อมูลใบขอซื้อ (PR)</td></tr>`;
+        return;
+    }
+
+    const isMgmt = checkIsManagement();
+    const currentUserEmail = state.currentUser ? state.currentUser.email.toLowerCase() : '';
+
+    state.prs.forEach(pr => {
+        const estTotalVal = Number(pr.total).toLocaleString('th-TH', {minimumFractionDigits: 2});
+        
+        let statusBadgeClass = 'badge-pending-approval';
+        let statusText = 'ยังไม่พิจารณา';
+        if (pr.status === 'approved') {
+            statusBadgeClass = 'badge-approved';
+            statusText = 'อนุมัติแล้ว';
+        } else if (pr.status === 'rejected') {
+            statusBadgeClass = 'badge-rejected';
+            statusText = 'ไม่อนุมัติ';
+        }
+
+        // Check if user is creator of this PR
+        const isOwner = pr.requesterEmail.toLowerCase() === currentUserEmail;
+        const canEditDelete = (pr.status === 'pending_approval' && isOwner) || isMgmt;
+
+        // Management Approval buttons
+        let approvalActions = '';
+        if (isMgmt && pr.status === 'pending_approval') {
+            approvalActions = `
+                <button class="btn btn-success btn-small" onclick="approvePR('${pr.id}')" title="อนุมัติ"><i data-lucide="check"></i> อนุมัติ</button>
+                <button class="btn btn-danger btn-small" onclick="rejectPR('${pr.id}')" title="ไม่อนุมัติ"><i data-lucide="x"></i> ปฏิเสธ</button>
+            `;
+        }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${escapeHtml(pr.code)}</strong></td>
+            <td>${escapeHtml(pr.requesterName)} (${escapeHtml(pr.requesterEmail)})</td>
+            <td>${formatThaiDate(pr.date)}</td>
+            <td>${estTotalVal} บาท</td>
+            <td><span class="status-badge ${statusBadgeClass}">${statusText}</span></td>
+            <td>
+                <div class="gap-2" style="display:flex; flex-wrap: wrap;">
+                    <button class="btn btn-secondary btn-small" onclick="viewPrintPR('${pr.id}')" title="พิมพ์/พรีวิว"><i data-lucide="printer"></i> ดู/พิมพ์</button>
+                    ${canEditDelete ? `
+                        <button class="btn btn-secondary btn-small btn-icon-only" onclick="editPR('${pr.id}')" title="แก้ไข"><i data-lucide="edit-3"></i></button>
+                        <button class="btn btn-danger btn-small btn-icon-only" onclick="deletePR('${pr.id}')" title="ลบ"><i data-lucide="trash-2"></i></button>
+                    ` : ''}
+                    ${approvalActions}
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+    lucide.createIcons();
+}
+
+window.addPRItemRow = function(desc = '', qty = '', unit = '', unitPrice = '') {
+    const container = document.getElementById('pr-items-container');
+    const row = document.createElement('div');
+    row.className = 'quote-item-row mt-2';
+    
+    const qtyVal = parseFloat(qty) || 0;
+    const priceVal = parseFloat(unitPrice) || 0;
+    const lineTotal = qtyVal * priceVal;
+
+    row.innerHTML = `
+        <input type="text" class="form-control item-desc" placeholder="คำอธิบายสินค้า / บริการ / อุปกรณ์" value="${escapeHtml(desc)}" style="flex: 2.5;" required>
+        <input type="number" class="form-control item-qty" placeholder="จำนวน" min="0.01" step="any" value="${qty}" style="flex: 0.8;" required>
+        <input type="text" class="form-control item-unit" placeholder="หน่วย" value="${escapeHtml(unit)}" style="flex: 0.8;" required>
+        <input type="number" class="form-control item-price" placeholder="ราคาต่อหน่วย" min="0" step="any" value="${unitPrice}" style="flex: 1;" required>
+        <input type="number" class="form-control item-line-total" placeholder="ราคารวม" readonly value="${lineTotal ? lineTotal.toFixed(2) : '0.00'}" style="flex: 1.2; background-color: var(--card-bg-hover);">
+        <button type="button" class="btn btn-danger btn-small btn-icon-only btn-remove-row" style="flex: 0 0 auto;"><i data-lucide="minus"></i></button>
+    `;
+    
+    row.querySelector('.btn-remove-row').addEventListener('click', () => {
+        row.remove();
+        calculatePRTotal();
+    });
+
+    const qtyInp = row.querySelector('.item-qty');
+    const priceInp = row.querySelector('.item-price');
+    const totalInp = row.querySelector('.item-line-total');
+
+    function updateLineTotal() {
+        const q = parseFloat(qtyInp.value) || 0;
+        const p = parseFloat(priceInp.value) || 0;
+        totalInp.value = (q * p).toFixed(2);
+        calculatePRTotal();
+    }
+
+    qtyInp.addEventListener('input', updateLineTotal);
+    priceInp.addEventListener('input', updateLineTotal);
+
+    container.appendChild(row);
+    lucide.createIcons();
+};
+
+function calculatePRTotal() {
+    let subtotal = 0;
+    document.querySelectorAll('#pr-items-container .quote-item-row').forEach(row => {
+        const lineTotal = parseFloat(row.querySelector('.item-line-total').value) || 0;
+        subtotal += lineTotal;
+    });
+
+    const vatRate = parseFloat(document.getElementById('pr-vat-rate').value) || 0;
+    const vatAmount = subtotal * (vatRate / 100);
+    const total = subtotal + vatAmount;
+
+    document.getElementById('pr-subtotal-disp').textContent = subtotal.toLocaleString('th-TH', {minimumFractionDigits: 2});
+    document.getElementById('pr-vat-disp').textContent = vatAmount.toLocaleString('th-TH', {minimumFractionDigits: 2});
+    document.getElementById('pr-total-disp').textContent = total.toLocaleString('th-TH', {minimumFractionDigits: 2});
+    document.getElementById('pr-total').value = total.toFixed(2);
+}
+
+window.editPR = function(id) {
+    const pr = state.prs.find(p => p.id === id);
+    if (!pr) return;
+
+    document.getElementById('pr-id').value = pr.id;
+    document.getElementById('pr-code').value = pr.code;
+    if (prDatePicker) prDatePicker.setDate(pr.date);
+    document.getElementById('pr-notes').value = pr.notes || '';
+    document.getElementById('pr-vat-rate').value = pr.vatRate !== undefined ? pr.vatRate : 0;
+    document.getElementById('pr-total').value = pr.total || 0;
+    
+    const container = document.getElementById('pr-items-container');
+    container.innerHTML = '';
+    const items = pr.items || [];
+    items.forEach(item => {
+        const price = item.unitPrice !== undefined ? item.unitPrice : (item.estPrice !== undefined ? item.estPrice : 0);
+        addPRItemRow(item.desc, item.qty, item.unit, price);
+    });
+    calculatePRTotal();
+
+    document.getElementById('pr-modal-title').textContent = 'แก้ไขใบขอซื้อ (PR)';
+    openModal('pr-modal');
+};
+
+window.deletePR = function(id) {
+    if (confirm('คุณต้องการลบใบขอซื้อนี้ใช่หรือไม่?')) {
+        state.prs = state.prs.filter(p => p.id !== id);
+        saveDataToLocalStorage();
+        renderPRs();
+        showToast('ลบใบขอซื้อเรียบร้อยแล้ว', 'success');
+    }
+};
+
+window.approvePR = function(id) {
+    const pr = state.prs.find(p => p.id === id);
+    if (!pr) return;
+
+    if (confirm(`คุณต้องการอนุมัติใบขอซื้อ ${pr.code} ใช่หรือไม่?`)) {
+        pr.status = 'approved';
+        pr.approvedBy = state.currentUser ? state.currentUser.email : 'ผู้จัดการ';
+        saveDataToLocalStorage();
+        renderPRs();
+        showToast(`อนุมัติใบขอซื้อ ${pr.code} เรียบร้อยแล้ว`, 'success');
+    }
+};
+
+window.rejectPR = function(id) {
+    const pr = state.prs.find(p => p.id === id);
+    if (!pr) return;
+
+    if (confirm(`คุณต้องการปฏิเสธใบขอซื้อ ${pr.code} ใช่หรือไม่?`)) {
+        pr.status = 'rejected';
+        saveDataToLocalStorage();
+        renderPRs();
+        showToast(`ปฏิเสธใบขอซื้อ ${pr.code} เรียบร้อยแล้ว`, 'info');
+    }
+};
+
+async function handlePRSubmit(e) {
+    e.preventDefault();
+    
+    const prId = document.getElementById('pr-id').value;
+    const prDate = document.getElementById('pr-date').value;
+    const prNotes = document.getElementById('pr-notes').value.trim();
+    
+    const items = [];
+    document.querySelectorAll('#pr-items-container .quote-item-row').forEach(row => {
+        const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+        const unitPrice = parseFloat(row.querySelector('.item-price').value) || 0;
+        items.push({
+            desc: row.querySelector('.item-desc').value.trim(),
+            qty: qty,
+            unit: row.querySelector('.item-unit').value.trim(),
+            unitPrice: unitPrice,
+            total: qty * unitPrice
+        });
+    });
+
+    if (items.length === 0) {
+        showToast('กรุณากรอกรายการอย่างน้อย 1 รายการ', 'error');
+        return;
+    }
+
+    let subtotal = 0;
+    items.forEach(i => subtotal += i.total);
+    const vatRate = parseFloat(document.getElementById('pr-vat-rate').value) || 0;
+    const vatAmount = subtotal * (vatRate / 100);
+    const total = subtotal + vatAmount;
+
+    if (prId) {
+        // Edit Mode
+        const pr = state.prs.find(p => p.id === prId);
+        if (pr) {
+            pr.date = prDate;
+            pr.notes = prNotes;
+            pr.items = items;
+            pr.subtotal = subtotal;
+            pr.vatRate = vatRate;
+            pr.vatAmount = vatAmount;
+            pr.total = total;
+        }
+        showToast('แก้ไขใบขอซื้อสำเร็จ', 'success');
+    } else {
+        // Create Mode
+        const count = state.prs.length + 1;
+        const year = new Date(prDate).getFullYear();
+        const code = `PR-${year}-${String(count).padStart(3, '0')}`;
+        
+        let requesterName = 'พนักงาน';
+        const member = state.staff.find(s => s.email.toLowerCase() === state.currentUser.email.toLowerCase());
+        if (member) requesterName = member.name;
+        else if (state.currentUser.email === 'davezaa1642@gmail.com') requesterName = 'ผู้ดูแลระบบ (เดฟ)';
+        else if (state.currentUser.email === 'nptconsultant2017@gmail.com') requesterName = 'ดร.ณภัทร ปุญศิริ';
+
+        state.prs.push({
+            id: 'pr-' + Date.now(),
+            code: code,
+            date: prDate,
+            requesterEmail: state.currentUser ? state.currentUser.email : '',
+            requesterName: requesterName,
+            items: items,
+            subtotal: subtotal,
+            vatRate: vatRate,
+            vatAmount: vatAmount,
+            total: total,
+            notes: prNotes,
+            status: 'pending_approval'
+        });
+        showToast('ส่งใบขอซื้อเสร็จสิ้น (รอผู้จัดการพิจารณา)', 'success');
+    }
+
+    saveDataToLocalStorage();
+    closeAllModals();
+    renderPRs();
+}
+
+window.viewPrintPR = function(id) {
+    const pr = state.prs.find(p => p.id === id);
+    if (!pr) return;
+
+    const printArea = document.getElementById('print-area');
+    document.getElementById('print-modal-title').textContent = 'พิมพ์ใบขอซื้อ (PR)';
+
+    let tableRows = '';
+    const items = pr.items || [];
+    items.forEach((item, index) => {
+        const unitPrice = item.unitPrice !== undefined ? item.unitPrice : (item.estPrice !== undefined ? item.estPrice : 0);
+        const lineTotal = item.qty * unitPrice;
+        tableRows += `
+            <tr>
+                <td style="text-align: center;">${index + 1}</td>
+                <td>${escapeHtml(item.desc)}</td>
+                <td style="text-align: right;">${Number(item.qty).toLocaleString()}</td>
+                <td style="text-align: center;">${escapeHtml(item.unit)}</td>
+                <td style="text-align: right;">${Number(unitPrice).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                <td style="text-align: right;">${lineTotal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+            </tr>
+        `;
+    });
+
+    const statusMap = {
+        'pending_approval': 'ยังไม่พิจารณา',
+        'approved': 'อนุมัติแล้ว',
+        'rejected': 'ไม่อนุมัติ'
+    };
+
+        const subtotal = pr.subtotal !== undefined ? pr.subtotal : pr.total;
+        const vatRate = pr.vatRate !== undefined ? pr.vatRate : 0;
+        const vatAmount = pr.vatAmount !== undefined ? pr.vatAmount : 0;
+
+        printArea.innerHTML = `
+        <div class="doc-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 15px;">
+            <div class="company-info" style="text-align: left;">
+                <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700;">บริษัท เอ็นพีที คอนซัลแทนท์ แอนด์ เซอร์วิส จำกัด</h2>
+                <p style="margin: 4px 0 0 0; font-size: 0.85rem; font-weight: 600; color: #475569;">NPT Consultant and Service Co., Ltd.</p>
+                <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #64748b;">เลขประจำตัวผู้เสียภาษี: 0215560002974</p>
+                <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #64748b;">ที่อยู่ : 131/60 หมู่ที่ 2 ต.ทับมา อ.เมืองระยอง จ.ระยอง 21000</p>
+            </div>
+            <div class="doc-meta" style="text-align: right;">
+                <h1 style="margin: 0; font-size: 1.6rem; color: #d97706; font-weight: 700;">ใบขอซื้อ (PR)</h1>
+                <p style="margin: 6px 0 0 0; font-size: 0.85rem;"><strong>เลขที่:</strong> ${escapeHtml(pr.code)}</p>
+                <p style="margin: 2px 0 0 0; font-size: 0.85rem;"><strong>วันที่ขอซื้อ:</strong> ${formatThaiDate(pr.date)}</p>
+            </div>
+        </div>
+
+        <div class="doc-parties">
+            <div class="party-box">
+                <h3>ข้อมูลผู้ขอจัดซื้อ</h3>
+                <p><strong>ชื่อผู้ขอจัดซื้อ:</strong> ${escapeHtml(pr.requesterName)}</p>
+                <p><strong>อีเมล:</strong> ${escapeHtml(pr.requesterEmail)}</p>
+                <p><strong>สถานะการอนุมัติ:</strong> ${statusMap[pr.status] || pr.status}</p>
+            </div>
+        </div>
+
+        <table class="doc-table">
+            <thead>
+                <tr>
+                    <th style="width: 8%; text-align: center;">ลำดับ</th>
+                    <th style="width: 42%;">รายการสินค้า / อุปกรณ์ที่ประสงค์สั่งซื้อ</th>
+                    <th style="width: 12%; text-align: right;">จำนวน</th>
+                    <th style="width: 13%; text-align: center;">หน่วย</th>
+                    <th style="width: 12%; text-align: right;">ราคาต่อหน่วย</th>
+                    <th style="width: 13%; text-align: right;">รวมเป็นเงิน</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${tableRows}
+            </tbody>
+        </table>
+
+        <div class="doc-footer">
+            <div class="doc-notes">
+                <h4>วัตถุประสงค์ / หมายเหตุเพิ่มเติม</h4>
+                <p>${escapeHtml(pr.notes || 'ไม่มีหมายเหตุเพิ่มเติม')}</p>
+            </div>
+            
+            <div class="doc-summary">
+                <div class="summary-row">
+                    <span>รวมเป็นเงิน (Subtotal)</span>
+                    <span>${Number(subtotal).toLocaleString('th-TH', {minimumFractionDigits: 2})} บาท</span>
+                </div>
+                <div class="summary-row">
+                    <span>ภาษีมูลค่าเพิ่ม (VAT ${vatRate}%)</span>
+                    <span>${Number(vatAmount).toLocaleString('th-TH', {minimumFractionDigits: 2})} บาท</span>
+                </div>
+                <div class="summary-row total-row">
+                    <span>ประมาณยอดสุทธิทั้งสิ้น</span>
+                    <span>${Number(pr.total).toLocaleString('th-TH', {minimumFractionDigits: 2})} บาท</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="doc-signatures" style="margin-top: 50px;">
+            <div class="sig-box">
+                <p>ผู้ขอซื้อ</p>
+                <div class="sig-line"></div>
+                <p>(${escapeHtml(pr.requesterName)})</p>
+                <p>วันที่: ___/___/___</p>
+            </div>
+            <div class="sig-box">
+                <p>ผู้อนุมัติ (ผู้จัดการ)</p>
+                <div class="sig-line"></div>
+                <p>(${escapeHtml(pr.approvedBy || '...........................................')})</p>
+                <p>วันที่: ___/___/___</p>
+            </div>
+        </div>
+    `;
+
+    openModal('print-modal');
+};
+
+// ================= CRUD: PURCHASE ORDER (PO) =================
+function renderPOs() {
+    const tbody = document.getElementById('pos-table-body');
+    tbody.innerHTML = '';
+
+    if (state.pos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-muted" style="text-align:center;">ไม่มีข้อมูลใบสั่งซื้อ (PO)</td></tr>`;
+        return;
+    }
+
+    const isMgmt = checkIsManagement();
+    const currentUserEmail = state.currentUser ? state.currentUser.email.toLowerCase() : '';
+
+    state.pos.forEach(po => {
+        const totalVal = Number(po.total).toLocaleString('th-TH', {minimumFractionDigits: 2});
+        
+        let statusBadgeClass = 'badge-pending-delivery';
+        let statusText = 'รอส่งมอบ';
+        if (po.status === 'completed') {
+            statusBadgeClass = 'badge-approved';
+            statusText = 'ได้รับสินค้าแล้ว';
+        } else if (po.status === 'cancelled') {
+            statusBadgeClass = 'badge-rejected';
+            statusText = 'ยกเลิก';
+        }
+
+        const isOwner = po.creatorEmail && po.creatorEmail.toLowerCase() === currentUserEmail;
+        const canEditDelete = isOwner || isMgmt;
+
+        let managementActions = '';
+        if (canEditDelete) {
+            managementActions = `
+                <select onchange="updatePOStatus('${po.id}', this.value)" class="form-control" style="width: auto; padding: 2px 6px; font-size: 0.8rem; display: inline-block;">
+                    <option value="pending_delivery" ${po.status === 'pending_delivery' ? 'selected' : ''}>รอส่งมอบ</option>
+                    <option value="completed" ${po.status === 'completed' ? 'selected' : ''}>ได้รับสินค้าแล้ว</option>
+                    <option value="cancelled" ${po.status === 'cancelled' ? 'selected' : ''}>ยกเลิก</option>
+                </select>
+                <button class="btn btn-secondary btn-small btn-icon-only" onclick="editPO('${po.id}')" title="แก้ไข"><i data-lucide="edit-3"></i></button>
+                <button class="btn btn-danger btn-small btn-icon-only" onclick="deletePO('${po.id}')" title="ลบ"><i data-lucide="trash-2"></i></button>
+            `;
+        }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${escapeHtml(po.code)}</strong></td>
+            <td>${escapeHtml(po.vendor)}</td>
+            <td>${formatThaiDate(po.date)}</td>
+            <td>${escapeHtml(po.refPrCode || '-')}</td>
+            <td>${totalVal} บาท</td>
+            <td><span class="status-badge ${statusBadgeClass}">${statusText}</span></td>
+            <td>
+                <div class="gap-2" style="display:flex; align-items: center;">
+                    <button class="btn btn-secondary btn-small" onclick="viewPrintPO('${po.id}')" title="พิมพ์/พรีวิว"><i data-lucide="printer"></i> ดู/พิมพ์</button>
+                    ${managementActions}
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+    lucide.createIcons();
+}
+
+window.updatePOStatus = function(id, newStatus) {
+    const po = state.pos.find(p => p.id === id);
+    if (!po) return;
+
+    po.status = newStatus;
+    saveDataToLocalStorage();
+    renderPOs();
+    showToast(`อัปเดตสถานะใบสั่งซื้อ ${po.code} เรียบร้อยแล้ว`, 'success');
+};
+
+window.addPOItemRow = function(desc = '', qty = '', unit = '', unitPrice = '') {
+    const container = document.getElementById('po-items-container');
+    const row = document.createElement('div');
+    row.className = 'quote-item-row mt-2';
+    row.innerHTML = `
+        <input type="text" class="form-control item-desc" placeholder="คำอธิบายสินค้า / บริการ / อุปกรณ์" value="${escapeHtml(desc)}" style="flex: 2.5;" required>
+        <input type="number" class="form-control item-qty" placeholder="จำนวน" min="0.01" step="any" value="${qty}" style="flex: 0.8;" required>
+        <input type="text" class="form-control item-unit" placeholder="หน่วย" value="${escapeHtml(unit)}" style="flex: 0.8;" required>
+        <input type="number" class="form-control item-price" placeholder="ราคาต่อหน่วย" min="0" step="any" value="${unitPrice}" style="flex: 1;" required>
+        <button type="button" class="btn btn-danger btn-small btn-icon-only btn-remove-row" style="flex: 0 0 auto;"><i data-lucide="minus"></i></button>
+    `;
+    
+    row.querySelector('.btn-remove-row').addEventListener('click', () => {
+        row.remove();
+        calculatePOTotal();
+    });
+
+    const qtyInp = row.querySelector('.item-qty');
+    const priceInp = row.querySelector('.item-price');
+    qtyInp.addEventListener('input', calculatePOTotal);
+    priceInp.addEventListener('input', calculatePOTotal);
+
+    container.appendChild(row);
+    lucide.createIcons();
+};
+
+function calculatePOTotal() {
+    let subtotal = 0;
+    document.querySelectorAll('#po-items-container .quote-item-row').forEach(row => {
+        const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+        const unitPrice = parseFloat(row.querySelector('.item-price').value) || 0;
+        subtotal += qty * unitPrice;
+    });
+
+    const vatRate = parseFloat(document.getElementById('po-vat-rate').value) || 0;
+    const vatAmount = subtotal * (vatRate / 100);
+    const total = subtotal + vatAmount;
+
+    document.getElementById('po-subtotal-disp').textContent = subtotal.toLocaleString('th-TH', {minimumFractionDigits: 2});
+    document.getElementById('po-vat-disp').textContent = vatAmount.toLocaleString('th-TH', {minimumFractionDigits: 2});
+    document.getElementById('po-total-disp').textContent = total.toLocaleString('th-TH', {minimumFractionDigits: 2});
+}
+
+function updateRefPrDropdown() {
+    const select = document.getElementById('po-ref-pr');
+    select.innerHTML = '<option value="">-- ไม่ต้องการอ้างอิง --</option>';
+
+    // Load only Approved PRs
+    const approvedPrs = state.prs.filter(p => p.status === 'approved');
+    approvedPrs.forEach(pr => {
+        const opt = document.createElement('option');
+        opt.value = pr.code;
+        opt.textContent = `${pr.code} - ${pr.requesterName} (ยอด ${Number(pr.total).toLocaleString()} บาท)`;
+        select.appendChild(opt);
+    });
+}
+
+window.editPO = function(id) {
+    const po = state.pos.find(p => p.id === id);
+    if (!po) return;
+
+    updateRefPrDropdown();
+
+    document.getElementById('po-id').value = po.id;
+    document.getElementById('po-code').value = po.code;
+    if (poDatePicker) poDatePicker.setDate(po.date);
+    document.getElementById('po-vendor').value = po.vendor;
+    document.getElementById('po-ref-pr').value = po.refPrCode || '';
+    document.getElementById('po-address').value = po.vendorAddress || '';
+    document.getElementById('po-payment-term').value = po.paymentTerm || 'เงินสด';
+    if (poDeliveryDatePicker) poDeliveryDatePicker.setDate(po.deliveryDate || '');
+    document.getElementById('po-vat-rate').value = po.vatRate || 0;
+    document.getElementById('po-notes').value = po.notes || '';
+    
+    const container = document.getElementById('po-items-container');
+    container.innerHTML = '';
+    po.items.forEach(item => {
+        addPOItemRow(item.desc, item.qty, item.unit, item.unitPrice);
+    });
+    calculatePOTotal();
+
+    document.getElementById('po-modal-title').textContent = 'แก้ไขใบสั่งซื้อ (PO)';
+    openModal('po-modal');
+};
+
+window.deletePO = function(id) {
+    if (confirm('คุณต้องการลบใบสั่งซื้อนี้ใช่หรือไม่?')) {
+        state.pos = state.pos.filter(p => p.id !== id);
+        saveDataToLocalStorage();
+        renderPOs();
+        showToast('ลบใบสั่งซื้อเรียบร้อยแล้ว', 'success');
+    }
+};
+
+async function handlePOSubmit(e) {
+    e.preventDefault();
+    
+    const poId = document.getElementById('po-id').value;
+    const poDate = document.getElementById('po-date').value;
+    const poVendor = document.getElementById('po-vendor').value.trim();
+    const poRefPr = document.getElementById('po-ref-pr').value;
+    const poAddress = document.getElementById('po-address').value.trim();
+    const poPaymentTerm = document.getElementById('po-payment-term').value.trim();
+    const poDeliveryDate = document.getElementById('po-delivery-date').value;
+    const poVatRate = parseFloat(document.getElementById('po-vat-rate').value) || 0;
+    const poNotes = document.getElementById('po-notes').value.trim();
+    
+    const items = [];
+    document.querySelectorAll('#po-items-container .quote-item-row').forEach(row => {
+        items.push({
+            desc: row.querySelector('.item-desc').value.trim(),
+            qty: parseFloat(row.querySelector('.item-qty').value) || 0,
+            unit: row.querySelector('.item-unit').value.trim(),
+            unitPrice: parseFloat(row.querySelector('.item-price').value) || 0
+        });
+    });
+
+    if (items.length === 0) {
+        showToast('กรุณากรอกรายการอย่างน้อย 1 รายการ', 'error');
+        return;
+    }
+
+    let subtotal = 0;
+    items.forEach(i => subtotal += i.qty * i.unitPrice);
+    const vatAmount = subtotal * (poVatRate / 100);
+    const total = subtotal + vatAmount;
+
+    if (poId) {
+        // Edit Mode
+        const po = state.pos.find(p => p.id === poId);
+        if (po) {
+            po.date = poDate;
+            po.vendor = poVendor;
+            po.refPrCode = poRefPr;
+            po.vendorAddress = poAddress;
+            po.paymentTerm = poPaymentTerm;
+            po.deliveryDate = poDeliveryDate;
+            po.vatRate = poVatRate;
+            po.subtotal = subtotal;
+            po.vatAmount = vatAmount;
+            po.total = total;
+            po.items = items;
+            po.notes = poNotes;
+        }
+        showToast('แก้ไขใบสั่งซื้อสำเร็จ', 'success');
+    } else {
+        // Create Mode
+        const count = state.pos.length + 1;
+        const year = new Date(poDate).getFullYear();
+        const code = `PO-${year}-${String(count).padStart(3, '0')}`;
+        
+        state.pos.push({
+            id: 'po-' + Date.now(),
+            code: code,
+            date: poDate,
+            vendor: poVendor,
+            refPrCode: poRefPr,
+            vendorAddress: poAddress,
+            paymentTerm: poPaymentTerm,
+            deliveryDate: poDeliveryDate,
+            vatRate: poVatRate,
+            subtotal: subtotal,
+            vatAmount: vatAmount,
+            total: total,
+            items: items,
+            notes: poNotes,
+            creatorEmail: state.currentUser ? state.currentUser.email : '',
+            status: 'pending_delivery'
+        });
+        showToast('สร้างใบสั่งซื้อสำเร็จ', 'success');
+    }
+
+    saveDataToLocalStorage();
+    closeAllModals();
+    renderPOs();
+}
+
+window.viewPrintPO = function(id) {
+    const po = state.pos.find(p => p.id === id);
+    if (!po) return;
+
+    const printArea = document.getElementById('print-area');
+    document.getElementById('print-modal-title').textContent = 'พิมพ์ใบสั่งซื้อ (PO)';
+
+    let tableRows = '';
+    const items = po.items || [];
+    items.forEach((item, index) => {
+        const lineTotal = item.qty * item.unitPrice;
+        tableRows += `
+            <tr>
+                <td style="text-align: center;">${index + 1}</td>
+                <td>${escapeHtml(item.desc)}</td>
+                <td style="text-align: right;">${Number(item.qty).toLocaleString()}</td>
+                <td style="text-align: center;">${escapeHtml(item.unit)}</td>
+                <td style="text-align: right;">${Number(item.unitPrice).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                <td style="text-align: right;">${lineTotal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+            </tr>
+        `;
+    });
+
+    const totalThaiWords = numToThaiWords(po.total);
+
+    printArea.innerHTML = `
+        <div class="doc-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 15px;">
+            <div class="company-info" style="text-align: left;">
+                <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700;">บริษัท เอ็นพีที คอนซัลแทนท์ แอนด์ เซอร์วิส จำกัด</h2>
+                <p style="margin: 4px 0 0 0; font-size: 0.85rem; font-weight: 600; color: #475569;">NPT Consultant and Service Co., Ltd.</p>
+                <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #64748b;">เลขประจำตัวผู้เสียภาษี: 0215560002974</p>
+                <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #64748b;">ที่อยู่ : 131/60 หมู่ที่ 2 ต.ทับมา อ.เมืองระยอง จ.ระยอง 21000</p>
+                <p style="margin: 2px 0 0 0; font-size: 0.8rem; color: #64748b;">โทรศัพท์: 081-996-5444 , 089-113-8844 | อีเมล: nptconsultant2017@gmail.com</p>
+            </div>
+            <div class="doc-meta" style="text-align: right;">
+                <h1 style="margin: 0; font-size: 1.6rem; color: #0284c7; font-weight: 700;">ใบสั่งซื้อ (PO)</h1>
+                <p style="margin: 6px 0 0 0; font-size: 0.85rem;"><strong>เลขที่:</strong> ${escapeHtml(po.code)}</p>
+                <p style="margin: 2px 0 0 0; font-size: 0.85rem;"><strong>วันที่สั่งซื้อ:</strong> ${formatThaiDate(po.date)}</p>
+            </div>
+        </div>
+
+        <div class="doc-parties">
+            <div class="party-box" style="width: 50%; float: left; min-height: 100px;">
+                <h3>ข้อมูลผู้สั่งซื้อ</h3>
+                <p><strong>ผู้สั่งซื้อ:</strong> บริษัท เอ็นพีที คอนซัลแทนท์ แอนด์ เซอร์วิส จำกัด</p>
+                <p><strong>เงื่อนไขชำระเงิน:</strong> ${escapeHtml(po.paymentTerm || 'เงินสด')}</p>
+                <p><strong>กำหนดส่งมอบ:</strong> ${po.deliveryDate ? formatThaiDate(po.deliveryDate) : 'ไม่ระบุ'}</p>
+            </div>
+            <div class="party-box" style="width: 48%; float: right; min-height: 100px;">
+                <h3>ผู้ขาย / ร้านค้า</h3>
+                <p><strong>ร้านค้า:</strong> ${escapeHtml(po.vendor)}</p>
+                <p><strong>ที่อยู่:</strong> ${escapeHtml(po.vendorAddress || 'ไม่ระบุ')}</p>
+                <p><strong>ใบขอซื้ออ้างอิง:</strong> ${escapeHtml(po.refPrCode || '-')}</p>
+            </div>
+            <div style="clear: both;"></div>
+        </div>
+
+        <table class="doc-table" style="margin-top: 15px;">
+            <thead>
+                <tr>
+                    <th style="width: 8%; text-align: center;">ลำดับ</th>
+                    <th style="width: 42%;">รายละเอียดสินค้า / บริการ / อุปกรณ์</th>
+                    <th style="width: 12%; text-align: right;">จำนวน</th>
+                    <th style="width: 13%; text-align: center;">หน่วย</th>
+                    <th style="width: 12%; text-align: right;">ราคาต่อหน่วย</th>
+                    <th style="width: 13%; text-align: right;">รวมเป็นเงิน</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${tableRows}
+            </tbody>
+        </table>
+
+        <div class="doc-footer">
+            <div class="doc-notes">
+                <h4>หมายเหตุเพิ่มเติม</h4>
+                <p>${escapeHtml(po.notes || 'ไม่มีหมายเหตุเพิ่มเติม')}</p>
+            </div>
+            
+            <div class="doc-summary">
+                <div class="summary-row">
+                    <span>รวมราคาสินค้า (Subtotal)</span>
+                    <span>${Number(po.subtotal).toLocaleString('th-TH', {minimumFractionDigits: 2})} บาท</span>
+                </div>
+                <div class="summary-row">
+                    <span>ภาษีมูลค่าเพิ่ม VAT (${po.vatRate}%)</span>
+                    <span>${Number(po.vatAmount).toLocaleString('th-TH', {minimumFractionDigits: 2})} บาท</span>
+                </div>
+                <div class="summary-row total-row">
+                    <span>ยอดสุทธิทั้งสิ้น</span>
+                    <span>${Number(po.total).toLocaleString('th-TH', {minimumFractionDigits: 2})} บาท</span>
+                </div>
+                <div style="font-size: 0.8rem; font-weight: 500; margin-top: 8px; text-align: right; color: #475569;">
+                    (${totalThaiWords})
+                </div>
+            </div>
+        </div>
+
+        <div class="doc-signatures" style="margin-top: 50px;">
+            <div class="sig-box">
+                <p>ผู้สั่งซื้อ (ดร.ณภัทร ปุญศิริ)</p>
+                <div class="sig-line"></div>
+                <p>ผู้จัดการ / ผู้มีอำนาจสั่งซื้อ</p>
+                <p>วันที่: ___/___/___</p>
+            </div>
+            <div class="sig-box">
+                <p>ผู้รับการสั่งซื้อ (ร้านค้า)</p>
+                <div class="sig-line"></div>
+                <p>ผู้รับสั่งซื้อ / ตัวแทนร้านค้า</p>
+                <p>วันที่: ___/___/___</p>
             </div>
         </div>
     `;
@@ -1450,9 +2240,76 @@ function setupEventListeners() {
 
 
 
+    // PR and PO Event Listeners
+    document.getElementById('btn-open-pr-modal').addEventListener('click', () => {
+        document.getElementById('pr-form').reset();
+        document.getElementById('pr-id').value = '';
+        document.getElementById('pr-items-container').innerHTML = '';
+        addPRItemRow();
+        if (prDatePicker) prDatePicker.setDate(new Date().toISOString().split('T')[0]);
+        document.getElementById('pr-total').value = '0.00';
+        document.getElementById('pr-modal-title').textContent = 'สร้างใบขอซื้อใหม่ (PR)';
+        openModal('pr-modal');
+    });
+
+    document.getElementById('btn-add-pr-row').addEventListener('click', () => {
+        addPRItemRow();
+    });
+
+    document.getElementById('pr-vat-rate').addEventListener('change', calculatePRTotal);
+
+    document.getElementById('btn-open-po-modal').addEventListener('click', () => {
+        document.getElementById('po-form').reset();
+        document.getElementById('po-id').value = '';
+        document.getElementById('po-items-container').innerHTML = '';
+        updateRefPrDropdown();
+        addPOItemRow();
+        if (poDatePicker) poDatePicker.setDate(new Date().toISOString().split('T')[0]);
+        if (poDeliveryDatePicker) poDeliveryDatePicker.setDate('');
+        calculatePOTotal();
+        document.getElementById('po-modal-title').textContent = 'สร้างใบสั่งซื้อใหม่ (PO)';
+        openModal('po-modal');
+    });
+
+    document.getElementById('btn-add-po-row').addEventListener('click', () => {
+        addPOItemRow();
+    });
+
+    document.getElementById('po-vat-rate').addEventListener('change', calculatePOTotal);
+
+    document.getElementById('po-ref-pr').addEventListener('change', (e) => {
+        const prCode = e.target.value;
+        if (!prCode) return;
+        
+        const pr = state.prs.find(p => p.code === prCode);
+        if (!pr) return;
+
+        // Auto copy items from PR to PO!
+        const container = document.getElementById('po-items-container');
+        container.innerHTML = '';
+        
+        pr.items.forEach(item => {
+            const price = item.unitPrice !== undefined ? item.unitPrice : (item.estPrice !== undefined ? item.estPrice : 0);
+            addPOItemRow(item.desc, item.qty, item.unit, price);
+        });
+        
+        calculatePOTotal();
+        showToast(`คัดลอกรายการสินค้าจาก ${pr.code} เรียบร้อยแล้ว`, 'success');
+    });
+
+    document.getElementById('btn-open-equipment-modal').addEventListener('click', () => {
+        document.getElementById('equipment-form').reset();
+        document.getElementById('equipment-id').value = '';
+        document.getElementById('equipment-modal-title').textContent = 'เพิ่มอุปกรณ์ใหม่';
+        openModal('equipment-modal');
+    });
+
     document.getElementById('task-form').addEventListener('submit', handleTaskSubmit);
     document.getElementById('staff-form').addEventListener('submit', handleStaffSubmit);
     document.getElementById('quotation-form').addEventListener('submit', handleQuotationSubmit);
+    document.getElementById('pr-form').addEventListener('submit', handlePRSubmit);
+    document.getElementById('po-form').addEventListener('submit', handlePOSubmit);
+    document.getElementById('equipment-form').addEventListener('submit', handleEquipmentSubmit);
 }
 
 // ================= FORM SUBMISSION HANDLERS =================
@@ -1807,4 +2664,115 @@ window.navigateToQuotations = function() {
 window.navigateToStaff = function() {
     switchTab('staff');
 };
+
+// ================= CRUD: EQUIPMENT INVENTORY =================
+function renderEquipments() {
+    const tbody = document.getElementById('equipment-table-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (!state.equipments || state.equipments.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-muted" style="text-align:center;">ไม่มีข้อมูลอุปกรณ์ของบริษัท</td></tr>`;
+        return;
+    }
+
+    const isMgmt = checkIsManagement();
+
+    state.equipments.forEach(eq => {
+        const tr = document.createElement('tr');
+        
+        let statusClass = eq.status === 'ปกติ' ? 'text-success' : 'text-danger';
+        let locationClass = eq.location === 'หน้างาน' ? 'badge-pending-approval' : 'badge-completed';
+
+        let managementActions = '';
+        if (isMgmt) {
+            managementActions = `
+                <button class="btn btn-secondary btn-small btn-icon-only" onclick="editEquipment('${eq.id}')" title="แก้ไข"><i data-lucide="edit-3"></i></button>
+                <button class="btn btn-danger btn-small btn-icon-only" onclick="deleteEquipment('${eq.id}')" title="ลบ"><i data-lucide="trash-2"></i></button>
+            `;
+        } else {
+            managementActions = `<span class="text-muted">-</span>`;
+        }
+
+        tr.innerHTML = `
+            <td><strong>${escapeHtml(eq.name)}</strong></td>
+            <td>${Number(eq.qty).toLocaleString()} ชิ้น</td>
+            <td><span class="${statusClass}" style="font-weight:600;">${escapeHtml(eq.status)}</span></td>
+            <td><span class="status-badge ${locationClass}">${escapeHtml(eq.location)}</span></td>
+            <td>${escapeHtml(eq.notes || '-')}</td>
+            <td class="admin-only">${managementActions}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    if (!isMgmt) {
+        document.querySelectorAll('#tab-equipment .admin-only').forEach(el => el.classList.add('hidden'));
+    } else {
+        document.querySelectorAll('#tab-equipment .admin-only').forEach(el => el.classList.remove('hidden'));
+    }
+
+    lucide.createIcons();
+}
+
+window.editEquipment = function(id) {
+    const eq = state.equipments.find(e => e.id === id);
+    if (!eq) return;
+
+    document.getElementById('equipment-id').value = eq.id;
+    document.getElementById('equipment-name').value = eq.name;
+    document.getElementById('equipment-qty').value = eq.qty;
+    document.getElementById('equipment-status').value = eq.status;
+    document.getElementById('equipment-location').value = eq.location;
+    document.getElementById('equipment-notes').value = eq.notes || '';
+
+    document.getElementById('equipment-modal-title').textContent = 'แก้ไขข้อมูลอุปกรณ์';
+    openModal('equipment-modal');
+};
+
+window.deleteEquipment = function(id) {
+    if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบอุปกรณ์นี้?')) return;
+    
+    state.equipments = state.equipments.filter(e => e.id !== id);
+    saveDataToLocalStorage();
+    renderEquipments();
+    showToast('ลบอุปกรณ์เรียบร้อยแล้ว', 'success');
+};
+
+async function handleEquipmentSubmit(e) {
+    e.preventDefault();
+    const id = document.getElementById('equipment-id').value;
+    const name = document.getElementById('equipment-name').value.trim();
+    const qty = parseInt(document.getElementById('equipment-qty').value) || 1;
+    const status = document.getElementById('equipment-status').value;
+    const location = document.getElementById('equipment-location').value;
+    const notes = document.getElementById('equipment-notes').value.trim();
+
+    if (id) {
+        // Edit Mode
+        const eq = state.equipments.find(e => e.id === id);
+        if (eq) {
+            eq.name = name;
+            eq.qty = qty;
+            eq.status = status;
+            eq.location = location;
+            eq.notes = notes;
+        }
+        showToast('แก้ไขข้อมูลอุปกรณ์สำเร็จ', 'success');
+    } else {
+        // Create Mode
+        state.equipments.push({
+            id: 'eq-' + Date.now(),
+            name: name,
+            qty: qty,
+            status: status,
+            location: location,
+            notes: notes
+        });
+        showToast('เพิ่มอุปกรณ์ใหม่สำเร็จ', 'success');
+    }
+
+    saveDataToLocalStorage();
+    closeAllModals();
+    renderEquipments();
+}
 
