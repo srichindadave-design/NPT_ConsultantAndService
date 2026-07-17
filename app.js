@@ -2122,13 +2122,14 @@ window.viewPrintPO = function(id) {
             <div class="sig-box">
                 <p>ผู้สั่งซื้อ (ดร.ณภัทร ปุญศิริ)</p>
                 <div class="sig-line"></div>
-                <p>ผู้จัดการ / ผู้มีอำนาจสั่งซื้อ</p>
+                <p>General Manager</p>
                 <p>วันที่: ___/___/___</p>
             </div>
             <div class="sig-box">
-                <p>ผู้รับการสั่งซื้อ (ร้านค้า)</p>
+                <p>ผู้อนุมัติ</p>
                 <div class="sig-line"></div>
-                <p>ผู้รับสั่งซื้อ / ตัวแทนร้านค้า</p>
+                <p>ตำแหน่ง</p>
+                <div class="sig-line"></div>
                 <p>วันที่: ___/___/___</p>
             </div>
         </div>
