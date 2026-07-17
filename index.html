@@ -579,13 +579,23 @@
                             <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: #06b6d4;">
                                 <i data-lucide="cloud-sun"></i> สภาพอากาศปัจจุบัน
                             </h3>
-                            <div style="text-align: center; margin: 20px 0;">
-                                <div id="weather-icon-large" style="font-size: 3.5rem; margin-bottom: 8px; animation: bounce 2s infinite;">☀️</div>
-                                <div id="weather-temp" style="font-size: 2.2rem; font-weight: 700; color: var(--text-primary);">32°C</div>
-                                <div id="weather-desc" style="font-size: 1rem; color: var(--text-secondary); font-weight: 500; margin-top: 4px;">ท้องฟ้าโปร่ง</div>
+                            
+                            <!-- Location Dropdown Selector -->
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label for="weather-location-select" style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 4px;">เลือกพิกัดหน้างาน:</label>
+                                <select id="weather-location-select" class="form-control" style="padding: 6px 10px; font-size: 0.85rem; height: auto; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-primary);">
+                                    <option value="rayong" selected>จังหวัดระยอง (คลังหลัก/หน้างาน)</option>
+                                    <option value="chonburi">จังหวัดชลบุรี (คลังแหลมฉบัง)</option>
+                                </select>
+                            </div>
+
+                            <div style="text-align: center; margin: 15px 0;">
+                                <div id="weather-icon-large" style="font-size: 3.2rem; margin-bottom: 4px; animation: bounce 2s infinite;">☀️</div>
+                                <div id="weather-temp" style="font-size: 2rem; font-weight: 700; color: var(--text-primary);">32°C</div>
+                                <div id="weather-desc" style="font-size: 0.95rem; color: var(--text-secondary); font-weight: 500; margin-top: 2px;">ท้องฟ้าโปร่ง</div>
                             </div>
                             
-                            <div style="font-size: 0.85rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 8px;">
+                            <div style="font-size: 0.82rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 6px;">
                                 <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
                                     <span>ความชื้นสัมพัทธ์:</span>
                                     <strong id="weather-humidity">70%</strong>
@@ -594,14 +604,18 @@
                                     <span>ความเร็วลม:</span>
                                     <strong id="weather-wind">12 กม./ชม.</strong>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;">
-                                    <span>พิกัดหน้างาน:</span>
-                                    <strong>กรุงเทพมหานคร</strong>
+                            </div>
+
+                            <!-- Weather Forecast Section -->
+                            <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;">
+                                <h4 style="font-size: 0.85rem; font-weight: 600; color: #06b6d4; margin-bottom: 8px;"><i data-lucide="calendar-range" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i> พยากรณ์ล่วงหน้า 3 วัน</h4>
+                                <div id="weather-forecast-list" style="display: flex; gap: 6px; justify-content: space-between;">
+                                    <!-- Injected by JS -->
                                 </div>
                             </div>
                         </div>
                         
-                        <div style="margin-top: 15px; font-size: 0.75rem; color: var(--text-muted); text-align: center; line-height: 1.4;">
+                        <div style="margin-top: 15px; font-size: 0.72rem; color: var(--text-muted); text-align: center; line-height: 1.4;">
                             * ข้อมูลอัปเดตแบบเรียลไทม์ผ่าน Open-Meteo API
                         </div>
                     </div>

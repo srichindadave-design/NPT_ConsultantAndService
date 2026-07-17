@@ -2383,6 +2383,11 @@ function setupEventListeners() {
             renderThaiCalendar();
         });
     }
+
+    const weatherLocSelect = document.getElementById('weather-location-select');
+    if (weatherLocSelect) {
+        weatherLocSelect.addEventListener('change', fetchCurrentWeather);
+    }
 }
 
 // ================= FORM SUBMISSION HANDLERS =================
@@ -3092,64 +3097,100 @@ async function fetchCurrentWeather() {
     const humidityEl = document.getElementById('weather-humidity');
     const windEl = document.getElementById('weather-wind');
     const iconEl = document.getElementById('weather-icon-large');
+    const forecastListEl = document.getElementById('weather-forecast-list');
+    const locationSelect = document.getElementById('weather-location-select');
+    
+    const location = locationSelect ? locationSelect.value : 'rayong';
+    let lat = 12.6814;
+    let lon = 101.2813;
+    
+    if (location === 'chonburi') {
+        lat = 13.3611;
+        lon = 100.9847;
+    }
     
     try {
-        // Fetch weather for Bangkok
-        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=13.7563&longitude=100.5018&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=Asia%2FBangkok');
+        // Fetch weather and 3-day forecast
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FBangkok`);
         if (!res.ok) throw new Error('Network response was not ok');
         const data = await res.json();
         const current = data.current;
+        const daily = data.daily;
         
+        // Helper to map code to icon and description
+        const getWeatherInfo = (code) => {
+            if (code === 0) return { desc: 'ท้องฟ้าโปร่ง', icon: '☀️' };
+            if ([1, 2, 3].includes(code)) return { desc: 'มีเมฆบางส่วน', icon: '⛅' };
+            if ([45, 48].includes(code)) return { desc: 'หมอกลง', icon: '🌫️' };
+            if ([51, 53, 55, 56, 57].includes(code)) return { desc: 'ฝนละออง', icon: '🌦️' };
+            if ([61, 63, 65, 66, 67].includes(code)) return { desc: 'ฝนตก', icon: '🌧️' };
+            if ([71, 73, 75, 77, 85, 86].includes(code)) return { desc: 'หิมะตก', icon: '❄️' };
+            if ([80, 81, 82].includes(code)) return { desc: 'ฝนตกหนัก', icon: '⛈️' };
+            if ([95, 96, 99].includes(code)) return { desc: 'พายุฝน', icon: '⚡' };
+            return { desc: 'แปรปรวน', icon: '🌀' };
+        };
+
         if (current) {
             const temp = Math.round(current.temperature_2m);
             const humidity = current.relative_humidity_2m;
             const wind = current.wind_speed_10m;
-            const code = current.weather_code;
-            
-            // Map code to Thai desc and emoji icon
-            let weatherDesc = 'ท้องฟ้าโปร่ง';
-            let weatherIcon = '☀️';
-            
-            if (code === 0) {
-                weatherDesc = 'ท้องฟ้าโปร่ง';
-                weatherIcon = '☀️';
-            } else if ([1, 2, 3].includes(code)) {
-                weatherDesc = 'มีเมฆบางส่วน';
-                weatherIcon = '⛅';
-            } else if ([45, 48].includes(code)) {
-                weatherDesc = 'หมอกลง';
-                weatherIcon = '🌫️';
-            } else if ([51, 53, 55, 56, 57].includes(code)) {
-                weatherDesc = 'ฝนละออง';
-                weatherIcon = '🌦️';
-            } else if ([61, 63, 65, 66, 67].includes(code)) {
-                weatherDesc = 'ฝนตก';
-                weatherIcon = '🌧️';
-            } else if ([71, 73, 75, 77, 85, 86].includes(code)) {
-                weatherDesc = 'หิมะตก';
-                weatherIcon = '❄️';
-            } else if ([80, 81, 82].includes(code)) {
-                weatherDesc = 'ฝนตกหนัก';
-                weatherIcon = '⛈️';
-            } else if ([95, 96, 99].includes(code)) {
-                weatherDesc = 'พายุฝนฟ้าคะนอง';
-                weatherIcon = '⚡';
-            }
+            const info = getWeatherInfo(current.weather_code);
             
             tempEl.textContent = `${temp}°C`;
-            descEl.textContent = weatherDesc;
+            descEl.textContent = info.desc;
             humidityEl.textContent = `${humidity}%`;
             windEl.textContent = `${wind} กม./ชม.`;
-            iconEl.textContent = weatherIcon;
+            iconEl.textContent = info.icon;
+        }
+        
+        if (daily && forecastListEl) {
+            forecastListEl.innerHTML = '';
+            
+            // Loop for next 3 days (excluding today)
+            for (let i = 1; i <= 3; i++) {
+                const dateStr = daily.time[i];
+                const maxTemp = Math.round(daily.temperature_2m_max[i]);
+                const minTemp = Math.round(daily.temperature_2m_min[i]);
+                const code = daily.weather_code[i];
+                const info = getWeatherInfo(code);
+                
+                // Get short day name (จ., อ., พ.)
+                const d = new Date(dateStr);
+                const dayName = d.toLocaleDateString('th-TH', { weekday: 'short' });
+                
+                const card = document.createElement('div');
+                card.style.cssText = 'flex: 1; background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 65px;';
+                card.innerHTML = `
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">${dayName}</div>
+                    <div style="font-size: 1.4rem;" title="${info.desc}">${info.icon}</div>
+                    <div style="font-size: 0.72rem; font-weight: 500; color: var(--text-primary);">${minTemp}°/${maxTemp}°</div>
+                `;
+                forecastListEl.appendChild(card);
+            }
         }
     } catch (e) {
-        console.warn('[Weather API] Failed to fetch current weather:', e);
+        console.warn('[Weather API] Failed to fetch current weather & forecast:', e);
         // Fallback mock values
         tempEl.textContent = '31°C';
         descEl.textContent = 'มีเมฆบางส่วน (จำลอง)';
         humidityEl.textContent = '72%';
         windEl.textContent = '10 กม./ชม.';
         iconEl.textContent = '⛅';
+        
+        if (forecastListEl) {
+            forecastListEl.innerHTML = '';
+            const mockDays = ['พรุ่งนี้', 'มะรืน', 'ถัดไป'];
+            mockDays.forEach((day, idx) => {
+                const card = document.createElement('div');
+                card.style.cssText = 'flex: 1; background: rgba(255,255,255,0.05); padding: 8px 4px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 65px;';
+                card.innerHTML = `
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">${day}</div>
+                    <div style="font-size: 1.4rem;">🌧️</div>
+                    <div style="font-size: 0.72rem; font-weight: 500; color: var(--text-primary);">26°/32°</div>
+                `;
+                forecastListEl.appendChild(card);
+            });
+        }
     }
 }
 
