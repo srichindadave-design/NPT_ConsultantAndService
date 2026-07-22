@@ -916,6 +916,59 @@
                     <textarea id="quote-notes" class="form-control" rows="2" placeholder="เช่น กำหนดยืนราคา 30 วัน, มัดจำ 50% เป็นต้น"></textarea>
                 </div>
 
+                <!-- Project Profitability Simulator Section (For management only check or simulator mode) -->
+                <div style="margin-top: 20px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: rgba(0,0,0,0.15); padding: 16px;">
+                    <h3 style="font-size: 0.95rem; font-weight: 700; color: #ff8800; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                        <i data-lucide="calculator" style="width: 18px; height: 18px;"></i> เครื่องมือจำลองและคำนวณกำไรขั้นต้น (Profitability Simulator)
+                    </h3>
+                    
+                    <div class="form-row" style="margin-bottom: 12px;">
+                        <div class="form-group col">
+                            <label for="sim-labor" style="font-size: 0.78rem;">ค่าแรงทีมงาน/ช่าง (บาท)</label>
+                            <input type="number" id="sim-labor" class="form-control sim-input" placeholder="0" min="0" value="0">
+                        </div>
+                        <div class="form-group col">
+                            <label for="sim-material" style="font-size: 0.78rem;">ค่าวัสดุ/อุปกรณ์ (บาท)</label>
+                            <input type="number" id="sim-material" class="form-control sim-input" placeholder="0" min="0" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row" style="margin-bottom: 12px;">
+                        <div class="form-group col">
+                            <label for="sim-travel" style="font-size: 0.78rem;">ค่าเดินทาง/ที่พัก/น้ำมัน (บาท)</label>
+                            <input type="number" id="sim-travel" class="form-control sim-input" placeholder="0" min="0" value="0">
+                        </div>
+                        <div class="form-group col">
+                            <label for="sim-subcontractor" style="font-size: 0.78rem;">ค่าจ้างผู้รับเหมาช่วง (บาท)</label>
+                            <input type="number" id="sim-subcontractor" class="form-control sim-input" placeholder="0" min="0" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="sim-other" style="font-size: 0.78rem;">ค่าดำเนินการอื่น ๆ (บาท)</label>
+                        <input type="number" id="sim-other" class="form-control sim-input" placeholder="0" min="0" value="0">
+                    </div>
+                    
+                    <!-- Result Summary Box -->
+                    <div id="sim-result-box" style="padding: 12px 16px; border-radius: var(--radius-md); background: rgba(255, 255, 255, 0.04); border-left: 4px solid var(--border-color); display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
+                            <span style="color: var(--text-secondary);">ต้นทุนรวมประมาณการ:</span>
+                            <span id="sim-total-cost" style="color: var(--text-primary);">0.00 บาท</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
+                            <span style="color: var(--text-secondary);">กำไรขั้นต้นประมาณการ:</span>
+                            <span id="sim-gross-profit" style="color: var(--text-primary);">0.00 บาท</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 700; margin-top: 4px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px;">
+                            <span style="color: var(--text-primary);">อัตรากำไรขั้นต้น (GP Margin %):</span>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span id="sim-gp-percent" style="font-size: 1.1rem; color: #ff8800;">0.00%</span>
+                                <span id="sim-status-indicator" class="badge" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; font-weight: bold;">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group mt-3">
                     <label for="quote-file"><i data-lucide="file-up"></i> อัปโหลดไฟล์ใบเสนอราคา / เอกสารแนบ (เช่น PDF, รูปภาพ)</label>
                     <input type="file" id="quote-file" class="form-control" accept=".pdf,image/*">
