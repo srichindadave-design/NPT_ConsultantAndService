@@ -8,7 +8,8 @@ const STORAGE_KEYS = {
     EQUIPMENT: 'npt_portal_equipment',
     SMTP_CONFIG: 'npt_portal_smtp_config',
     LINE_CONFIG: 'npt_portal_line_config',
-    AUTH: 'npt_portal_auth_user'
+    AUTH: 'npt_portal_auth_user',
+    NOTIFICATIONS: 'npt_portal_notifications'
 };
 
 // ================= DEFAULT MOCK DATA =================
@@ -35,7 +36,8 @@ let state = {
     equipments: [],
     smtpConfig: null, // { user, pass }
     lineConfig: null, // { channelAccessToken }
-    currentUser: null // { email, isAdmin }
+    currentUser: null, // { email, isAdmin }
+    notifications: []
 };
 
 const positionOrder = {
@@ -128,6 +130,16 @@ function initData() {
     state.smtpConfig = JSON.parse(localStorage.getItem(STORAGE_KEYS.SMTP_CONFIG)) || null;
     state.lineConfig = JSON.parse(localStorage.getItem(STORAGE_KEYS.LINE_CONFIG)) || null;
     state.currentUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH)) || null;
+    
+    const defaultNotifs = [
+        { id: 'notif-1', title: 'อนุมัติใบเสนอราคา PRQ-2405-015', desc: 'รอการอนุมัติจากคุณ', time: new Date(Date.now() - 1000 * 60 * 15).toISOString(), type: 'info', read: false },
+        { id: 'notif-2', title: 'งานติดตั้งระบบไฟฟ้าโรงงาน ใกล้ครบกำหนด', desc: 'กำหนดส่ง 25/05/2567', time: new Date(Date.now() - 1000 * 60 * 45).toISOString(), type: 'warning', read: false },
+        { id: 'notif-3', title: 'ระบบจัดซื้อ PR-2405-009 ได้รับการอนุมัติแล้ว', desc: 'สามารถนำรหัส PR ไปสร้างใบ PO ได้ทันที', time: new Date(Date.now() - 1000 * 60 * 90).toISOString(), type: 'success', read: false }
+    ];
+    state.notifications = JSON.parse(localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS)) || defaultNotifs;
+    setTimeout(() => {
+        renderNotificationBell();
+    }, 100);
 
     // Data Migration: Upgrade from old Phone number schema to Email schema
     let needsMigration = false;
@@ -358,6 +370,7 @@ function saveDataToLocalStorage(syncWithServer = true) {
     localStorage.setItem(STORAGE_KEYS.PRS, JSON.stringify(state.prs));
     localStorage.setItem(STORAGE_KEYS.POS, JSON.stringify(state.pos));
     localStorage.setItem(STORAGE_KEYS.EQUIPMENT, JSON.stringify(state.equipments));
+    localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(state.notifications || []));
     if (state.smtpConfig) {
         localStorage.setItem(STORAGE_KEYS.SMTP_CONFIG, JSON.stringify(state.smtpConfig));
     } else {
@@ -1175,6 +1188,9 @@ window.updateTaskStatus = function(id, newStatus) {
     
     if (newStatus === 'completed' && oldStatus !== 'completed') {
         notifyTaskCompletionViaLine(task);
+        addNotification('งานเสร็จสิ้นแล้ว: ' + task.title, `ผู้ปฏิบัติงานเสร็จสิ้นการปฏิบัติงานเรียบร้อย`, 'success');
+    } else {
+        addNotification('อัปเดตสถานะงาน: ' + task.title, `สถานะงานถูกเปลี่ยนเป็น: ${newStatus === 'ongoing' ? 'กำลังดำเนินการ' : 'รอดำเนินการ'}`, 'info');
     }
 
     saveDataToLocalStorage();
@@ -1208,8 +1224,10 @@ window.updateTaskProgress = function(id) {
             notifyTaskCompletionViaLine(task);
         }
         showToast('อัปเดตความคืบหน้าสำเร็จ และเสร็จสิ้นงานเรียบร้อย', 'success');
+        addNotification('งานเสร็จสิ้นแล้ว: ' + task.title, `ผู้ปฏิบัติงานทำผลงานครบถ้วน (${task.completedQty}/${task.qty})`, 'success');
     } else {
         showToast(`บันทึกความคืบหน้าแล้ว (${task.completedQty}/${task.qty})`, 'success');
+        addNotification('อัปเดตความคืบหน้า: ' + task.title, `ความคืบหน้าเป็น ${task.completedQty}/${task.qty}`, 'info');
     }
 
     saveDataToLocalStorage();
@@ -1673,6 +1691,7 @@ async function handlePRSubmit(e) {
             pr.vatRate = vatRate;
             pr.vatAmount = vatAmount;
             pr.total = total;
+            addNotification('แก้ไขใบขอซื้อสำเร็จ', `ใบขอซื้อ ${pr.code} ได้รับการอัปเดต`, 'info');
         }
         showToast('แก้ไขใบขอซื้อสำเร็จ', 'success');
     } else {
@@ -1702,6 +1721,7 @@ async function handlePRSubmit(e) {
             status: 'approved'
         });
         showToast('บันทึกใบขอซื้อสำเร็จ (อนุมัติอัตโนมัติ)', 'success');
+        addNotification('ใบขอซื้ออนุมัติอัตโนมัติ', `ใบขอซื้อเลขที่ ${code} โดย ${requesterName} ได้รับการอนุมัติแล้ว`, 'success');
     }
 
     saveDataToLocalStorage();
@@ -2039,6 +2059,7 @@ async function handlePOSubmit(e) {
             po.total = total;
             po.items = items;
             po.notes = poNotes;
+            addNotification('แก้ไขใบสั่งซื้อสำเร็จ', `ใบสั่งซื้อ ${po.code} ได้รับการอัปเดต`, 'info');
         }
         showToast('แก้ไขใบสั่งซื้อสำเร็จ', 'success');
     } else {
@@ -2066,6 +2087,7 @@ async function handlePOSubmit(e) {
             status: 'pending_delivery'
         });
         showToast('สร้างใบสั่งซื้อสำเร็จ', 'success');
+        addNotification('ออกใบสั่งซื้อใหม่', `ออกใบสั่งซื้อเลขที่ ${code} เรียบร้อยแล้ว`, 'success');
     }
 
     saveDataToLocalStorage();
@@ -2203,6 +2225,24 @@ function setupEventListeners() {
         document.getElementById('otp-view').classList.add('hidden');
     });
     document.getElementById('btn-logout').addEventListener('click', logout);
+    
+    // Notification Bell Toggle Event
+    const bellBtn = document.getElementById('notification-bell-btn');
+    const notifDropdown = document.getElementById('notifications-dropdown');
+    if (bellBtn && notifDropdown) {
+        bellBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            notifDropdown.classList.toggle('hidden');
+            if (!notifDropdown.classList.contains('hidden')) {
+                renderNotificationList();
+            }
+        });
+        window.addEventListener('click', (e) => {
+            if (!notifDropdown.contains(e.target) && !bellBtn.contains(e.target)) {
+                notifDropdown.classList.add('hidden');
+            }
+        });
+    }
 
     document.getElementById('login-email').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') requestOTP();
@@ -2492,6 +2532,7 @@ async function handleTaskSubmit(e) {
 
             // Send LINE update notification
             notifyAssigneesViaLine(assigneeEmails, title, desc, assignedDate, true);
+            addNotification('อัปเดตงาน: ' + title, `งานได้รับการอัปเดตรายละเอียดใหม่`, 'info');
         }
     } else {
         // Add Mode
@@ -2513,6 +2554,7 @@ async function handleTaskSubmit(e) {
 
         // Send LINE creation notification
         notifyAssigneesViaLine(assigneeEmails, title, desc, assignedDate, false);
+        addNotification('มอบหมายงานใหม่: ' + title, `ผู้รับผิดชอบ: ${assigneeNames.join(', ')}`, 'info');
     }
 
     saveDataToLocalStorage();
@@ -3279,5 +3321,140 @@ window.toggleFieldVisibility = function(id) {
     if (window.lucide) {
         lucide.createIcons();
     }
+};
+
+// ================= NOTIFICATION CENTER =================
+window.addNotification = function(title, desc, type = 'info') {
+    if (!state.notifications) state.notifications = [];
+    const newNotif = {
+        id: 'notif-' + Date.now() + Math.floor(Math.random() * 1000),
+        title: title,
+        desc: desc,
+        time: new Date().toISOString(),
+        type: type,
+        read: false
+    };
+    state.notifications.unshift(newNotif);
+    if (state.notifications.length > 20) {
+        state.notifications.pop();
+    }
+    saveDataToLocalStorage();
+    renderNotificationBell();
+    
+    // Play alert sound or animation
+    const bellBtn = document.getElementById('notification-bell-btn');
+    if (bellBtn) {
+        bellBtn.style.animation = 'bounce 0.4s ease';
+        setTimeout(() => bellBtn.style.animation = '', 400);
+    }
+};
+
+window.renderNotificationBell = function() {
+    const badgeEl = document.getElementById('notification-badge');
+    if (!badgeEl) return;
+    
+    if (!state.notifications) state.notifications = [];
+    
+    const unreadCount = state.notifications.filter(n => !n.read).length;
+    if (unreadCount > 0) {
+        badgeEl.textContent = unreadCount;
+        badgeEl.classList.remove('hidden');
+    } else {
+        badgeEl.classList.add('hidden');
+    }
+};
+
+window.timeAgo = function(dateString) {
+    const now = new Date();
+    const past = new Date(dateString);
+    const msPerMinute = 60 * 1000;
+    const msPerHour = msPerMinute * 60;
+    const msPerDay = msPerHour * 24;
+    
+    const elapsed = now - past;
+    
+    if (elapsed < msPerMinute) {
+         return 'เมื่อครู่';
+    } else if (elapsed < msPerHour) {
+         return Math.round(elapsed / msPerMinute) + ' นาทีที่แล้ว';   
+    } else if (elapsed < msPerDay) {
+         return Math.round(elapsed / msPerHour) + ' ชั่วโมงที่แล้ว';   
+    } else {
+         return past.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+    }
+};
+
+window.renderNotificationList = function() {
+    const listEl = document.getElementById('notifications-list');
+    if (!listEl) return;
+    
+    if (!state.notifications || state.notifications.length === 0) {
+        listEl.innerHTML = `
+            <div style="padding: 30px 16px; text-align: center; color: var(--text-muted); font-size: 0.88rem;">
+                <i data-lucide="bell-off" style="width: 28px; height: 28px; display: block; margin: 0 auto 8px auto; opacity: 0.5;"></i>
+                <div>ไม่มีการแจ้งเตือนในขณะนี้</div>
+            </div>
+        `;
+        if (window.lucide) lucide.createIcons();
+        return;
+    }
+    
+    listEl.innerHTML = state.notifications.map(notif => {
+        let icon = 'info';
+        let iconColor = '#3b82f6';
+        let iconBg = 'rgba(59, 130, 246, 0.08)';
+        
+        if (notif.type === 'success') {
+            icon = 'check';
+            iconColor = '#10b981';
+            iconBg = 'rgba(16, 185, 129, 0.08)';
+        } else if (notif.type === 'warning') {
+            icon = 'alert-triangle';
+            iconColor = '#ff8800';
+            iconBg = 'rgba(255, 136, 0, 0.08)';
+        } else if (notif.type === 'danger') {
+            icon = 'x-circle';
+            iconColor = '#f43f5e';
+            iconBg = 'rgba(244, 63, 94, 0.08)';
+        }
+        
+        const unreadStyle = notif.read ? '' : 'background: rgba(255, 136, 0, 0.03); font-weight: 600;';
+        
+        return `
+            <div class="notification-item" onclick="markNotificationAsRead('${notif.id}')" style="display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid rgba(0,0,0,0.03); cursor: pointer; transition: background 0.15s; ${unreadStyle}">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: ${iconBg}; color: ${iconColor}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <i data-lucide="${icon}" style="width: 16px; height: 16px;"></i>
+                </div>
+                <div style="flex-grow: 1; text-align: left; min-width: 0;">
+                    <div style="font-size: 0.85rem; color: var(--text-primary); margin-bottom: 2px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${notif.title}</div>
+                    <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px; line-height: 1.3;">${notif.desc}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">${timeAgo(notif.time)}</div>
+                </div>
+                ${notif.read ? '' : '<div style="width: 6px; height: 6px; background: #ff8800; border-radius: 50%; align-self: center; flex-shrink: 0;"></div>'}
+            </div>
+        `;
+    }).join('');
+    
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+};
+
+window.markNotificationAsRead = function(id) {
+    const notif = state.notifications.find(n => n.id === id);
+    if (notif) {
+        notif.read = true;
+        saveDataToLocalStorage();
+        renderNotificationBell();
+        renderNotificationList();
+    }
+};
+
+window.markAllNotificationsAsRead = function() {
+    if (!state.notifications) return;
+    state.notifications.forEach(n => n.read = true);
+    saveDataToLocalStorage();
+    renderNotificationBell();
+    renderNotificationList();
 };
 
