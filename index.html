@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/th.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="dark-mode"> <!-- Defaults to dark-mode for premium look, can be toggled to light-mode -->
+<body class="light-mode"> <!-- Defaults to light-mode for premium look, can be toggled to dark-mode -->
 
     <!-- ================= SIMULATED GMAIL NOTIFICATION ================= -->
     <div id="simulated-sms" class="sms-notification hidden">
@@ -86,8 +86,12 @@
     <div id="app-container" class="app-layout hidden">
         
         <aside class="sidebar glass">
-            <div class="sidebar-brand" style="justify-content: center; padding: 20px 10px; margin-bottom: 24px;">
-                <span class="brand-name" style="font-size: 1.05rem; white-space: nowrap; letter-spacing: -0.2px;">NPT Consultant And Service</span>
+            <div class="sidebar-brand" style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 10px 10px; margin-bottom: 20px; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 20px;">
+                <img src="npt-logo.png" alt="NPT Logo" style="height: 64px; max-width: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));">
+                <div>
+                    <span class="brand-name" style="font-size: 1.12rem; font-weight: 700; color: #ffffff; display: block; line-height: 1.2;">NPT Consultant And Service</span>
+                    <span style="font-size: 0.68rem; color: rgba(255, 255, 255, 0.5); display: block; margin-top: 4px; font-weight: 500;">ระบบบริหารงานและบุคลากรภายในบริษัท</span>
+                </div>
             </div>
 
             <!-- User Status Info -->
@@ -175,13 +179,25 @@
                         <i data-lucide="menu"></i>
                     </button>
                     <div class="header-title">
-                        <h1 id="page-title">ภาพรวมระบบ</h1>
-                        <p id="page-subtitle" class="text-muted">ยินดีต้อนรับสู่ศูนย์กลางการจัดการงาน</p>
+                        <h1 id="page-title" style="font-size: 1.8rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">สวัสดี, Admin User 👋</h1>
+                        <p id="page-subtitle" class="text-muted" style="font-size: 0.9rem; font-weight: 500;">ยินดีต้อนรับสู่ศูนย์กลางการจัดการงาน</p>
                     </div>
                 </div>
-                <div class="header-actions" style="display: flex; gap: 8px; align-items: center;">
-                    <span id="current-time" class="time-badge">--:--:-- น.</span>
-                    <span id="current-date" class="date-badge">15 กรกฎาคม 2026</span>
+                <div class="header-actions" style="display: flex; gap: 12px; align-items: center;">
+                    <!-- Notification Bell with Badge -->
+                    <button class="btn btn-icon-only" style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: var(--transition-fast);">
+                        <i data-lucide="bell" style="width: 20px; height: 20px; color: var(--text-secondary);"></i>
+                        <span style="position: absolute; top: 10px; right: 10px; width: 8px; height: 8px; background: #f43f5e; border-radius: 50%;"></span>
+                    </button>
+                    
+                    <!-- Combined Live Clock Widget -->
+                    <div id="current-date-btn" class="date-badge" style="display: flex; align-items: center; gap: 10px; background: var(--bg-surface); border: 1px solid var(--border-color); padding: 6px 16px; border-radius: 50px; cursor: pointer; transition: var(--transition-fast);">
+                        <i data-lucide="clock" style="width: 18px; height: 18px; color: var(--text-muted);"></i>
+                        <div style="font-size: 0.85rem; font-weight: 600; text-align: left; line-height: 1.25;">
+                            <div id="current-time" style="color: var(--text-primary);">--:--:-- น.</div>
+                            <div id="current-date" style="color: var(--text-muted); font-size: 0.72rem; font-weight: 500;">--/--/----</div>
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -189,46 +205,151 @@
                 
                 <!-- 1. DASHBOARD VIEW -->
                 <section id="tab-dashboard" class="tab-panel active">
+                    
+                    <!-- Centralized Operations Dashboard Banner -->
+                    <div class="dashboard-banner" style="text-align: center; margin-bottom: 24px; padding: 24px 16px; background: var(--bg-surface); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center;">
+                        <h2 style="font-size: 2.1rem; font-weight: 800; color: #0d2149; margin-bottom: 4px; font-family: var(--font-primary); letter-spacing: -0.5px;">NPT Centralized Operations Dashboard</h2>
+                        <p style="font-size: 1.02rem; color: #ff8800; margin-bottom: 20px; font-weight: 600; letter-spacing: 0.5px;">Efficiency &bull; Transparency &bull; Integration</p>
+                        
+                        <!-- Three Info Badges -->
+                        <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; width: 100%; max-width: 900px; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.06);">
+                            <div style="display: flex; align-items: center; gap: 10px; min-width: 200px; justify-content: flex-start;">
+                                <div style="width: 36px; height: 36px; background: rgba(13, 33, 73, 0.06); color: #0d2149; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><i data-lucide="check-circle-2" style="width: 20px; height: 20px;"></i></div>
+                                <div style="text-align: left;">
+                                    <div style="font-weight: 700; font-size: 0.88rem; color: #0d2149;">Real-time Tracking</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">ติดตามงานแบบเรียลไทม์</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px; min-width: 200px; justify-content: flex-start;">
+                                <div style="width: 36px; height: 36px; background: rgba(13, 33, 73, 0.06); color: #0d2149; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><i data-lucide="puzzle" style="width: 20px; height: 20px;"></i></div>
+                                <div style="text-align: left;">
+                                    <div style="font-weight: 700; font-size: 0.88rem; color: #0d2149;">Integrated Modules</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">(Quotation, PR/PO, HR) บูรณาการหลัก</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px; min-width: 200px; justify-content: flex-start;">
+                                <div style="width: 36px; height: 36px; background: rgba(13, 33, 73, 0.06); color: #0d2149; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><i data-lucide="shield-check" style="width: 20px; height: 20px;"></i></div>
+                                <div style="text-align: left;">
+                                    <div style="font-weight: 700; font-size: 0.88rem; color: #0d2149;">Efficiency & Transparency</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">เพิ่มประสิทธิภาพ โปร่งใส ตรวจสอบได้</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Statistics Grid -->
                     <div class="stats-grid">
-                        <div class="stat-card glass" style="cursor: pointer;" onclick="navigateToTasks('all')">
-                            <div class="stat-icon bg-primary-soft"><i data-lucide="list-todo"></i></div>
-                            <div class="stat-details">
-                                <h3>งานทั้งหมด</h3>
-                                <span class="stat-value" id="stat-total-tasks">0</span>
-                                <span class="stat-desc">รายการงานในระบบ</span>
+                        <div class="stat-card glass" style="cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 180px;" onclick="navigateToTasks('all')">
+                            <div style="display: flex; gap: 15px; align-items: center; width: 100%;">
+                                <div class="stat-icon bg-primary-soft" style="color: #3b82f6; background: rgba(59, 130, 246, 0.08); width: 44px; height: 44px; border-radius: 12px;"><i data-lucide="list-todo"></i></div>
+                                <div style="text-align: left;">
+                                    <h3 style="font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px;">งานทั้งหมด (Total Tasks)</h3>
+                                    <div style="display: flex; align-items: baseline; gap: 6px;">
+                                        <span class="stat-value" id="stat-total-tasks" style="font-size: 2.1rem; font-weight: 700; color: #0d2149;">0</span>
+                                        <span class="stat-desc" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">รายการ</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Blue Sparkline -->
+                            <div style="display: flex; gap: 3px; align-items: flex-end; height: 24px; margin-top: 15px; width: 100%; padding: 0 4px;">
+                                <div style="flex: 1; height: 35%; background: rgba(59, 130, 246, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 60%; background: rgba(59, 130, 246, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 45%; background: rgba(59, 130, 246, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 80%; background: rgba(59, 130, 246, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 50%; background: rgba(59, 130, 246, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 95%; background: #3b82f6; border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 75%; background: rgba(59, 130, 246, 0.15); border-radius: 2px;"></div>
                             </div>
                         </div>
-                        <div class="stat-card glass" style="cursor: pointer;" onclick="navigateToTasks('ongoing')">
-                            <div class="stat-icon bg-warning-soft"><i data-lucide="clock"></i></div>
-                            <div class="stat-details">
-                                <h3>กำลังดำเนินการ</h3>
-                                <span class="stat-value text-warning" id="stat-pending-tasks">0</span>
-                                <span class="stat-desc">งานที่พนักงานกำลังทำ</span>
+                        
+                        <div class="stat-card glass" style="cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 180px;" onclick="navigateToTasks('ongoing')">
+                            <div style="display: flex; gap: 15px; align-items: center; width: 100%;">
+                                <div class="stat-icon bg-warning-soft" style="color: #ff8800; background: rgba(255, 136, 0, 0.08); width: 44px; height: 44px; border-radius: 12px;"><i data-lucide="clock"></i></div>
+                                <div style="text-align: left;">
+                                    <h3 style="font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px;">กำลังดำเนินการ (In Progress)</h3>
+                                    <div style="display: flex; align-items: baseline; gap: 6px;">
+                                        <span class="stat-value" id="stat-pending-tasks" style="font-size: 2.1rem; font-weight: 700; color: #ff8800;">0</span>
+                                        <span class="stat-desc" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">รายการ</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Orange Sparkline -->
+                            <div style="display: flex; gap: 3px; align-items: flex-end; height: 24px; margin-top: 15px; width: 100%; padding: 0 4px;">
+                                <div style="flex: 1; height: 45%; background: rgba(255, 136, 0, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 35%; background: rgba(255, 136, 0, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 70%; background: rgba(255, 136, 0, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 50%; background: rgba(255, 136, 0, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 90%; background: #ff8800; border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 60%; background: rgba(255, 136, 0, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 80%; background: rgba(255, 136, 0, 0.15); border-radius: 2px;"></div>
                             </div>
                         </div>
-                        <div class="stat-card glass" style="cursor: pointer;" onclick="navigateToTasks('completed')">
-                            <div class="stat-icon bg-success-soft"><i data-lucide="check-circle-2"></i></div>
-                            <div class="stat-details">
-                                <h3>เสร็จสิ้นแล้ว</h3>
-                                <span class="stat-value text-success" id="stat-completed-tasks">0</span>
-                                <span class="stat-desc">งานที่ปิดเรียบร้อย</span>
+
+                        <div class="stat-card glass" style="cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 180px;" onclick="navigateToTasks('completed')">
+                            <div style="display: flex; gap: 15px; align-items: center; width: 100%;">
+                                <div class="stat-icon bg-success-soft" style="color: #10b981; background: rgba(16, 185, 129, 0.08); width: 44px; height: 44px; border-radius: 12px;"><i data-lucide="check-circle-2"></i></div>
+                                <div style="text-align: left;">
+                                    <h3 style="font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px;">เสร็จสิ้นแล้ว (Completed)</h3>
+                                    <div style="display: flex; align-items: baseline; gap: 6px;">
+                                        <span class="stat-value" id="stat-completed-tasks" style="font-size: 2.1rem; font-weight: 700; color: #10b981;">0</span>
+                                        <span class="stat-desc" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">รายการ</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Green Sparkline -->
+                            <div style="display: flex; gap: 3px; align-items: flex-end; height: 24px; margin-top: 15px; width: 100%; padding: 0 4px;">
+                                <div style="flex: 1; height: 30%; background: rgba(16, 185, 129, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 50%; background: rgba(16, 185, 129, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 40%; background: rgba(16, 185, 129, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 60%; background: rgba(16, 185, 129, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 80%; background: #10b981; border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 65%; background: rgba(16, 185, 129, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 90%; background: rgba(16, 185, 129, 0.15); border-radius: 2px;"></div>
                             </div>
                         </div>
-                        <div class="stat-card glass" style="cursor: pointer;" onclick="navigateToQuotations()">
-                            <div class="stat-icon bg-info-soft"><i data-lucide="file-text"></i></div>
-                            <div class="stat-details">
-                                <h3>ใบเสนอราคา</h3>
-                                <span class="stat-value text-info" id="stat-total-quotations">0</span>
-                                <span class="stat-desc">จำนวนใบเสนอราคาทั้งหมด</span>
+
+                        <div class="stat-card glass" style="cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 180px;" onclick="navigateToQuotations()">
+                            <div style="display: flex; gap: 15px; align-items: center; width: 100%;">
+                                <div class="stat-icon bg-info-soft" style="color: #8b5cf6; background: rgba(139, 92, 246, 0.08); width: 44px; height: 44px; border-radius: 12px;"><i data-lucide="file-text"></i></div>
+                                <div style="text-align: left;">
+                                    <h3 style="font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px;">ใบเสนอราคา (Quotations)</h3>
+                                    <div style="display: flex; align-items: baseline; gap: 6px;">
+                                        <span class="stat-value" id="stat-total-quotations" style="font-size: 2.1rem; font-weight: 700; color: #8b5cf6;">0</span>
+                                        <span class="stat-desc" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">รายการ</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Purple Sparkline -->
+                            <div style="display: flex; gap: 3px; align-items: flex-end; height: 24px; margin-top: 15px; width: 100%; padding: 0 4px;">
+                                <div style="flex: 1; height: 50%; background: rgba(139, 92, 246, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 40%; background: rgba(139, 92, 246, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 80%; background: rgba(139, 92, 246, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 60%; background: rgba(139, 92, 246, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 75%; background: rgba(139, 92, 246, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 95%; background: #8b5cf6; border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 70%; background: rgba(139, 92, 246, 0.15); border-radius: 2px;"></div>
                             </div>
                         </div>
-                        <div class="stat-card glass admin-only" style="cursor: pointer;" onclick="navigateToStaff()">
-                            <div class="stat-icon bg-info-soft"><i data-lucide="users"></i></div>
-                            <div class="stat-details">
-                                <h3>พนักงานทั้งหมด</h3>
-                                <span class="stat-value text-info" id="stat-total-staff">0</span>
-                                <span class="stat-desc">จำนวนพนักงานในบริษัท</span>
+
+                        <div class="stat-card glass" style="cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 180px;" onclick="navigateToStaff()">
+                            <div style="display: flex; gap: 15px; align-items: center; width: 100%;">
+                                <div class="stat-icon bg-info-soft" style="color: #14b8a6; background: rgba(20, 184, 166, 0.08); width: 44px; height: 44px; border-radius: 12px;"><i data-lucide="users"></i></div>
+                                <div style="text-align: left;">
+                                    <h3 style="font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px;">พนักงานทั้งหมด (Employees)</h3>
+                                    <div style="display: flex; align-items: baseline; gap: 6px;">
+                                        <span class="stat-value" id="stat-total-staff" style="font-size: 2.1rem; font-weight: 700; color: #14b8a6;">0</span>
+                                        <span class="stat-desc" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">คน</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Teal Sparkline -->
+                            <div style="display: flex; gap: 3px; align-items: flex-end; height: 24px; margin-top: 15px; width: 100%; padding: 0 4px;">
+                                <div style="flex: 1; height: 40%; background: rgba(20, 184, 166, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 60%; background: rgba(20, 184, 166, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 50%; background: rgba(20, 184, 166, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 85%; background: rgba(20, 184, 166, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 70%; background: rgba(20, 184, 166, 0.15); border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 95%; background: #14b8a6; border-radius: 2px;"></div>
+                                <div style="flex: 1; height: 80%; background: rgba(20, 184, 166, 0.15); border-radius: 2px;"></div>
                             </div>
                         </div>
                     </div>
@@ -548,9 +669,14 @@
                     </div>
                 </section>
 
-            </div>
-        </main>
-    </div>
+            <!-- Application Footer -->
+            <footer style="margin-top: auto; padding-top: 40px; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); font-size: 0.85rem; color: var(--text-muted); width: 100%;">
+                <div style="font-weight: 600; color: #ff8800;">&ldquo; บริหารงานง่ายขึ้น ข้อมูลครบถ้วน ทันเวลา &rdquo;</div>
+                <div>NPT Consultant And Service Co., Ltd. &copy; 2024 All Rights Reserved.</div>
+            </footer>
+        </div>
+    </main>
+</div>
 
     <!-- ================= MODALS ================= -->
     

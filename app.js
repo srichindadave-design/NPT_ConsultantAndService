@@ -2417,7 +2417,7 @@ function setupEventListeners() {
     }
 
     // Calendar & Weather Modal Events
-    const currentDateBtn = document.getElementById('current-date');
+    const currentDateBtn = document.getElementById('current-date-btn') || document.getElementById('current-date');
     if (currentDateBtn) {
         currentDateBtn.addEventListener('click', () => {
             calCurrentDate = new Date();
