@@ -824,6 +824,7 @@ body.light-mode .table-hover tbody tr:hover {
     align-items: center;
     gap: 6px;
     font-weight: 500;
+    white-space: nowrap;
 }
 
 .status-dot {
