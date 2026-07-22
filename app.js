@@ -1122,29 +1122,12 @@ function renderQuotations() {
             fileBtn = `<a href="${q.fileData}" download="${escapeHtml(q.fileName)}" class="btn btn-secondary btn-small" title="ดาวน์โหลดไฟล์แนบ"><i data-lucide="download"></i> ไฟล์แนบ</a>`;
         }
 
-        let gpBadge = '';
-        if (checkIsManagement() && q.estGpPercent !== undefined) {
-            let gpColor = '#10b981';
-            let gpBg = 'rgba(16, 185, 129, 0.1)';
-            if (q.estGpPercent < 0) {
-                gpColor = '#f43f5e';
-                gpBg = 'rgba(244, 63, 94, 0.15)';
-            } else if (q.estGpPercent < 20) {
-                gpColor = '#f43f5e';
-                gpBg = 'rgba(244, 63, 94, 0.1)';
-            } else if (q.estGpPercent < 40) {
-                gpColor = '#ff8800';
-                gpBg = 'rgba(255, 136, 0, 0.1)';
-            }
-            gpBadge = `<br><span class="badge" style="background: ${gpBg} !important; color: ${gpColor} !important; font-size: 0.72rem !important; font-weight: bold !important; border: 1px solid rgba(255,255,255,0.05) !important; padding: 2px 6px !important; border-radius: 4px !important; display: inline-block !important; margin-top: 4px !important; white-space: nowrap !important;">GP ${q.estGpPercent.toFixed(1)}%</span>`;
-        }
-
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td><strong>${escapeHtml(q.code)}</strong></td>
             <td>${escapeHtml(q.customer)}</td>
             <td>${formatThaiDate(q.date)}</td>
-            <td>${formattedTotal} ${gpBadge}</td>
+            <td>${formattedTotal}</td>
             <td>
                 <div class="gap-2" style="display:flex;">
                     ${fileBtn}
@@ -1340,14 +1323,6 @@ window.editQuotation = function(id) {
     document.getElementById('quote-total').value = quote.total;
     document.getElementById('quote-notes').value = quote.notes || '';
 
-    // Load simulator details
-    document.getElementById('sim-labor').value = quote.estLaborCost || 0;
-    document.getElementById('sim-material').value = quote.estMaterialCost || 0;
-    document.getElementById('sim-travel').value = quote.estTravelCost || 0;
-    document.getElementById('sim-subcontractor').value = quote.estSubcontractorCost || 0;
-    document.getElementById('sim-other').value = quote.estOtherCost || 0;
-    calculateSimulatorProfit();
-
     // Load items
     const container = document.getElementById('quote-items-container');
     container.innerHTML = '';
@@ -1364,33 +1339,32 @@ window.editQuotation = function(id) {
     openModal('quotation-modal');
 };
 
-window.calculateSimulatorProfit = function() {
-    const totalVal = parseFloat(document.getElementById('quote-total').value) || 0;
-    const labor = parseFloat(document.getElementById('sim-labor').value) || 0;
-    const material = parseFloat(document.getElementById('sim-material').value) || 0;
-    const travel = parseFloat(document.getElementById('sim-travel').value) || 0;
-    const subcon = parseFloat(document.getElementById('sim-subcontractor').value) || 0;
-    const other = parseFloat(document.getElementById('sim-other').value) || 0;
+window.calculatePRProfit = function() {
+    const prTotal = parseFloat(document.getElementById('pr-total').value) || 0;
+    const projectVal = parseFloat(document.getElementById('pr-sim-project-val').value) || 0;
+    const labor = parseFloat(document.getElementById('pr-sim-labor').value) || 0;
+    const travel = parseFloat(document.getElementById('pr-sim-travel').value) || 0;
+    const other = parseFloat(document.getElementById('pr-sim-other').value) || 0;
     
-    const totalCost = labor + material + travel + subcon + other;
-    const grossProfit = totalVal - totalCost;
+    const totalCost = prTotal + labor + travel + other;
+    const grossProfit = projectVal - totalCost;
     let gpPercent = 0;
-    if (totalVal > 0) {
-        gpPercent = (grossProfit / totalVal) * 100;
+    if (projectVal > 0) {
+        gpPercent = (grossProfit / projectVal) * 100;
     }
     
-    // Update UI elements
-    document.getElementById('sim-total-cost').textContent = totalCost.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' บาท';
-    document.getElementById('sim-gross-profit').textContent = grossProfit.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' บาท';
-    document.getElementById('sim-gp-percent').textContent = gpPercent.toFixed(2) + '%';
+    document.getElementById('pr-sim-current-pr-cost').textContent = prTotal.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' บาท';
+    document.getElementById('pr-sim-total-cost').textContent = totalCost.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' บาท';
+    document.getElementById('pr-sim-gross-profit').textContent = grossProfit.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' บาท';
+    document.getElementById('pr-sim-gp-percent').textContent = gpPercent.toFixed(2) + '%';
     
-    const resultBox = document.getElementById('sim-result-box');
-    const indicator = document.getElementById('sim-status-indicator');
-    const gpText = document.getElementById('sim-gp-percent');
+    const resultBox = document.getElementById('pr-sim-result-box');
+    const indicator = document.getElementById('pr-sim-status-indicator');
+    const gpText = document.getElementById('pr-sim-gp-percent');
     
-    if (totalVal <= 0) {
+    if (projectVal <= 0) {
         resultBox.style.borderLeftColor = 'var(--border-color)';
-        indicator.textContent = 'ระบุราคาขาย';
+        indicator.textContent = 'ระบุมูลค่าโครงการ';
         indicator.className = 'badge';
         indicator.style.background = 'rgba(255,255,255,0.08)';
         indicator.style.color = 'var(--text-secondary)';
@@ -1407,6 +1381,67 @@ window.calculateSimulatorProfit = function() {
         indicator.textContent = 'กำไรต่ำผิดปกติ 🔴';
         indicator.className = 'badge badge-danger';
         indicator.style.background = 'rgba(244, 63, 94, 0.1)';
+        indicator.style.color = '#f43f5e';
+        gpText.style.color = '#f43f5e';
+    } else if (gpPercent < 40) {
+        resultBox.style.borderLeftColor = '#ff8800';
+        indicator.textContent = 'กำไรปานกลาง 🟡';
+        indicator.className = 'badge badge-warning';
+        indicator.style.background = 'rgba(255, 136, 0, 0.1)';
+        indicator.style.color = '#ff8800';
+        gpText.style.color = '#ff8800';
+    } else {
+        resultBox.style.borderLeftColor = '#10b981';
+        indicator.textContent = 'กำไรดีเยี่ยม 🟢';
+        indicator.className = 'badge badge-success';
+        indicator.style.background = 'rgba(16, 185, 129, 0.1)';
+        indicator.style.color = '#10b981';
+        gpText.style.color = '#10b981';
+    }
+};
+
+window.calculatePOProfit = function() {
+    const poTotal = parseFloat(document.getElementById('po-total-disp').textContent.replace(/,/g, '')) || 0;
+    const projectVal = parseFloat(document.getElementById('po-sim-project-val').value) || 0;
+    const labor = parseFloat(document.getElementById('po-sim-labor').value) || 0;
+    const travel = parseFloat(document.getElementById('po-sim-travel').value) || 0;
+    const other = parseFloat(document.getElementById('po-sim-other').value) || 0;
+    
+    const totalCost = poTotal + labor + travel + other;
+    const grossProfit = projectVal - totalCost;
+    let gpPercent = 0;
+    if (projectVal > 0) {
+        gpPercent = (grossProfit / projectVal) * 100;
+    }
+    
+    document.getElementById('po-sim-current-po-cost').textContent = poTotal.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' บาท';
+    document.getElementById('po-sim-total-cost').textContent = totalCost.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' บาท';
+    document.getElementById('po-sim-gross-profit').textContent = grossProfit.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' บาท';
+    document.getElementById('po-sim-gp-percent').textContent = gpPercent.toFixed(2) + '%';
+    
+    const resultBox = document.getElementById('po-sim-result-box');
+    const indicator = document.getElementById('po-sim-status-indicator');
+    const gpText = document.getElementById('po-sim-gp-percent');
+    
+    if (projectVal <= 0) {
+        resultBox.style.borderLeftColor = 'var(--border-color)';
+        indicator.textContent = 'ระบุมูลค่าโครงการ';
+        indicator.className = 'badge';
+        indicator.style.background = 'rgba(255,255,255,0.08)';
+        indicator.style.color = 'var(--text-secondary)';
+        gpText.style.color = 'var(--text-primary)';
+    } else if (gpPercent < 0) {
+        resultBox.style.borderLeftColor = '#f43f5e';
+        indicator.textContent = 'ขาดทุนสุทธิ! ⚠️';
+        indicator.className = 'badge badge-danger';
+        indicator.style.background = 'rgba(244, 63, 94, 0.15)';
+        indicator.style.color = '#f43f5e';
+        gpText.style.color = '#f43f5e';
+    } else if (gpPercent < 20) {
+        resultBox.style.borderLeftColor = '#f43f5e';
+        indicator.textContent = 'กำไรต่ำผิดปกติ 🔴';
+        indicator.className = 'badge badge-danger';
+        indicator.style.background = 'rgba(244, 63, 94, 0.15)'; // Red bg
         indicator.style.color = '#f43f5e';
         gpText.style.color = '#f43f5e';
     } else if (gpPercent < 40) {
@@ -1600,12 +1635,29 @@ function renderPRs() {
             `;
         }
 
+        let gpBadge = '';
+        if (isMgmt && pr.estGpPercent !== undefined && pr.estProjectVal > 0) {
+            let gpColor = '#10b981';
+            let gpBg = 'rgba(16, 185, 129, 0.1)';
+            if (pr.estGpPercent < 0) {
+                gpColor = '#f43f5e';
+                gpBg = 'rgba(244, 63, 94, 0.15)';
+            } else if (pr.estGpPercent < 20) {
+                gpColor = '#f43f5e';
+                gpBg = 'rgba(244, 63, 94, 0.1)';
+            } else if (pr.estGpPercent < 40) {
+                gpColor = '#ff8800';
+                gpBg = 'rgba(255, 136, 0, 0.1)';
+            }
+            gpBadge = `<br><span class="badge" style="background: ${gpBg} !important; color: ${gpColor} !important; font-size: 0.72rem !important; font-weight: bold !important; border: 1px solid rgba(255,255,255,0.05) !important; padding: 2px 6px !important; border-radius: 4px !important; display: inline-block !important; margin-top: 4px !important; white-space: nowrap !important;">GP ${pr.estGpPercent.toFixed(1)}%</span>`;
+        }
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td><strong>${escapeHtml(pr.code)}</strong></td>
             <td>${escapeHtml(pr.requesterName)} (${escapeHtml(pr.requesterEmail)})</td>
             <td>${formatThaiDate(pr.date)}</td>
-            <td>${estTotalVal} บาท</td>
+            <td>${estTotalVal} บาท ${gpBadge}</td>
             <td><span class="status-badge ${statusBadgeClass}">${statusText}</span></td>
             <td>
                 <div class="gap-2" style="display:flex; flex-wrap: wrap;">
@@ -1679,6 +1731,11 @@ function calculatePRTotal() {
     document.getElementById('pr-vat-disp').textContent = vatAmount.toLocaleString('th-TH', {minimumFractionDigits: 2});
     document.getElementById('pr-total-disp').textContent = total.toLocaleString('th-TH', {minimumFractionDigits: 2});
     document.getElementById('pr-total').value = total.toFixed(2);
+    
+    // Live update PR profitability simulator
+    if (typeof calculatePRProfit === 'function') {
+        calculatePRProfit();
+    }
 }
 
 window.editPR = function(id) {
@@ -1692,6 +1749,12 @@ window.editPR = function(id) {
     document.getElementById('pr-vat-rate').value = pr.vatRate !== undefined ? pr.vatRate : 0;
     document.getElementById('pr-total').value = pr.total || 0;
     
+    // Load simulator details
+    document.getElementById('pr-sim-project-val').value = pr.estProjectVal || 0;
+    document.getElementById('pr-sim-labor').value = pr.estLaborCost || 0;
+    document.getElementById('pr-sim-travel').value = pr.estTravelCost || 0;
+    document.getElementById('pr-sim-other').value = pr.estOtherCost || 0;
+
     const container = document.getElementById('pr-items-container');
     container.innerHTML = '';
     const items = pr.items || [];
@@ -1700,6 +1763,7 @@ window.editPR = function(id) {
         addPRItemRow(item.desc, item.qty, item.unit, price);
     });
     calculatePRTotal();
+    calculatePRProfit();
 
     document.getElementById('pr-modal-title').textContent = 'แก้ไขใบขอซื้อ (PR)';
     openModal('pr-modal');
@@ -1770,6 +1834,13 @@ async function handlePRSubmit(e) {
     const vatAmount = subtotal * (vatRate / 100);
     const total = subtotal + vatAmount;
 
+    const estProjectVal = parseFloat(document.getElementById('pr-sim-project-val').value) || 0;
+    const estLaborCost = parseFloat(document.getElementById('pr-sim-labor').value) || 0;
+    const estTravelCost = parseFloat(document.getElementById('pr-sim-travel').value) || 0;
+    const estOtherCost = parseFloat(document.getElementById('pr-sim-other').value) || 0;
+    const estTotalCost = total + estLaborCost + estTravelCost + estOtherCost;
+    const estGpPercent = estProjectVal > 0 ? ((estProjectVal - estTotalCost) / estProjectVal) * 100 : 0;
+
     if (prId) {
         // Edit Mode
         const pr = state.prs.find(p => p.id === prId);
@@ -1781,6 +1852,12 @@ async function handlePRSubmit(e) {
             pr.vatRate = vatRate;
             pr.vatAmount = vatAmount;
             pr.total = total;
+            pr.estProjectVal = estProjectVal;
+            pr.estLaborCost = estLaborCost;
+            pr.estTravelCost = estTravelCost;
+            pr.estOtherCost = estOtherCost;
+            pr.estTotalCost = estTotalCost;
+            pr.estGpPercent = estGpPercent;
             addNotification('แก้ไขใบขอซื้อสำเร็จ', `ใบขอซื้อ ${pr.code} ได้รับการอัปเดต`, 'info', { type: 'pr', id: pr.id });
         }
         showToast('แก้ไขใบขอซื้อสำเร็จ', 'success');
@@ -1809,7 +1886,13 @@ async function handlePRSubmit(e) {
             vatAmount: vatAmount,
             total: total,
             notes: prNotes,
-            status: 'approved'
+            status: 'approved',
+            estProjectVal: estProjectVal,
+            estLaborCost: estLaborCost,
+            estTravelCost: estTravelCost,
+            estOtherCost: estOtherCost,
+            estTotalCost: estTotalCost,
+            estGpPercent: estGpPercent
         });
         showToast('บันทึกใบขอซื้อสำเร็จ (อนุมัติอัตโนมัติ)', 'success');
         addNotification('ใบขอซื้ออนุมัติอัตโนมัติ', `ใบขอซื้อเลขที่ ${code} โดย ${requesterName} ได้รับการอนุมัติแล้ว`, 'success', { type: 'pr', id: newPrId });
@@ -1977,13 +2060,30 @@ function renderPOs() {
             `;
         }
 
+        let gpBadge = '';
+        if (isMgmt && po.estGpPercent !== undefined && po.estProjectVal > 0) {
+            let gpColor = '#10b981';
+            let gpBg = 'rgba(16, 185, 129, 0.1)';
+            if (po.estGpPercent < 0) {
+                gpColor = '#f43f5e';
+                gpBg = 'rgba(244, 63, 94, 0.15)';
+            } else if (po.estGpPercent < 20) {
+                gpColor = '#f43f5e';
+                gpBg = 'rgba(244, 63, 94, 0.1)';
+            } else if (po.estGpPercent < 40) {
+                gpColor = '#ff8800';
+                gpBg = 'rgba(255, 136, 0, 0.1)';
+            }
+            gpBadge = `<br><span class="badge" style="background: ${gpBg} !important; color: ${gpColor} !important; font-size: 0.72rem !important; font-weight: bold !important; border: 1px solid rgba(255,255,255,0.05) !important; padding: 2px 6px !important; border-radius: 4px !important; display: inline-block !important; margin-top: 4px !important; white-space: nowrap !important;">GP ${po.estGpPercent.toFixed(1)}%</span>`;
+        }
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td><strong>${escapeHtml(po.code)}</strong></td>
             <td>${escapeHtml(po.vendor)}</td>
             <td>${formatThaiDate(po.date)}</td>
             <td>${escapeHtml(po.refPrCode || '-')}</td>
-            <td>${totalVal} บาท</td>
+            <td>${totalVal} บาท ${gpBadge}</td>
             <td><span class="status-badge ${statusBadgeClass}">${statusText}</span></td>
             <td>
                 <div class="gap-2" style="display:flex; align-items: center;">
@@ -2048,6 +2148,11 @@ function calculatePOTotal() {
     document.getElementById('po-subtotal-disp').textContent = subtotal.toLocaleString('th-TH', {minimumFractionDigits: 2});
     document.getElementById('po-vat-disp').textContent = vatAmount.toLocaleString('th-TH', {minimumFractionDigits: 2});
     document.getElementById('po-total-disp').textContent = total.toLocaleString('th-TH', {minimumFractionDigits: 2});
+    
+    // Live update PO profitability simulator
+    if (typeof calculatePOProfit === 'function') {
+        calculatePOProfit();
+    }
 }
 
 function updateRefPrDropdown() {
@@ -2081,12 +2186,19 @@ window.editPO = function(id) {
     document.getElementById('po-vat-rate').value = po.vatRate || 0;
     document.getElementById('po-notes').value = po.notes || '';
     
+    // Load simulator details
+    document.getElementById('po-sim-project-val').value = po.estProjectVal || 0;
+    document.getElementById('po-sim-labor').value = po.estLaborCost || 0;
+    document.getElementById('po-sim-travel').value = po.estTravelCost || 0;
+    document.getElementById('po-sim-other').value = po.estOtherCost || 0;
+
     const container = document.getElementById('po-items-container');
     container.innerHTML = '';
     po.items.forEach(item => {
         addPOItemRow(item.desc, item.qty, item.unit, item.unitPrice);
     });
     calculatePOTotal();
+    calculatePOProfit();
 
     document.getElementById('po-modal-title').textContent = 'แก้ไขใบสั่งซื้อ (PO)';
     openModal('po-modal');
@@ -2134,6 +2246,13 @@ async function handlePOSubmit(e) {
     const vatAmount = subtotal * (poVatRate / 100);
     const total = subtotal + vatAmount;
 
+    const estProjectVal = parseFloat(document.getElementById('po-sim-project-val').value) || 0;
+    const estLaborCost = parseFloat(document.getElementById('po-sim-labor').value) || 0;
+    const estTravelCost = parseFloat(document.getElementById('po-sim-travel').value) || 0;
+    const estOtherCost = parseFloat(document.getElementById('po-sim-other').value) || 0;
+    const estTotalCost = total + estLaborCost + estTravelCost + estOtherCost;
+    const estGpPercent = estProjectVal > 0 ? ((estProjectVal - estTotalCost) / estProjectVal) * 100 : 0;
+
     if (poId) {
         // Edit Mode
         const po = state.pos.find(p => p.id === poId);
@@ -2150,6 +2269,12 @@ async function handlePOSubmit(e) {
             po.total = total;
             po.items = items;
             po.notes = poNotes;
+            po.estProjectVal = estProjectVal;
+            po.estLaborCost = estLaborCost;
+            po.estTravelCost = estTravelCost;
+            po.estOtherCost = estOtherCost;
+            po.estTotalCost = estTotalCost;
+            po.estGpPercent = estGpPercent;
             addNotification('แก้ไขใบสั่งซื้อสำเร็จ', `ใบสั่งซื้อ ${po.code} ได้รับการอัปเดต`, 'info', { type: 'po', id: po.id });
         }
         showToast('แก้ไขใบสั่งซื้อสำเร็จ', 'success');
@@ -2176,7 +2301,13 @@ async function handlePOSubmit(e) {
             items: items,
             notes: poNotes,
             creatorEmail: state.currentUser ? state.currentUser.email : '',
-            status: 'pending_delivery'
+            status: 'pending_delivery',
+            estProjectVal: estProjectVal,
+            estLaborCost: estLaborCost,
+            estTravelCost: estTravelCost,
+            estOtherCost: estOtherCost,
+            estTotalCost: estTotalCost,
+            estGpPercent: estGpPercent
         });
         showToast('สร้างใบสั่งซื้อสำเร็จ', 'success');
         addNotification('ออกใบสั่งซื้อใหม่', `ออกใบสั่งซื้อเลขที่ ${code} เรียบร้อยแล้ว`, 'success', { type: 'po', id: newPoId });
@@ -2408,14 +2539,6 @@ function setupEventListeners() {
         addQuotationItemRow();
         if (quoteDatePicker) quoteDatePicker.setDate(new Date().toISOString().split('T')[0]);
         
-        // Reset simulator fields
-        document.getElementById('sim-labor').value = 0;
-        document.getElementById('sim-material').value = 0;
-        document.getElementById('sim-travel').value = 0;
-        document.getElementById('sim-subcontractor').value = 0;
-        document.getElementById('sim-other').value = 0;
-        calculateSimulatorProfit();
-
         tempUploadedFileData = '';
         tempUploadedFileName = '';
         document.getElementById('quote-file').value = '';
@@ -2454,19 +2577,19 @@ function setupEventListeners() {
         reader.readAsDataURL(file);
     });
 
-    // Profitability Simulator Live Calculation Events
-    document.getElementById('quote-total').addEventListener('input', () => {
-        calculateSimulatorProfit();
-    });
-    document.querySelectorAll('.sim-input').forEach(input => {
+    // PR Profitability Simulator Live Calculation Events
+    document.querySelectorAll('.pr-sim-input').forEach(input => {
         input.addEventListener('input', () => {
-            calculateSimulatorProfit();
+            calculatePRProfit();
         });
     });
 
-
-
-
+    // PO Profitability Simulator Live Calculation Events
+    document.querySelectorAll('.po-sim-input').forEach(input => {
+        input.addEventListener('input', () => {
+            calculatePOProfit();
+        });
+    });
 
     // PR and PO Event Listeners
     document.getElementById('btn-open-pr-modal').addEventListener('click', () => {
@@ -2476,6 +2599,14 @@ function setupEventListeners() {
         addPRItemRow();
         if (prDatePicker) prDatePicker.setDate(new Date().toISOString().split('T')[0]);
         document.getElementById('pr-total').value = '0.00';
+        
+        // Reset PR simulator inputs
+        document.getElementById('pr-sim-project-val').value = 0;
+        document.getElementById('pr-sim-labor').value = 0;
+        document.getElementById('pr-sim-travel').value = 0;
+        document.getElementById('pr-sim-other').value = 0;
+        calculatePRProfit();
+
         document.getElementById('pr-modal-title').textContent = 'สร้างใบขอซื้อใหม่ (PR)';
         openModal('pr-modal');
     });
@@ -2495,6 +2626,14 @@ function setupEventListeners() {
         if (poDatePicker) poDatePicker.setDate(new Date().toISOString().split('T')[0]);
         if (poDeliveryDatePicker) poDeliveryDatePicker.setDate('');
         calculatePOTotal();
+        
+        // Reset PO simulator inputs
+        document.getElementById('po-sim-project-val').value = 0;
+        document.getElementById('po-sim-labor').value = 0;
+        document.getElementById('po-sim-travel').value = 0;
+        document.getElementById('po-sim-other').value = 0;
+        calculatePOProfit();
+
         document.getElementById('po-modal-title').textContent = 'สร้างใบสั่งซื้อใหม่ (PO)';
         openModal('po-modal');
     });
@@ -2768,14 +2907,6 @@ function handleQuotationSubmit(e) {
         return;
     }
 
-    const estLaborCost = parseFloat(document.getElementById('sim-labor').value) || 0;
-    const estMaterialCost = parseFloat(document.getElementById('sim-material').value) || 0;
-    const estTravelCost = parseFloat(document.getElementById('sim-travel').value) || 0;
-    const estSubcontractorCost = parseFloat(document.getElementById('sim-subcontractor').value) || 0;
-    const estOtherCost = parseFloat(document.getElementById('sim-other').value) || 0;
-    const estTotalCost = estLaborCost + estMaterialCost + estTravelCost + estSubcontractorCost + estOtherCost;
-    const estGpPercent = total > 0 ? ((total - estTotalCost) / total) * 100 : 0;
-
     if (id) {
         const quote = state.quotations.find(q => q.id === id);
         if (quote) {
@@ -2787,13 +2918,6 @@ function handleQuotationSubmit(e) {
             quote.items = items;
             quote.fileData = tempUploadedFileData;
             quote.fileName = tempUploadedFileName;
-            quote.estLaborCost = estLaborCost;
-            quote.estMaterialCost = estMaterialCost;
-            quote.estTravelCost = estTravelCost;
-            quote.estSubcontractorCost = estSubcontractorCost;
-            quote.estOtherCost = estOtherCost;
-            quote.estTotalCost = estTotalCost;
-            quote.estGpPercent = estGpPercent;
         }
     } else {
         const currentYear = new Date(date).getFullYear();
@@ -2810,14 +2934,7 @@ function handleQuotationSubmit(e) {
             total,
             notes,
             fileData: tempUploadedFileData,
-            fileName: tempUploadedFileName,
-            estLaborCost,
-            estMaterialCost,
-            estTravelCost,
-            estSubcontractorCost,
-            estOtherCost,
-            estTotalCost,
-            estGpPercent
+            fileName: tempUploadedFileName
         };
         state.quotations.push(newQuote);
     }
