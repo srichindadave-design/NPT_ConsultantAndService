@@ -1191,9 +1191,9 @@ window.updateTaskStatus = function(id, newStatus) {
     
     if (newStatus === 'completed' && oldStatus !== 'completed') {
         notifyTaskCompletionViaLine(task);
-        addNotification('งานเสร็จสิ้นแล้ว: ' + task.title, `ผู้ปฏิบัติงานเสร็จสิ้นการปฏิบัติงานเรียบร้อย`, 'success');
+        addNotification('งานเสร็จสิ้นแล้ว: ' + task.title, `ผู้ปฏิบัติงานเสร็จสิ้นการปฏิบัติงานเรียบร้อย`, 'success', { type: 'task', id: task.id });
     } else {
-        addNotification('อัปเดตสถานะงาน: ' + task.title, `สถานะงานถูกเปลี่ยนเป็น: ${newStatus === 'ongoing' ? 'กำลังดำเนินการ' : 'รอดำเนินการ'}`, 'info');
+        addNotification('อัปเดตสถานะงาน: ' + task.title, `สถานะงานถูกเปลี่ยนเป็น: ${newStatus === 'ongoing' ? 'กำลังดำเนินการ' : 'รอดำเนินการ'}`, 'info', { type: 'task', id: task.id });
     }
 
     saveDataToLocalStorage();
@@ -1227,10 +1227,10 @@ window.updateTaskProgress = function(id) {
             notifyTaskCompletionViaLine(task);
         }
         showToast('อัปเดตความคืบหน้าสำเร็จ และเสร็จสิ้นงานเรียบร้อย', 'success');
-        addNotification('งานเสร็จสิ้นแล้ว: ' + task.title, `ผู้ปฏิบัติงานทำผลงานครบถ้วน (${task.completedQty}/${task.qty})`, 'success');
+        addNotification('งานเสร็จสิ้นแล้ว: ' + task.title, `ผู้ปฏิบัติงานทำผลงานครบถ้วน (${task.completedQty}/${task.qty})`, 'success', { type: 'task', id: task.id });
     } else {
         showToast(`บันทึกความคืบหน้าแล้ว (${task.completedQty}/${task.qty})`, 'success');
-        addNotification('อัปเดตความคืบหน้า: ' + task.title, `ความคืบหน้าเป็น ${task.completedQty}/${task.qty}`, 'info');
+        addNotification('อัปเดตความคืบหน้า: ' + task.title, `ความคืบหน้าเป็น ${task.completedQty}/${task.qty}`, 'info', { type: 'task', id: task.id });
     }
 
     saveDataToLocalStorage();
@@ -1694,7 +1694,7 @@ async function handlePRSubmit(e) {
             pr.vatRate = vatRate;
             pr.vatAmount = vatAmount;
             pr.total = total;
-            addNotification('แก้ไขใบขอซื้อสำเร็จ', `ใบขอซื้อ ${pr.code} ได้รับการอัปเดต`, 'info');
+            addNotification('แก้ไขใบขอซื้อสำเร็จ', `ใบขอซื้อ ${pr.code} ได้รับการอัปเดต`, 'info', { type: 'pr', id: pr.id });
         }
         showToast('แก้ไขใบขอซื้อสำเร็จ', 'success');
     } else {
@@ -1709,8 +1709,9 @@ async function handlePRSubmit(e) {
         else if (state.currentUser.email === 'davezaa1642@gmail.com') requesterName = 'ผู้ดูแลระบบ (เดฟ)';
         else if (state.currentUser.email === 'nptconsultant2017@gmail.com') requesterName = 'ดร.ณภัทร ปุญศิริ';
 
+        const newPrId = 'pr-' + Date.now();
         state.prs.push({
-            id: 'pr-' + Date.now(),
+            id: newPrId,
             code: code,
             date: prDate,
             requesterEmail: state.currentUser ? state.currentUser.email : '',
@@ -1724,7 +1725,7 @@ async function handlePRSubmit(e) {
             status: 'approved'
         });
         showToast('บันทึกใบขอซื้อสำเร็จ (อนุมัติอัตโนมัติ)', 'success');
-        addNotification('ใบขอซื้ออนุมัติอัตโนมัติ', `ใบขอซื้อเลขที่ ${code} โดย ${requesterName} ได้รับการอนุมัติแล้ว`, 'success');
+        addNotification('ใบขอซื้ออนุมัติอัตโนมัติ', `ใบขอซื้อเลขที่ ${code} โดย ${requesterName} ได้รับการอนุมัติแล้ว`, 'success', { type: 'pr', id: newPrId });
     }
 
     saveDataToLocalStorage();
@@ -2062,7 +2063,7 @@ async function handlePOSubmit(e) {
             po.total = total;
             po.items = items;
             po.notes = poNotes;
-            addNotification('แก้ไขใบสั่งซื้อสำเร็จ', `ใบสั่งซื้อ ${po.code} ได้รับการอัปเดต`, 'info');
+            addNotification('แก้ไขใบสั่งซื้อสำเร็จ', `ใบสั่งซื้อ ${po.code} ได้รับการอัปเดต`, 'info', { type: 'po', id: po.id });
         }
         showToast('แก้ไขใบสั่งซื้อสำเร็จ', 'success');
     } else {
@@ -2071,8 +2072,9 @@ async function handlePOSubmit(e) {
         const year = new Date(poDate).getFullYear();
         const code = `PO-${year}-${String(count).padStart(3, '0')}`;
         
+        const newPoId = 'po-' + Date.now();
         state.pos.push({
-            id: 'po-' + Date.now(),
+            id: newPoId,
             code: code,
             date: poDate,
             vendor: poVendor,
@@ -2090,7 +2092,7 @@ async function handlePOSubmit(e) {
             status: 'pending_delivery'
         });
         showToast('สร้างใบสั่งซื้อสำเร็จ', 'success');
-        addNotification('ออกใบสั่งซื้อใหม่', `ออกใบสั่งซื้อเลขที่ ${code} เรียบร้อยแล้ว`, 'success');
+        addNotification('ออกใบสั่งซื้อใหม่', `ออกใบสั่งซื้อเลขที่ ${code} เรียบร้อยแล้ว`, 'success', { type: 'po', id: newPoId });
     }
 
     saveDataToLocalStorage();
@@ -2535,7 +2537,7 @@ async function handleTaskSubmit(e) {
 
             // Send LINE update notification
             notifyAssigneesViaLine(assigneeEmails, title, desc, assignedDate, true);
-            addNotification('อัปเดตงาน: ' + title, `งานได้รับการอัปเดตรายละเอียดใหม่`, 'info');
+            addNotification('อัปเดตงาน: ' + title, `งานได้รับการอัปเดตรายละเอียดใหม่`, 'info', { type: 'task', id: task.id });
         }
     } else {
         // Add Mode
@@ -2557,7 +2559,7 @@ async function handleTaskSubmit(e) {
 
         // Send LINE creation notification
         notifyAssigneesViaLine(assigneeEmails, title, desc, assignedDate, false);
-        addNotification('มอบหมายงานใหม่: ' + title, `ผู้รับผิดชอบ: ${assigneeNames.join(', ')}`, 'info');
+        addNotification('มอบหมายงานใหม่: ' + title, `ผู้รับผิดชอบ: ${assigneeNames.join(', ')}`, 'info', { type: 'task', id: newTask.id });
     }
 
     saveDataToLocalStorage();
@@ -3327,7 +3329,7 @@ window.toggleFieldVisibility = function(id) {
 };
 
 // ================= NOTIFICATION CENTER =================
-window.addNotification = function(title, desc, type = 'info') {
+window.addNotification = function(title, desc, type = 'info', action = null) {
     if (!state.notifications) state.notifications = [];
     const newNotif = {
         id: 'notif-' + Date.now() + Math.floor(Math.random() * 1000),
@@ -3335,7 +3337,8 @@ window.addNotification = function(title, desc, type = 'info') {
         desc: desc,
         time: new Date().toISOString(),
         type: type,
-        read: false
+        read: false,
+        action: action
     };
     state.notifications.unshift(newNotif);
     if (state.notifications.length > 20) {
@@ -3424,7 +3427,7 @@ window.renderNotificationList = function() {
         const unreadStyle = notif.read ? '' : 'background: rgba(255, 136, 0, 0.03); font-weight: 600;';
         
         return `
-            <div class="notification-item" onclick="markNotificationAsRead('${notif.id}')" style="display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid rgba(0,0,0,0.03); cursor: pointer; transition: background 0.15s; ${unreadStyle}">
+            <div class="notification-item" onclick="handleNotificationClick('${notif.id}')" style="display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid rgba(0,0,0,0.03); cursor: pointer; transition: background 0.15s; ${unreadStyle}">
                 <div style="width: 32px; height: 32px; border-radius: 50%; background: ${iconBg}; color: ${iconColor}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                     <i data-lucide="${icon}" style="width: 16px; height: 16px;"></i>
                 </div>
@@ -3440,6 +3443,40 @@ window.renderNotificationList = function() {
     
     if (window.lucide) {
         lucide.createIcons();
+    }
+};
+
+window.handleNotificationClick = function(id) {
+    const notif = state.notifications.find(n => n.id === id);
+    if (!notif) return;
+    
+    notif.read = true;
+    saveDataToLocalStorage();
+    renderNotificationBell();
+    renderNotificationList();
+    
+    // Close notifications panel
+    const notifDropdown = document.getElementById('notifications-dropdown');
+    if (notifDropdown) notifDropdown.classList.add('hidden');
+    
+    // Action router
+    if (notif.action) {
+        const act = notif.action;
+        if (act.type === 'task') {
+            if (window.viewTaskDetail) {
+                window.viewTaskDetail(act.id);
+            }
+        } else if (act.type === 'pr') {
+            switchTab('pr');
+            if (window.viewPrintPR) {
+                window.viewPrintPR(act.id);
+            }
+        } else if (act.type === 'po') {
+            switchTab('po');
+            if (window.viewPrintPO) {
+                window.viewPrintPO(act.id);
+            }
+        }
     }
 };
 
