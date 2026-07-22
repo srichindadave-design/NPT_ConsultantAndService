@@ -989,56 +989,7 @@
                     <textarea id="pr-notes" class="form-control" rows="2" placeholder="ระบุเหตุผลความจำเป็นในการสั่งซื้อ หรือร้านค้าที่แนะนำ"></textarea>
                 </div>
 
-                <!-- Project Profitability Simulator Section (For PR) -->
-                <div style="margin-top: 20px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: rgba(0,0,0,0.15); padding: 16px;">
-                    <h3 style="font-size: 0.95rem; font-weight: 700; color: #ff8800; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
-                        <i data-lucide="calculator" style="width: 18px; height: 18px;"></i> เครื่องมือจำลองและคำนวณกำไรขั้นต้น (Profitability Simulator)
-                    </h3>
-                    
-                    <div class="form-group" style="margin-bottom: 12px;">
-                        <label for="pr-sim-project-val" style="font-size: 0.78rem; font-weight: 600; color: #6366f1;">มูลค่าโครงการ / ราคาขายเสนอราคา (บาท)</label>
-                        <input type="number" id="pr-sim-project-val" class="form-control pr-sim-input" placeholder="ระบุมูลค่าโครงการขายของงานนี้" min="0" value="0" style="border: 1.5px solid #6366f1;">
-                    </div>
 
-                    <div class="form-row" style="margin-bottom: 12px;">
-                        <div class="form-group col">
-                            <label for="pr-sim-labor" style="font-size: 0.78rem;">ค่าแรงทีมงาน/ช่างประมาณการ (บาท)</label>
-                            <input type="number" id="pr-sim-labor" class="form-control pr-sim-input" placeholder="0" min="0" value="0">
-                        </div>
-                        <div class="form-group col">
-                            <label for="pr-sim-travel" style="font-size: 0.78rem;">ค่าเดินทาง/ที่พักประมาณการ (บาท)</label>
-                            <input type="number" id="pr-sim-travel" class="form-control pr-sim-input" placeholder="0" min="0" value="0">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group" style="margin-bottom: 16px;">
-                        <label for="pr-sim-other" style="font-size: 0.78rem;">ค่าดำเนินการอื่นๆ ประมาณการ (บาท)</label>
-                        <input type="number" id="pr-sim-other" class="form-control pr-sim-input" placeholder="0" min="0" value="0">
-                    </div>
-                    
-                    <!-- Result Summary Box -->
-                    <div id="pr-sim-result-box" style="padding: 12px 16px; border-radius: var(--radius-md); background: rgba(255, 255, 255, 0.04); border-left: 4px solid var(--border-color); display: flex; flex-direction: column; gap: 8px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                            <span style="color: var(--text-secondary);">ยอดค่าขอซื้อนี้ (PR Total):</span>
-                            <span id="pr-sim-current-pr-cost" style="color: var(--text-primary);">0.00 บาท</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                            <span style="color: var(--text-secondary);">ต้นทุนรวมประมาณการ (PR + อื่นๆ):</span>
-                            <span id="pr-sim-total-cost" style="color: var(--text-primary);">0.00 บาท</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                            <span style="color: var(--text-secondary);">กำไรขั้นต้นประมาณการ:</span>
-                            <span id="pr-sim-gross-profit" style="color: var(--text-primary);">0.00 บาท</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 700; margin-top: 4px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px;">
-                            <span style="color: var(--text-primary);">อัตรากำไรขั้นต้น (GP Margin %):</span>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <span id="pr-sim-gp-percent" style="font-size: 1.1rem; color: #ff8800;">0.00%</span>
-                                <span id="pr-sim-status-indicator" class="badge" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; font-weight: bold;">--</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary modal-close-btn">ยกเลิก</button>
@@ -1136,56 +1087,7 @@
                     <textarea id="po-notes" class="form-control" rows="2" placeholder="รายละเอียดอื่นๆ ของการสั่งซื้อ"></textarea>
                 </div>
 
-                <!-- Project Profitability Simulator Section (For PO) -->
-                <div style="margin-top: 20px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: rgba(0,0,0,0.15); padding: 16px;">
-                    <h3 style="font-size: 0.95rem; font-weight: 700; color: #ff8800; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
-                        <i data-lucide="calculator" style="width: 18px; height: 18px;"></i> เครื่องมือจำลองและคำนวณกำไรขั้นต้น (Profitability Simulator)
-                    </h3>
-                    
-                    <div class="form-group" style="margin-bottom: 12px;">
-                        <label for="po-sim-project-val" style="font-size: 0.78rem; font-weight: 600; color: #6366f1;">มูลค่าโครงการ / ราคาขายเสนอราคา (บาท)</label>
-                        <input type="number" id="po-sim-project-val" class="form-control po-sim-input" placeholder="ระบุมูลค่าโครงการขายของงานนี้" min="0" value="0" style="border: 1.5px solid #6366f1;">
-                    </div>
 
-                    <div class="form-row" style="margin-bottom: 12px;">
-                        <div class="form-group col">
-                            <label for="po-sim-labor" style="font-size: 0.78rem;">ค่าแรงทีมงาน/ช่างประมาณการ (บาท)</label>
-                            <input type="number" id="po-sim-labor" class="form-control po-sim-input" placeholder="0" min="0" value="0">
-                        </div>
-                        <div class="form-group col">
-                            <label for="po-sim-travel" style="font-size: 0.78rem;">ค่าเดินทาง/ที่พักประมาณการ (บาท)</label>
-                            <input type="number" id="po-sim-travel" class="form-control po-sim-input" placeholder="0" min="0" value="0">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group" style="margin-bottom: 16px;">
-                        <label for="po-sim-other" style="font-size: 0.78rem;">ค่าดำเนินการอื่นๆ ประมาณการ (บาท)</label>
-                        <input type="number" id="po-sim-other" class="form-control po-sim-input" placeholder="0" min="0" value="0">
-                    </div>
-                    
-                    <!-- Result Summary Box -->
-                    <div id="po-sim-result-box" style="padding: 12px 16px; border-radius: var(--radius-md); background: rgba(255, 255, 255, 0.04); border-left: 4px solid var(--border-color); display: flex; flex-direction: column; gap: 8px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                            <span style="color: var(--text-secondary);">ยอดสั่งซื้อนี้ (PO Total):</span>
-                            <span id="po-sim-current-po-cost" style="color: var(--text-primary);">0.00 บาท</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                            <span style="color: var(--text-secondary);">ต้นทุนรวมประมาณการ (PO + อื่นๆ):</span>
-                            <span id="po-sim-total-cost" style="color: var(--text-primary);">0.00 บาท</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                            <span style="color: var(--text-secondary);">กำไรขั้นต้นประมาณการ:</span>
-                            <span id="po-sim-gross-profit" style="color: var(--text-primary);">0.00 บาท</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 700; margin-top: 4px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px;">
-                            <span style="color: var(--text-primary);">อัตรากำไรขั้นต้น (GP Margin %):</span>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <span id="po-sim-gp-percent" style="font-size: 1.1rem; color: #ff8800;">0.00%</span>
-                                <span id="po-sim-status-indicator" class="badge" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; font-weight: bold;">--</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary modal-close-btn">ยกเลิก</button>
