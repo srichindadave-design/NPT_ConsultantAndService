@@ -1546,15 +1546,22 @@ body.light-mode select option {
     color: rgba(255, 255, 255, 0.5) !important;
 }
 
-.sidebar .nav-item:hover a,
-.sidebar .nav-item.active a {
-    background: #ff8800 !important;
+.sidebar .nav-item:hover a {
+    background: #00a2ff !important;
     color: #ffffff !important;
 }
 
-.sidebar .nav-item:hover a i,
-.sidebar .nav-item.active a i {
+.sidebar .nav-item:hover a i {
     color: #ffffff !important;
+}
+
+.sidebar .nav-item.active a {
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.sidebar .nav-item.active a i {
+    color: rgba(255, 255, 255, 0.7) !important;
 }
 
 .sidebar .user-profile-section {
@@ -1593,9 +1600,14 @@ body.light-mode select option {
     color: rgba(255, 255, 255, 0.7) !important;
 }
 
-.sidebar-nav .submenu .sub-nav-item.active a {
-    background: #ff8800 !important;
+.sidebar-nav .submenu .sub-nav-item:hover a {
+    background: #00a2ff !important;
     color: #ffffff !important;
+}
+
+.sidebar-nav .submenu .sub-nav-item.active a {
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.95) !important;
 }
 
 /* Stats grid desktop 5 columns layout */
