@@ -218,10 +218,10 @@
                     <!-- Statistics Grid -->
                     <div class="stats-grid">
                         <div class="stat-card glass" style="cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 180px;" onclick="navigateToTasks('all')">
-                            <div style="display: flex; gap: 15px; align-items: center; width: 100%;">
+                            <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
                                 <div class="stat-icon bg-primary-soft" style="color: #3b82f6; background: rgba(59, 130, 246, 0.08); width: 44px; height: 44px; border-radius: 12px;"><i data-lucide="list-todo"></i></div>
                                 <div style="text-align: left;">
-                                    <h3 style="font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px;">งานทั้งหมด</h3>
+                                    <h3 style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px; white-space: nowrap;">งานทั้งหมด</h3>
                                     <div style="display: flex; align-items: baseline; gap: 6px;">
                                         <span class="stat-value" id="stat-total-tasks" style="font-size: 2.1rem; font-weight: 700; color: #0d2149;">0</span>
                                         <span class="stat-desc" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">รายการ</span>
@@ -241,10 +241,10 @@
                         </div>
                         
                         <div class="stat-card glass" style="cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 180px;" onclick="navigateToTasks('ongoing')">
-                            <div style="display: flex; gap: 15px; align-items: center; width: 100%;">
+                            <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
                                 <div class="stat-icon bg-warning-soft" style="color: #ff8800; background: rgba(255, 136, 0, 0.08); width: 44px; height: 44px; border-radius: 12px;"><i data-lucide="clock"></i></div>
                                 <div style="text-align: left;">
-                                    <h3 style="font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px;">กำลังดำเนินการ</h3>
+                                    <h3 style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px; white-space: nowrap;">กำลังดำเนินการ</h3>
                                     <div style="display: flex; align-items: baseline; gap: 6px;">
                                         <span class="stat-value" id="stat-pending-tasks" style="font-size: 2.1rem; font-weight: 700; color: #ff8800;">0</span>
                                         <span class="stat-desc" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">รายการ</span>
@@ -264,10 +264,10 @@
                         </div>
 
                         <div class="stat-card glass" style="cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 180px;" onclick="navigateToTasks('completed')">
-                            <div style="display: flex; gap: 15px; align-items: center; width: 100%;">
+                            <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
                                 <div class="stat-icon bg-success-soft" style="color: #10b981; background: rgba(16, 185, 129, 0.08); width: 44px; height: 44px; border-radius: 12px;"><i data-lucide="check-circle-2"></i></div>
                                 <div style="text-align: left;">
-                                    <h3 style="font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px;">เสร็จสิ้นแล้ว</h3>
+                                    <h3 style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px; white-space: nowrap;">เสร็จสิ้นแล้ว</h3>
                                     <div style="display: flex; align-items: baseline; gap: 6px;">
                                         <span class="stat-value" id="stat-completed-tasks" style="font-size: 2.1rem; font-weight: 700; color: #10b981;">0</span>
                                         <span class="stat-desc" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">รายการ</span>
@@ -287,10 +287,10 @@
                         </div>
 
                         <div class="stat-card glass" style="cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 180px;" onclick="navigateToQuotations()">
-                            <div style="display: flex; gap: 15px; align-items: center; width: 100%;">
+                            <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
                                 <div class="stat-icon bg-info-soft" style="color: #8b5cf6; background: rgba(139, 92, 246, 0.08); width: 44px; height: 44px; border-radius: 12px;"><i data-lucide="file-text"></i></div>
                                 <div style="text-align: left;">
-                                    <h3 style="font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px;">ใบเสนอราคา</h3>
+                                    <h3 style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px; white-space: nowrap;">ใบเสนอราคา</h3>
                                     <div style="display: flex; align-items: baseline; gap: 6px;">
                                         <span class="stat-value" id="stat-total-quotations" style="font-size: 2.1rem; font-weight: 700; color: #8b5cf6;">0</span>
                                         <span class="stat-desc" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">รายการ</span>
@@ -310,10 +310,10 @@
                         </div>
 
                         <div class="stat-card glass" style="cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 180px;" onclick="navigateToStaff()">
-                            <div style="display: flex; gap: 15px; align-items: center; width: 100%;">
+                            <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
                                 <div class="stat-icon bg-info-soft" style="color: #14b8a6; background: rgba(20, 184, 166, 0.08); width: 44px; height: 44px; border-radius: 12px;"><i data-lucide="users"></i></div>
                                 <div style="text-align: left;">
-                                    <h3 style="font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px;">พนักงานทั้งหมด</h3>
+                                    <h3 style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px; white-space: nowrap;">พนักงานทั้งหมด</h3>
                                     <div style="display: flex; align-items: baseline; gap: 6px;">
                                         <span class="stat-value" id="stat-total-staff" style="font-size: 2.1rem; font-weight: 700; color: #14b8a6;">0</span>
                                         <span class="stat-desc" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">คน</span>

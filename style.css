@@ -524,7 +524,7 @@ body.light-mode .login-container {
 }
 
 .stat-card {
-    padding: 24px;
+    padding: 16px 20px;
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
