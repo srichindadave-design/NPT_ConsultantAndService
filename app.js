@@ -674,8 +674,8 @@ function switchTab(tabId) {
         }
     });
 
-    // Auto-expand parent submenu if PR or PO is selected
-    if (tabId === 'pr' || tabId === 'po') {
+    // Auto-expand parent submenu if PR, PO, or Quotations is selected
+    if (tabId === 'pr' || tabId === 'po' || tabId === 'quotations') {
         const procMenu = document.getElementById('procurement-menu');
         if (procMenu) {
             const submenu = procMenu.querySelector('.submenu');
