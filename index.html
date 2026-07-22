@@ -114,11 +114,28 @@
                     <li class="nav-item" data-tab="quotations">
                         <a href="#"><i data-lucide="file-text"></i><span>ใบเสนอราคา</span></a>
                     </li>
-                    <li class="nav-item" data-tab="pr">
-                        <a href="#"><i data-lucide="shopping-bag"></i><span>ใบขอซื้อ (PR)</span></a>
-                    </li>
-                    <li class="nav-item" data-tab="po">
-                        <a href="#"><i data-lucide="shopping-cart"></i><span>ใบสั่งซื้อ (PO)</span></a>
+                    <li class="nav-item has-submenu" id="procurement-menu">
+                        <a href="#" class="submenu-toggle" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <i data-lucide="shopping-bag"></i>
+                                <span>ระบบจัดซื้อ (PR/PO)</span>
+                            </div>
+                            <i data-lucide="chevron-down" class="arrow-icon" style="width: 16px; height: 16px; transition: transform 0.2s;"></i>
+                        </a>
+                        <ul class="submenu hidden" style="padding-left: 15px; list-style: none; margin-top: 5px;">
+                            <li class="nav-item sub-nav-item" data-tab="pr" style="margin-top: 5px; padding: 4px 0;">
+                                <a href="#" style="font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                                    <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+                                    <span>ใบขอซื้อ (PR)</span>
+                                </a>
+                            </li>
+                            <li class="nav-item sub-nav-item" data-tab="po" style="margin-top: 5px; padding: 4px 0;">
+                                <a href="#" style="font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                                    <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+                                    <span>ใบสั่งซื้อ (PO)</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     <li class="nav-item" data-tab="staff">
                         <a href="#"><i data-lucide="users-2"></i><span>รายชื่อบุคลากร</span></a>
@@ -504,11 +521,21 @@
                                 <h3 style="color: #06b6d4; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; margin-top: 30px; margin-bottom: 15px; font-size: 1.1rem;"><i data-lucide="message-square" style="vertical-align: middle; margin-right: 8px; width: 18px; height: 18px;"></i> LINE Messaging API Configuration (ระบบแจ้งเตือนทาง LINE)</h3>
                                 <div class="form-group">
                                     <label for="settings-line-token">LINE Channel Access Token (Long-lived)</label>
-                                    <textarea id="settings-line-token" class="form-control" rows="3" placeholder="ระบุ Channel Access Token ที่ได้มาจาก LINE Developers Console"></textarea>
+                                    <div style="position: relative; display: flex; align-items: center;">
+                                        <textarea id="settings-line-token" class="form-control masked-field" rows="3" placeholder="ระบุ Channel Access Token ที่ได้มาจาก LINE Developers Console" style="padding-right: 45px;"></textarea>
+                                        <button type="button" onclick="toggleFieldVisibility('settings-line-token')" style="position: absolute; right: 10px; top: 10px; background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;">
+                                            <i data-lucide="eye-off" id="settings-line-token-eye" style="width: 20px; height: 20px;"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="form-group mt-3">
                                     <label for="settings-line-group-id">LINE Group ID (รหัสกลุ่มไลน์ สำหรับส่งแจ้งเตือนเข้ากลุ่ม)</label>
-                                    <input type="text" id="settings-line-group-id" class="form-control" placeholder="ระบุ Group ID เริ่มต้นด้วยตัว C เช่น Cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+                                    <div style="position: relative; display: flex; align-items: center;">
+                                        <input type="password" id="settings-line-group-id" class="form-control" placeholder="ระบุ Group ID เริ่มต้นด้วยตัว C เช่น Cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="padding-right: 45px;">
+                                        <button type="button" onclick="toggleFieldVisibility('settings-line-group-id')" style="position: absolute; right: 10px; background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;">
+                                            <i data-lucide="eye-off" id="settings-line-group-id-eye" style="width: 20px; height: 20px;"></i>
+                                        </button>
+                                    </div>
                                     <small class="form-hint" style="color: var(--accent-color);">* LINE Group ID เป็นรหัสเฉพาะของห้องแชทกลุ่ม (ได้มาจากบอทเมื่อถูกดึงเข้ากลุ่ม หรือดูจาก Webhook ของ LINE Developers)</small>
                                 </div>
                                 <small class="form-hint mt-1" style="display: block;">* ใช้สำหรับยิงส่ง Push Message แจ้งเตือนผู้ปฏิบัติงานโดยตรงเมื่อมีการมอบหมายหรือปิดงาน</small>

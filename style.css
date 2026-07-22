@@ -1501,3 +1501,27 @@ body.light-mode select option {
         transform: translateY(-8px);
     }
 }
+
+/* Masked Input style for settings page */
+.masked-field {
+    -webkit-text-security: disc !important;
+}
+
+/* Sidebar Submenu */
+.sidebar-nav .submenu {
+    list-style: none;
+    padding-left: 15px !important;
+    margin: 5px 0 10px 0;
+    border-left: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+.sidebar-nav .submenu .sub-nav-item a {
+    padding: 6px 12px !important;
+    font-size: 0.88rem !important;
+    color: var(--text-secondary);
+}
+
+.sidebar-nav .submenu .sub-nav-item.active a {
+    color: var(--accent-color) !important;
+    background: var(--accent-soft) !important;
+}

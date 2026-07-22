@@ -661,6 +661,19 @@ function switchTab(tabId) {
         }
     });
 
+    // Auto-expand parent submenu if PR or PO is selected
+    if (tabId === 'pr' || tabId === 'po') {
+        const procMenu = document.getElementById('procurement-menu');
+        if (procMenu) {
+            const submenu = procMenu.querySelector('.submenu');
+            const arrow = procMenu.querySelector('.arrow-icon');
+            if (submenu) {
+                submenu.classList.remove('hidden');
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+            }
+        }
+    }
+
     // Hide/Show Panels
     document.querySelectorAll('.tab-panel').forEach(panel => {
         if (panel.id === `tab-${tabId}`) {
@@ -1468,7 +1481,7 @@ function renderPRs() {
 
         // Check if user is creator of this PR
         const isOwner = pr.requesterEmail.toLowerCase() === currentUserEmail;
-        const canEditDelete = (pr.status === 'pending_approval' && isOwner) || isMgmt;
+        const canEditDelete = isOwner || isMgmt;
 
         // Management Approval buttons
         let approvalActions = '';
@@ -1686,9 +1699,9 @@ async function handlePRSubmit(e) {
             vatAmount: vatAmount,
             total: total,
             notes: prNotes,
-            status: 'pending_approval'
+            status: 'approved'
         });
-        showToast('ส่งใบขอซื้อเสร็จสิ้น (รอผู้จัดการพิจารณา)', 'success');
+        showToast('บันทึกใบขอซื้อสำเร็จ (อนุมัติอัตโนมัติ)', 'success');
     }
 
     saveDataToLocalStorage();
@@ -2200,8 +2213,31 @@ function setupEventListeners() {
 
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', (e) => {
+            if (item.classList.contains('has-submenu')) return; // handled by submenu-toggle
             e.preventDefault();
             switchTab(item.dataset.tab);
+        });
+    });
+
+    // Submenu toggles
+    document.querySelectorAll('.submenu-toggle').forEach(toggle => {
+        toggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const parent = toggle.closest('.has-submenu');
+            const submenu = parent.querySelector('.submenu');
+            const arrow = parent.querySelector('.arrow-icon');
+            
+            if (submenu) {
+                const isHidden = submenu.classList.contains('hidden');
+                if (isHidden) {
+                    submenu.classList.remove('hidden');
+                    if (arrow) arrow.style.transform = 'rotate(180deg)';
+                } else {
+                    submenu.classList.add('hidden');
+                    if (arrow) arrow.style.transform = 'rotate(0deg)';
+                }
+            }
         });
     });
 
@@ -2373,6 +2409,7 @@ function setupEventListeners() {
         // Close sidebar when navigating tabs on mobile
         document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
             item.addEventListener('click', () => {
+                if (item.classList.contains('has-submenu')) return;
                 sidebar.classList.remove('active');
                 sidebarOverlay.classList.remove('active');
             });
@@ -3212,4 +3249,35 @@ async function fetchCurrentWeather() {
         }
     }
 }
+
+// Toggle Visibility of sensitive fields (LINE Config)
+window.toggleFieldVisibility = function(id) {
+    const el = document.getElementById(id);
+    const eye = document.getElementById(id + '-eye');
+    if (!el || !eye) return;
+    
+    if (el.tagName === 'INPUT') {
+        if (el.type === 'password') {
+            el.type = 'text';
+            eye.setAttribute('data-lucide', 'eye');
+        } else {
+            el.type = 'password';
+            eye.setAttribute('data-lucide', 'eye-off');
+        }
+    } else {
+        // For textarea (Token)
+        if (el.classList.contains('masked-field')) {
+            el.classList.remove('masked-field');
+            eye.setAttribute('data-lucide', 'eye');
+        } else {
+            el.classList.add('masked-field');
+            eye.setAttribute('data-lucide', 'eye-off');
+        }
+    }
+    
+    // Re-render Lucide icons
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+};
 
