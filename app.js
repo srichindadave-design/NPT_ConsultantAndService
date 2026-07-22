@@ -1078,12 +1078,15 @@ function renderStaff() {
         const statusCell = isManager ? '-' : `<span class="badge ${statusBadgeClass}">${statusText}</span>`;
 
         const isMgmt = checkIsManagement();
+        const isSelf = state.currentUser && s.email.toLowerCase() === state.currentUser.email.toLowerCase();
+        const emailDisp = (isMgmt || isSelf) ? s.email : '••••••••';
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td style="white-space: nowrap;"><strong>${escapeHtml(s.name)}</strong></td>
             <td>${escapeHtml(s.nickname || '-')}</td>
             <td>${escapeHtml(s.position)}</td>
-            <td>${escapeHtml(s.email)}</td>
+            <td>${escapeHtml(emailDisp)}</td>
             <td>${escapeHtml(s.phone || '-')}</td>
             <td>${escapeHtml(s.lineId || '-')}</td>
             <td>${statusCell}</td>
