@@ -1498,7 +1498,18 @@ body.light-mode select option {
 
     .header-actions {
         width: 100% !important;
-        justify-content: space-between !important;
+        justify-content: flex-end !important;
+    }
+
+    /* กรอบแจ้งเตือน: บนมือถือให้กางเป็นแผงเต็มความกว้างจอแทนการอิงตำแหน่งปุ่ม
+       (ปุ่มอาจอยู่ตำแหน่งไหนก็ได้ แต่แผงนี้ต้องอยู่ในจอเสมอ ไม่หลุดขอบ) */
+    #notifications-dropdown {
+        position: fixed !important;
+        top: 64px !important;
+        left: 12px !important;
+        right: 12px !important;
+        width: auto !important;
+        max-width: none !important;
     }
 
     /* นาฬิกาสด ไม่ใช่ข้อมูลสำคัญสำหรับหน้าจอเล็ก ซ่อนไว้เพื่อลดความรก */
