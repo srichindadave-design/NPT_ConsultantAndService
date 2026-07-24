@@ -1482,6 +1482,69 @@ body.light-mode select option {
         grid-template-columns: 1fr !important;
         gap: 16px !important;
     }
+
+    /* ===== Header decluttering (แก้ปัญหาส่วนหัวรก/ดูงงบนมือถือ) ===== */
+    #page-title {
+        font-size: 1.25rem !important;
+    }
+    #page-subtitle {
+        font-size: 0.78rem !important;
+    }
+
+    .header-actions-wrapper {
+        width: 100% !important;
+        align-items: stretch !important;
+    }
+
+    .header-actions {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+
+    /* นาฬิกาสด ไม่ใช่ข้อมูลสำคัญสำหรับหน้าจอเล็ก ซ่อนไว้เพื่อลดความรก */
+    #current-date-btn {
+        display: none !important;
+    }
+
+    /* ป้ายชื่อผู้ใช้: กว้างเต็มแถว + ตัดอีเมลด้วย ... แทนการล้นจอ */
+    .user-profile-section {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+    .user-profile-section .user-meta {
+        overflow: hidden !important;
+        min-width: 0 !important;
+    }
+    #user-display-email {
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 150px !important;
+    }
+
+    /* คำใบ้ให้รู้ว่าตารางเลื่อนดูเพิ่มได้ (แถบไล่สีขวา) */
+    .table-responsive {
+        position: relative;
+        background:
+            linear-gradient(to right, var(--bg-surface-solid, #fff) 0%, rgba(255,255,255,0) 2%),
+            linear-gradient(to left, var(--bg-surface-solid, #fff) 0%, rgba(255,255,255,0) 8%) right;
+        background-repeat: no-repeat;
+        background-size: 20px 100%, 30px 100%;
+        background-attachment: local, scroll;
+    }
+}
+
+/* ===== จอมือถือขนาดเล็กมาก (เช่น iPhone SE) ===== */
+@media (max-width: 380px) {
+    .stat-card {
+        min-height: 140px !important;
+        padding: 14px !important;
+    }
+    .stat-value {
+        font-size: 1.6rem !important;
+    }
+    #page-title {
+        font-size: 1.1rem !important;
+    }
 }
 
 /* Date badge clickability */
