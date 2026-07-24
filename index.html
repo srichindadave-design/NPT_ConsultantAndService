@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NPT Consultant And Service</title>
     <link rel="icon" href="npt-logo.png" type="image/png">
+    <!-- PWA: ทำให้ติดตั้งเป็นแอปบนมือถือได้ -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#143C82">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1224,5 +1228,16 @@
     <div id="global-toast" class="toast hidden"></div>
 
     <script src="app.js"></script>
+    <!-- PWA: ลงทะเบียน Service Worker เพื่อให้ติดตั้งเป็นแอปได้ -->
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/service-worker.js")
+            .then(() => console.log("Service worker registered"))
+            .catch((err) => console.error("Service worker registration failed:", err));
+        });
+      }
+    </script>
 </body>
 </html>
