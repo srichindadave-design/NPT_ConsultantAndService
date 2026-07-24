@@ -1563,6 +1563,17 @@ body.light-mode select option {
         right: 12px !important;
         width: auto !important;
         max-width: none !important;
+        max-height: calc(100vh - 90px) !important;
+        display: flex !important;
+        flex-direction: column;
+    }
+    #notifications-dropdown.hidden {
+        display: none !important;
+    }
+    #notifications-list {
+        max-height: none !important;
+        overflow-y: auto !important;
+        flex: 1;
     }
 
     /* นาฬิกา/ปุ่มเปิดปฏิทิน: เดิมซ่อนไปทั้งหมดทำให้เปิดปฏิทินไม่ได้ (แก้แล้ว)

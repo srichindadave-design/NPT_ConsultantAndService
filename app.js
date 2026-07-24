@@ -2251,6 +2251,15 @@ function setupEventListeners() {
         });
     }
 
+    // ปุ่มกากบาทปิดกรอบแจ้งเตือน (สำคัญมากบนมือถือที่กรอบกางเต็มจอ)
+    const closeNotifBtn = document.getElementById('close-notifications-btn');
+    if (closeNotifBtn && notifDropdown) {
+        closeNotifBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            notifDropdown.classList.add('hidden');
+        });
+    }
+
     document.getElementById('login-email').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') requestOTP();
     });
