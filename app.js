@@ -828,7 +828,7 @@ function renderDashboard() {
 
             const displayNames = t.assigneeNames ? t.assigneeNames.join(', ') : t.assigneeName;
 
-            const dateText = `<br><small class="text-muted"><i data-lucide="calendar" style="width:12px;height:12px;vertical-align:middle;display:inline-block;margin-right:4px;"></i>มอบหมายเมื่อ: ${t.assignedDate || '-'}</small>`;
+            const dateText = `<br><small class="text-muted">${iconSvg('calendar', 'width:12px;height:12px;margin-right:4px;')}มอบหมายเมื่อ: ${t.assignedDate || '-'}</small>`;
 
             const tr = document.createElement('tr');
             tr.style.cursor = 'pointer';
@@ -929,7 +929,7 @@ function renderTasks() {
             actionButtons = `<span class="text-muted">โปรดจัดการที่เมนูมอบหมายงาน</span>`;
         } else {
             if (t.status === 'pending') {
-                actionButtons = `<button class="btn btn-success btn-small" onclick="updateTaskStatus('${t.id}', 'ongoing')"><i data-lucide="play"></i> เริ่มงาน</button>`;
+                actionButtons = `<button class="btn btn-success btn-small" onclick="updateTaskStatus('${t.id}', 'ongoing')">${iconSvg('play')} เริ่มงาน</button>`;
             } else if (t.status === 'ongoing') {
                 if (t.qty && t.qty >= 1) {
                     actionButtons = `
@@ -940,10 +940,10 @@ function renderTasks() {
                         </div>
                     `;
                 } else {
-                    actionButtons = `<button class="btn btn-primary btn-small" onclick="updateTaskStatus('${t.id}', 'completed')"><i data-lucide="check-square"></i> เสร็จงาน</button>`;
+                    actionButtons = `<button class="btn btn-primary btn-small" onclick="updateTaskStatus('${t.id}', 'completed')">${iconSvg('check-square')} เสร็จงาน</button>`;
                 }
             } else {
-                actionButtons = `<span class="text-success"><i data-lucide="check-circle"></i> ปิดงานแล้ว</span>`;
+                actionButtons = `<span class="text-success">${iconSvg('check-circle')} ปิดงานแล้ว</span>`;
             }
         }
 
@@ -952,7 +952,7 @@ function renderTasks() {
             qtyText = `<br><small class="text-muted">ความคืบหน้า: ${t.completedQty || 0} / ${t.qty} หน่วย</small>`;
         }
         
-        const dateText = `<br><small class="text-muted"><i data-lucide="calendar" style="width:12px;height:12px;vertical-align:middle;display:inline-block;margin-right:4px;"></i>มอบหมายเมื่อ: ${t.assignedDate || '-'}</small>`;
+        const dateText = `<br><small class="text-muted">${iconSvg('calendar', 'width:12px;height:12px;margin-right:4px;')}มอบหมายเมื่อ: ${t.assignedDate || '-'}</small>`;
 
         const displayNames = t.assigneeNames ? t.assigneeNames.join(', ') : t.assigneeName;
 
@@ -989,8 +989,8 @@ function renderAssignTasks() {
         const tr = document.createElement('tr');
         
         let actionButtons = `
-            <button class="btn btn-secondary btn-small btn-icon-only" onclick="editTask('${t.id}')" title="แก้ไขงาน"><i data-lucide="edit-3"></i></button>
-            <button class="btn btn-danger btn-small btn-icon-only" onclick="deleteTask('${t.id}')" title="ลบงาน"><i data-lucide="trash-2"></i></button>
+            <button class="btn btn-secondary btn-small btn-icon-only" onclick="editTask('${t.id}')" title="แก้ไขงาน">${iconSvg('edit-3')}</button>
+            <button class="btn btn-danger btn-small btn-icon-only" onclick="deleteTask('${t.id}')" title="ลบงาน">${iconSvg('trash-2')}</button>
         `;
 
         let qtyText = '';
@@ -1000,7 +1000,7 @@ function renderAssignTasks() {
 
         const displayNames = t.assigneeNames ? t.assigneeNames.join(', ') : t.assigneeName;
 
-        const dateText = `<br><small class="text-muted"><i data-lucide="calendar" style="width:12px;height:12px;vertical-align:middle;display:inline-block;margin-right:4px;"></i>มอบหมายเมื่อ: ${t.assignedDate || '-'}</small>`;
+        const dateText = `<br><small class="text-muted">${iconSvg('calendar', 'width:12px;height:12px;margin-right:4px;')}มอบหมายเมื่อ: ${t.assignedDate || '-'}</small>`;
 
         tr.innerHTML = `
             <td><strong>${escapeHtml(t.title)}</strong>${dateText}${qtyText}</td>
@@ -1093,8 +1093,8 @@ function renderStaff() {
             ${isMgmt ? `
             <td>
                 <div class="gap-2" style="display:flex;">
-                    <button class="btn btn-secondary btn-small btn-icon-only" onclick="editStaff('${s.id}')" title="แก้ไขข้อมูล"><i data-lucide="edit-3"></i></button>
-                    <button class="btn btn-danger btn-small btn-icon-only" onclick="deleteStaff('${s.id}')" title="ลบพนักงาน"><i data-lucide="trash-2"></i></button>
+                    <button class="btn btn-secondary btn-small btn-icon-only" onclick="editStaff('${s.id}')" title="แก้ไขข้อมูล">${iconSvg('edit-3')}</button>
+                    <button class="btn btn-danger btn-small btn-icon-only" onclick="deleteStaff('${s.id}')" title="ลบพนักงาน">${iconSvg('trash-2')}</button>
                 </div>
             </td>
             ` : ''}
@@ -1119,7 +1119,7 @@ function renderQuotations() {
         
         let fileBtn = '';
         if (q.fileData) {
-            fileBtn = `<a href="${q.fileData}" download="${escapeHtml(q.fileName)}" class="btn btn-secondary btn-small" title="ดาวน์โหลดไฟล์แนบ"><i data-lucide="download"></i> ไฟล์แนบ</a>`;
+            fileBtn = `<a href="${q.fileData}" download="${escapeHtml(q.fileName)}" class="btn btn-secondary btn-small" title="ดาวน์โหลดไฟล์แนบ">${iconSvg('download')} ไฟล์แนบ</a>`;
         }
 
         const tr = document.createElement('tr');
@@ -1131,10 +1131,10 @@ function renderQuotations() {
             <td>
                 <div class="gap-2" style="display:flex;">
                     ${fileBtn}
-                    <button class="btn btn-success btn-small" onclick="viewPrintQuotation('${q.id}')" title="ดู/พิมพ์เอกสาร"><i data-lucide="printer"></i> พิมพ์</button>
+                    <button class="btn btn-success btn-small" onclick="viewPrintQuotation('${q.id}')" title="ดู/พิมพ์เอกสาร">${iconSvg('printer')} พิมพ์</button>
                     ${checkIsManagement() ? `
-                    <button class="btn btn-secondary btn-small btn-icon-only" onclick="editQuotation('${q.id}')" title="แก้ไข"><i data-lucide="edit-3"></i></button>
-                    <button class="btn btn-danger btn-small btn-icon-only" onclick="deleteQuotation('${q.id}')" title="ลบ"><i data-lucide="trash-2"></i></button>
+                    <button class="btn btn-secondary btn-small btn-icon-only" onclick="editQuotation('${q.id}')" title="แก้ไข">${iconSvg('edit-3')}</button>
+                    <button class="btn btn-danger btn-small btn-icon-only" onclick="deleteQuotation('${q.id}')" title="ลบ">${iconSvg('trash-2')}</button>
                     ` : ''}
                 </div>
             </td>
@@ -1358,7 +1358,7 @@ function addQuotationItemRow(desc = '', qty = '', unit = '') {
         <input type="text" class="form-control item-desc" placeholder="คำอธิบายงาน / สินค้า / บริการ" value="${escapeHtml(desc)}" required>
         <input type="number" class="form-control item-qty" placeholder="จำนวน" min="0.01" step="any" value="${qty}" required>
         <input type="text" class="form-control item-unit" placeholder="หน่วย (เช่น วัน, งาน, ชิ้น)" value="${escapeHtml(unit)}">
-        <button type="button" class="btn btn-danger btn-small btn-icon-only btn-remove-row"><i data-lucide="minus"></i></button>
+        <button type="button" class="btn btn-danger btn-small btn-icon-only btn-remove-row">${iconSvg('minus')}</button>
     `;
     
     row.querySelector('.btn-remove-row').addEventListener('click', () => {
@@ -1510,8 +1510,8 @@ function renderPRs() {
         let approvalActions = '';
         if (isMgmt && pr.status === 'pending_approval') {
             approvalActions = `
-                <button class="btn btn-success btn-small" onclick="approvePR('${pr.id}')" title="อนุมัติ"><i data-lucide="check"></i> อนุมัติ</button>
-                <button class="btn btn-danger btn-small" onclick="rejectPR('${pr.id}')" title="ไม่อนุมัติ"><i data-lucide="x"></i> ปฏิเสธ</button>
+                <button class="btn btn-success btn-small" onclick="approvePR('${pr.id}')" title="อนุมัติ">${iconSvg('check')} อนุมัติ</button>
+                <button class="btn btn-danger btn-small" onclick="rejectPR('${pr.id}')" title="ไม่อนุมัติ">${iconSvg('x')} ปฏิเสธ</button>
             `;
         }
 
@@ -1524,10 +1524,10 @@ function renderPRs() {
             <td><span class="status-badge ${statusBadgeClass}">${statusText}</span></td>
             <td>
                 <div class="gap-2" style="display:flex; flex-wrap: wrap;">
-                    <button class="btn btn-secondary btn-small" onclick="viewPrintPR('${pr.id}')" title="พิมพ์/พรีวิว"><i data-lucide="printer"></i> ดู/พิมพ์</button>
+                    <button class="btn btn-secondary btn-small" onclick="viewPrintPR('${pr.id}')" title="พิมพ์/พรีวิว">${iconSvg('printer')} ดู/พิมพ์</button>
                     ${canEditDelete ? `
-                        <button class="btn btn-secondary btn-small btn-icon-only" onclick="editPR('${pr.id}')" title="แก้ไข"><i data-lucide="edit-3"></i></button>
-                        <button class="btn btn-danger btn-small btn-icon-only" onclick="deletePR('${pr.id}')" title="ลบ"><i data-lucide="trash-2"></i></button>
+                        <button class="btn btn-secondary btn-small btn-icon-only" onclick="editPR('${pr.id}')" title="แก้ไข">${iconSvg('edit-3')}</button>
+                        <button class="btn btn-danger btn-small btn-icon-only" onclick="deletePR('${pr.id}')" title="ลบ">${iconSvg('trash-2')}</button>
                     ` : ''}
                     ${approvalActions}
                 </div>
@@ -1553,7 +1553,7 @@ window.addPRItemRow = function(desc = '', qty = '', unit = '', unitPrice = '') {
         <input type="text" class="form-control item-unit" placeholder="หน่วย" value="${escapeHtml(unit)}" style="flex: 0.8;" required>
         <input type="number" class="form-control item-price" placeholder="ราคาต่อหน่วย" min="0" step="any" value="${unitPrice}" style="flex: 1;" required>
         <input type="number" class="form-control item-line-total" placeholder="ราคารวม" readonly value="${lineTotal ? lineTotal.toFixed(2) : '0.00'}" style="flex: 1.2; background-color: var(--card-bg-hover);">
-        <button type="button" class="btn btn-danger btn-small btn-icon-only btn-remove-row" style="flex: 0 0 auto;"><i data-lucide="minus"></i></button>
+        <button type="button" class="btn btn-danger btn-small btn-icon-only btn-remove-row" style="flex: 0 0 auto;">${iconSvg('minus')}</button>
     `;
     
     row.querySelector('.btn-remove-row').addEventListener('click', () => {
@@ -1887,8 +1887,8 @@ function renderPOs() {
                     <option value="completed" ${po.status === 'completed' ? 'selected' : ''}>ได้รับสินค้าแล้ว</option>
                     <option value="cancelled" ${po.status === 'cancelled' ? 'selected' : ''}>ยกเลิก</option>
                 </select>
-                <button class="btn btn-secondary btn-small btn-icon-only" onclick="editPO('${po.id}')" title="แก้ไข"><i data-lucide="edit-3"></i></button>
-                <button class="btn btn-danger btn-small btn-icon-only" onclick="deletePO('${po.id}')" title="ลบ"><i data-lucide="trash-2"></i></button>
+                <button class="btn btn-secondary btn-small btn-icon-only" onclick="editPO('${po.id}')" title="แก้ไข">${iconSvg('edit-3')}</button>
+                <button class="btn btn-danger btn-small btn-icon-only" onclick="deletePO('${po.id}')" title="ลบ">${iconSvg('trash-2')}</button>
             `;
         }
 
@@ -1902,7 +1902,7 @@ function renderPOs() {
             <td><span class="status-badge ${statusBadgeClass}">${statusText}</span></td>
             <td>
                 <div class="gap-2" style="display:flex; align-items: center;">
-                    <button class="btn btn-secondary btn-small" onclick="viewPrintPO('${po.id}')" title="พิมพ์/พรีวิว"><i data-lucide="printer"></i> ดู/พิมพ์</button>
+                    <button class="btn btn-secondary btn-small" onclick="viewPrintPO('${po.id}')" title="พิมพ์/พรีวิว">${iconSvg('printer')} ดู/พิมพ์</button>
                     ${managementActions}
                 </div>
             </td>
@@ -1931,7 +1931,7 @@ window.addPOItemRow = function(desc = '', qty = '', unit = '', unitPrice = '') {
         <input type="number" class="form-control item-qty" placeholder="จำนวน" min="0.01" step="any" value="${qty}" style="flex: 0.8;" required>
         <input type="text" class="form-control item-unit" placeholder="หน่วย" value="${escapeHtml(unit)}" style="flex: 0.8;" required>
         <input type="number" class="form-control item-price" placeholder="ราคาต่อหน่วย" min="0" step="any" value="${unitPrice}" style="flex: 1;" required>
-        <button type="button" class="btn btn-danger btn-small btn-icon-only btn-remove-row" style="flex: 0 0 auto;"><i data-lucide="minus"></i></button>
+        <button type="button" class="btn btn-danger btn-small btn-icon-only btn-remove-row" style="flex: 0 0 auto;">${iconSvg('minus')}</button>
     `;
     
     row.querySelector('.btn-remove-row').addEventListener('click', () => {
@@ -2724,6 +2724,35 @@ function closeAllModals() {
 }
 
 // ================= HELPER FUNCTIONS =================
+
+// ไอคอนแบบฝังในตัว (ไม่พึ่งการโหลดไลบรารีจากอินเทอร์เน็ต)
+// ใช้แทน data-lucide สำหรับส่วนที่ render แบบไดนามิก (ตาราง, รายการแจ้งเตือน ฯลฯ)
+// เพราะไอคอนแบบเดิมบางครั้งไม่ขึ้นเวลาเน็ตช้า/หลุดตอนโหลดหน้า
+const ICON_PATHS = {
+    'trash-2': '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
+    'edit-3': '<path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
+    'printer': '<polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>',
+    'minus': '<line x1="5" y1="12" x2="19" y2="12"/>',
+    'calendar': '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+    'x': '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    'play': '<polygon points="5 3 19 12 5 21 5 3"/>',
+    'download': '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    'check-square': '<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+    'check-circle': '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+    'check': '<polyline points="20 6 9 17 4 12"/>',
+    'bell-off': '<path d="M8.7 3A6 6 0 0 1 18 8c0 2.4.8 4.3 1.5 5.5"/><path d="M17 17H3s3-2 3-9c0-.4 0-.7.1-1.1"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><line x1="1" y1="1" x2="23" y2="23"/>',
+    'info': '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+    'alert-triangle': '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+    'x-circle': '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'
+};
+
+function iconSvg(name, extraStyle) {
+    const paths = ICON_PATHS[name];
+    if (!paths) return '';
+    const style = `width: 16px; height: 16px; display: inline-block; vertical-align: middle; flex-shrink: 0; ${extraStyle || ''}`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="${style}">${paths}</svg>`;
+}
+
 function escapeHtml(str) {
     if (!str) return '';
     return str
@@ -2884,8 +2913,8 @@ function renderEquipments() {
         let managementActions = '';
         if (isMgmt) {
             managementActions = `
-                <button class="btn btn-secondary btn-small btn-icon-only" onclick="editEquipment('${eq.id}')" title="แก้ไข"><i data-lucide="edit-3"></i></button>
-                <button class="btn btn-danger btn-small btn-icon-only" onclick="deleteEquipment('${eq.id}')" title="ลบ"><i data-lucide="trash-2"></i></button>
+                <button class="btn btn-secondary btn-small btn-icon-only" onclick="editEquipment('${eq.id}')" title="แก้ไข">${iconSvg('edit-3')}</button>
+                <button class="btn btn-danger btn-small btn-icon-only" onclick="deleteEquipment('${eq.id}')" title="ลบ">${iconSvg('trash-2')}</button>
             `;
         } else {
             managementActions = `<span class="text-muted">-</span>`;
@@ -3403,7 +3432,7 @@ window.renderNotificationList = function() {
     if (!state.notifications || state.notifications.length === 0) {
         listEl.innerHTML = `
             <div style="padding: 30px 16px; text-align: center; color: var(--text-muted); font-size: 0.88rem;">
-                <i data-lucide="bell-off" style="width: 28px; height: 28px; display: block; margin: 0 auto 8px auto; opacity: 0.5;"></i>
+                ${iconSvg('bell-off', 'width:28px;height:28px;display:block;margin:0 auto 8px auto;opacity:0.5;')}
                 <div>ไม่มีการแจ้งเตือนในขณะนี้</div>
             </div>
         `;
@@ -3435,7 +3464,7 @@ window.renderNotificationList = function() {
         return `
             <div class="notification-item" onclick="handleNotificationClick('${notif.id}')" style="display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid rgba(0,0,0,0.03); cursor: pointer; transition: background 0.15s; ${unreadStyle}">
                 <div style="width: 32px; height: 32px; border-radius: 50%; background: ${iconBg}; color: ${iconColor}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <i data-lucide="${icon}" style="width: 16px; height: 16px;"></i>
+                    ${iconSvg(icon)}
                 </div>
                 <div style="flex-grow: 1; text-align: left; min-width: 0;">
                     <div style="font-size: 0.85rem; color: var(--text-primary); margin-bottom: 2px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${notif.title}</div>
