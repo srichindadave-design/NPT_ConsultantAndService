@@ -1565,8 +1565,17 @@ body.light-mode select option {
         max-width: none !important;
     }
 
-    /* นาฬิกาสด ไม่ใช่ข้อมูลสำคัญสำหรับหน้าจอเล็ก ซ่อนไว้เพื่อลดความรก */
+    /* นาฬิกา/ปุ่มเปิดปฏิทิน: เดิมซ่อนไปทั้งหมดทำให้เปิดปฏิทินไม่ได้ (แก้แล้ว)
+       ตอนนี้ย่อเหลือแค่ไอคอนนาฬิกากดได้ ไม่แสดงตัวเลขเวลา/วันที่ที่กินพื้นที่ */
     #current-date-btn {
+        padding: 8px !important;
+        gap: 0 !important;
+        width: 40px !important;
+        height: 40px !important;
+        justify-content: center !important;
+        border-radius: 50% !important;
+    }
+    #current-date-btn > div {
         display: none !important;
     }
 
