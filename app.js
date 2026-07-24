@@ -465,6 +465,7 @@ function checkAuth() {
         loginOverlay.classList.remove('hidden');
         appContainer.classList.add('hidden');
         resetLoginForm();
+        maybeShowQuickUnlock();
     }
 }
 
@@ -552,6 +553,7 @@ async function requestOTP() {
                 
                 checkAuth();
                 showToast('เข้าสู่ระบบสำเร็จ ยินดีต้อนรับครับ', 'success');
+                maybeOfferRememberDevice();
             } else {
                 showToast(result.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ', 'error', 'login-message');
             }
@@ -577,6 +579,7 @@ async function requestOTP() {
     localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(state.currentUser));
     checkAuth();
     showToast('เข้าสู่ระบบสำเร็จ (โหมดจำลองออฟไลน์)', 'success');
+    maybeOfferRememberDevice();
 }
 
 function triggerEmailAlert(email, htmlContent) {
@@ -616,6 +619,7 @@ async function verifyOTP() {
             
             checkAuth();
             showToast('เข้าสู่ระบบสำเร็จ (โหมดจำลองออฟไลน์)', 'success');
+            maybeOfferRememberDevice();
         } else {
             showToast('รหัส OTP ไม่ถูกต้อง', 'error', 'login-message');
         }
@@ -642,6 +646,7 @@ async function verifyOTP() {
             
             checkAuth();
             showToast('เข้าสู่ระบบสำเร็จ ยินดีต้อนรับครับ', 'success');
+            maybeOfferRememberDevice();
         } else {
             showToast(result.message || 'รหัส OTP ไม่ถูกต้อง', 'error', 'login-message');
         }
@@ -655,6 +660,298 @@ function logout() {
     localStorage.removeItem(STORAGE_KEYS.AUTH);
     checkAuth();
     showToast('ออกจากระบบเรียบร้อยแล้ว', 'info');
+}
+
+// ================= QUICK UNLOCK: จดจำอุปกรณ์ (PIN / Face ID / Touch ID) =================
+// หมายเหตุด้านความปลอดภัย: ระบบนี้เป็น "ตัวปลดล็อกอุปกรณ์เครื่องนี้" เท่านั้น
+// ตัวที่ยืนยันตัวตนจริงกับเซิร์ฟเวอร์ยังคงเป็นอีเมล (ผ่าน /api/login-direct ที่เช็ครายชื่อพนักงาน/แอดมิน)
+// PIN และ Face ID/Touch ID เก็บ/ตรวจสอบไว้ในเครื่องนี้เท่านั้น เพื่อข้ามการพิมพ์อีเมลซ้ำทุกครั้ง
+const REMEMBER_EMAIL_KEY = 'npt_remember_email';
+const REMEMBER_NAME_KEY = 'npt_remember_name';
+const PIN_HASH_KEY = 'npt_pin_hash';
+const WEBAUTHN_CRED_KEY = 'npt_webauthn_cred_id';
+const REMEMBER_DISMISSED_KEY = 'npt_remember_dismissed';
+
+let quickUnlockPinBuffer = '';
+let rememberSetupStage = 'enter'; // 'enter' -> 'confirm'
+let rememberSetupFirstPin = '';
+let rememberSetupPinBuffer = '';
+
+async function sha256Hex(text) {
+    const enc = new TextEncoder().encode(text);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', enc);
+    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function hasRememberedDevice() {
+    return !!(localStorage.getItem(REMEMBER_EMAIL_KEY) && localStorage.getItem(PIN_HASH_KEY));
+}
+
+function hasFaceIdEnrolled() {
+    return !!localStorage.getItem(WEBAUTHN_CRED_KEY);
+}
+
+// เรียกตอนหน้า login แสดงผล เพื่อสลับไปหน้าปลดล็อกด่วนถ้ามีการจดจำอุปกรณ์นี้ไว้
+function maybeShowQuickUnlock() {
+    const phoneView = document.getElementById('phone-view');
+    const otpView = document.getElementById('otp-view');
+    const quickView = document.getElementById('quick-unlock-view');
+
+    if (hasRememberedDevice()) {
+        phoneView.classList.add('hidden');
+        otpView.classList.add('hidden');
+        quickView.classList.remove('hidden');
+
+        const name = localStorage.getItem(REMEMBER_NAME_KEY) || localStorage.getItem(REMEMBER_EMAIL_KEY);
+        document.getElementById('quick-unlock-name').textContent = `สวัสดี, ${name}`;
+
+        const faceBtn = document.getElementById('btn-faceid-unlock');
+        if (hasFaceIdEnrolled() && window.PublicKeyCredential) {
+            faceBtn.classList.remove('hidden');
+        } else {
+            faceBtn.classList.add('hidden');
+        }
+
+        quickUnlockPinBuffer = '';
+        updatePinDots('pin-dots', 0, false);
+    } else {
+        quickView.classList.add('hidden');
+        phoneView.classList.remove('hidden');
+    }
+}
+
+function updatePinDots(containerId, filledCount, isError) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const dots = container.querySelectorAll('.pin-dot');
+    dots.forEach((dot, i) => dot.classList.toggle('filled', i < filledCount));
+    container.classList.toggle('pin-dots-error', !!isError);
+}
+
+// --- Quick Unlock (เข้าสู่ระบบด้วย PIN ที่จดจำไว้) ---
+function setupQuickUnlockListeners() {
+    document.querySelectorAll('#quick-unlock-view .pin-key[data-digit]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (quickUnlockPinBuffer.length >= 4) return;
+            quickUnlockPinBuffer += btn.dataset.digit;
+            updatePinDots('pin-dots', quickUnlockPinBuffer.length, false);
+            if (quickUnlockPinBuffer.length === 4) {
+                attemptPinUnlock();
+            }
+        });
+    });
+    document.getElementById('btn-pin-backspace').addEventListener('click', () => {
+        quickUnlockPinBuffer = quickUnlockPinBuffer.slice(0, -1);
+        updatePinDots('pin-dots', quickUnlockPinBuffer.length, false);
+    });
+
+    document.getElementById('btn-use-other-account').addEventListener('click', () => {
+        document.getElementById('quick-unlock-view').classList.add('hidden');
+        document.getElementById('phone-view').classList.remove('hidden');
+    });
+
+    document.getElementById('btn-forget-device').addEventListener('click', (e) => {
+        e.preventDefault();
+        forgetDevice();
+        showToast('ลบการจดจำอุปกรณ์นี้เรียบร้อยแล้ว', 'info');
+        maybeShowQuickUnlock();
+    });
+
+    document.getElementById('btn-faceid-unlock').addEventListener('click', attemptFaceIdUnlock);
+
+    // --- Remember Device Setup Modal: PIN keypad ---
+    document.querySelectorAll('.remember-pin-key[data-digit]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (rememberSetupPinBuffer.length >= 4) return;
+            rememberSetupPinBuffer += btn.dataset.digit;
+            updatePinDots('remember-pin-dots', rememberSetupPinBuffer.length, false);
+            if (rememberSetupPinBuffer.length === 4) {
+                handleRememberPinComplete();
+            }
+        });
+    });
+    document.getElementById('btn-remember-pin-backspace').addEventListener('click', () => {
+        rememberSetupPinBuffer = rememberSetupPinBuffer.slice(0, -1);
+        updatePinDots('remember-pin-dots', rememberSetupPinBuffer.length, false);
+    });
+
+    document.getElementById('btn-enable-faceid').addEventListener('click', enrollFaceId);
+}
+
+async function attemptPinUnlock() {
+    const enteredHash = await sha256Hex(quickUnlockPinBuffer);
+    const storedHash = localStorage.getItem(PIN_HASH_KEY);
+
+    if (enteredHash === storedHash) {
+        await finishQuickLogin();
+    } else {
+        updatePinDots('pin-dots', 4, true);
+        showToast('รหัส PIN ไม่ถูกต้อง', 'error', 'login-message');
+        setTimeout(() => {
+            quickUnlockPinBuffer = '';
+            updatePinDots('pin-dots', 0, false);
+        }, 500);
+    }
+}
+
+async function attemptFaceIdUnlock() {
+    try {
+        const credIdB64 = localStorage.getItem(WEBAUTHN_CRED_KEY);
+        const credId = Uint8Array.from(atob(credIdB64), c => c.charCodeAt(0));
+        const challenge = crypto.getRandomValues(new Uint8Array(32));
+
+        await navigator.credentials.get({
+            publicKey: {
+                challenge: challenge,
+                allowCredentials: [{ id: credId, type: 'public-key' }],
+                userVerification: 'required',
+                timeout: 30000
+            }
+        });
+
+        // ผ่านการยืนยัน Face ID/Touch ID ของเครื่องนี้แล้ว
+        await finishQuickLogin();
+    } catch (e) {
+        console.warn('[FaceID Unlock] ยกเลิกหรือไม่สำเร็จ:', e);
+        showToast('ปลดล็อกด้วย Face ID/Touch ID ไม่สำเร็จ กรุณาใช้ PIN แทน', 'error', 'login-message');
+    }
+}
+
+// เข้าสู่ระบบจริงโดยใช้อีเมลที่จดจำไว้ ผ่าน endpoint เดิม (login-direct)
+async function finishQuickLogin() {
+    const email = localStorage.getItem(REMEMBER_EMAIL_KEY);
+    if (!email) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/login-direct`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            state.currentUser = { email: result.email, isAdmin: result.isAdmin };
+            localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(state.currentUser));
+            checkAuth();
+            showToast('ปลดล็อกสำเร็จ ยินดีต้อนรับกลับครับ', 'success');
+        } else {
+            showToast('ไม่สามารถเข้าสู่ระบบอัตโนมัติได้ กรุณาเข้าสู่ระบบด้วยอีเมลอีกครั้ง', 'error', 'login-message');
+            forgetDevice();
+            maybeShowQuickUnlock();
+        }
+    } catch (e) {
+        showToast('เชื่อมต่อไม่สำเร็จ กรุณาลองใหม่', 'error', 'login-message');
+    }
+}
+
+function forgetDevice() {
+    localStorage.removeItem(REMEMBER_EMAIL_KEY);
+    localStorage.removeItem(REMEMBER_NAME_KEY);
+    localStorage.removeItem(PIN_HASH_KEY);
+    localStorage.removeItem(WEBAUTHN_CRED_KEY);
+}
+
+// --- หลังเข้าสู่ระบบสำเร็จ: ชวนตั้งค่าจดจำอุปกรณ์นี้ (ถ้ายังไม่เคยตั้ง/ยังไม่เคยปฏิเสธ) ---
+function maybeOfferRememberDevice() {
+    if (hasRememberedDevice()) return; // ตั้งไว้แล้ว ไม่ต้องถามซ้ำ
+    if (localStorage.getItem(REMEMBER_DISMISSED_KEY)) return; // เคยกด "ไว้คราวหน้า" แล้ว
+
+    rememberSetupStage = 'enter';
+    rememberSetupFirstPin = '';
+    rememberSetupPinBuffer = '';
+    document.getElementById('remember-setup-label').textContent = 'กำหนดรหัส PIN 4 หลัก';
+    updatePinDots('remember-pin-dots', 0, false);
+    document.getElementById('remember-pin-step').classList.remove('hidden');
+    document.getElementById('remember-faceid-offer').classList.add('hidden');
+    openModal('remember-device-modal');
+}
+
+function skipRememberDeviceSetup() {
+    localStorage.setItem(REMEMBER_DISMISSED_KEY, '1');
+    closeModal('remember-device-modal');
+}
+
+function handleRememberPinComplete() {
+    if (rememberSetupStage === 'enter') {
+        rememberSetupFirstPin = rememberSetupPinBuffer;
+        rememberSetupPinBuffer = '';
+        rememberSetupStage = 'confirm';
+        document.getElementById('remember-setup-label').textContent = 'กรอกรหัส PIN อีกครั้งเพื่อยืนยัน';
+        updatePinDots('remember-pin-dots', 0, false);
+    } else {
+        if (rememberSetupPinBuffer === rememberSetupFirstPin) {
+            completeRememberPinSetup(rememberSetupPinBuffer);
+        } else {
+            updatePinDots('remember-pin-dots', 4, true);
+            showToast('รหัส PIN ไม่ตรงกัน กรุณาตั้งใหม่อีกครั้ง', 'error');
+            setTimeout(() => {
+                rememberSetupStage = 'enter';
+                rememberSetupFirstPin = '';
+                rememberSetupPinBuffer = '';
+                document.getElementById('remember-setup-label').textContent = 'กำหนดรหัส PIN 4 หลัก';
+                updatePinDots('remember-pin-dots', 0, false);
+            }, 600);
+        }
+    }
+}
+
+async function completeRememberPinSetup(pin) {
+    const hash = await sha256Hex(pin);
+    localStorage.setItem(PIN_HASH_KEY, hash);
+    localStorage.setItem(REMEMBER_EMAIL_KEY, state.currentUser.email);
+
+    const member = state.staff.find(s => s.email.toLowerCase() === state.currentUser.email.toLowerCase());
+    localStorage.setItem(REMEMBER_NAME_KEY, member ? member.name : state.currentUser.email);
+
+    // ถ้าอุปกรณ์รองรับ Face ID/Touch ID (WebAuthn platform authenticator) ให้เสนอเปิดใช้ต่อ
+    if (window.PublicKeyCredential && window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+        const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
+        if (available) {
+            document.getElementById('remember-pin-step').classList.add('hidden');
+            document.getElementById('remember-faceid-offer').classList.remove('hidden');
+            return;
+        }
+    }
+    finishRememberDeviceSetup();
+}
+
+async function enrollFaceId() {
+    try {
+        const challenge = crypto.getRandomValues(new Uint8Array(32));
+        const userId = crypto.getRandomValues(new Uint8Array(16));
+
+        const credential = await navigator.credentials.create({
+            publicKey: {
+                challenge: challenge,
+                rp: { name: 'NPT Consultant And Service' },
+                user: {
+                    id: userId,
+                    name: state.currentUser.email,
+                    displayName: localStorage.getItem(REMEMBER_NAME_KEY) || state.currentUser.email
+                },
+                pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
+                authenticatorSelection: {
+                    authenticatorAttachment: 'platform',
+                    userVerification: 'required'
+                },
+                timeout: 30000
+            }
+        });
+
+        const credIdB64 = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+        localStorage.setItem(WEBAUTHN_CRED_KEY, credIdB64);
+        showToast('เปิดใช้ Face ID / Touch ID สำเร็จ', 'success');
+    } catch (e) {
+        console.warn('[FaceID Enroll] ยกเลิกหรือไม่สำเร็จ:', e);
+        showToast('ไม่สามารถเปิดใช้ Face ID/Touch ID ได้ในขณะนี้ ใช้ PIN แทนได้ครับ', 'error');
+    }
+    finishRememberDeviceSetup();
+}
+
+function finishRememberDeviceSetup() {
+    closeModal('remember-device-modal');
+    showToast('ตั้งค่าเข้าสู่ระบบด่วนเรียบร้อยแล้ว', 'success');
 }
 
 function hideSMSNotification() {
@@ -2232,6 +2529,7 @@ function setupEventListeners() {
         document.getElementById('otp-view').classList.add('hidden');
     });
     document.getElementById('btn-logout').addEventListener('click', logout);
+    setupQuickUnlockListeners();
     
     // Notification Bell Toggle Event
     const bellBtn = document.getElementById('notification-bell-btn');

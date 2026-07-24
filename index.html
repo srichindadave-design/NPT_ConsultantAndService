@@ -81,8 +81,103 @@
                 </div>
             </div>
 
+            <!-- Quick Unlock View (จดจำอุปกรณ์: PIN / Face ID / Touch ID) -->
+            <div id="quick-unlock-view" class="login-form-view hidden">
+                <div class="otp-intro" style="text-align: center;">
+                    <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--bg-surface); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:26px;height:26px;display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                    <p style="font-weight: 700; font-size: 1.05rem; margin-bottom: 2px;" id="quick-unlock-name">สวัสดี</p>
+                    <p class="form-hint" style="margin-bottom: 0;">ปลดล็อกเพื่อเข้าใช้งานต่อ</p>
+                </div>
+
+                <button id="btn-faceid-unlock" class="btn btn-primary btn-block hidden" style="margin-top: 18px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01"/><path d="M15 9h.01"/></svg> <span>ปลดล็อกด้วย Face ID / Touch ID</span>
+                </button>
+
+                <div style="margin-top: 18px;">
+                    <div id="pin-dots" style="display: flex; justify-content: center; gap: 14px; margin-bottom: 18px;">
+                        <div class="pin-dot"></div>
+                        <div class="pin-dot"></div>
+                        <div class="pin-dot"></div>
+                        <div class="pin-dot"></div>
+                    </div>
+                    <div class="pin-keypad">
+                        <button type="button" class="pin-key" data-digit="1">1</button>
+                        <button type="button" class="pin-key" data-digit="2">2</button>
+                        <button type="button" class="pin-key" data-digit="3">3</button>
+                        <button type="button" class="pin-key" data-digit="4">4</button>
+                        <button type="button" class="pin-key" data-digit="5">5</button>
+                        <button type="button" class="pin-key" data-digit="6">6</button>
+                        <button type="button" class="pin-key" data-digit="7">7</button>
+                        <button type="button" class="pin-key" data-digit="8">8</button>
+                        <button type="button" class="pin-key" data-digit="9">9</button>
+                        <div></div>
+                        <button type="button" class="pin-key" data-digit="0">0</button>
+                        <button type="button" id="btn-pin-backspace" class="pin-key" aria-label="ลบ"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg></button>
+                    </div>
+                </div>
+
+                <button id="btn-use-other-account" class="btn btn-secondary btn-block" style="margin-top: 18px;">
+                    เข้าสู่ระบบด้วยอีเมลอื่น
+                </button>
+                <p style="text-align: center; margin-top: 10px;">
+                    <a href="#" id="btn-forget-device" style="font-size: 0.78rem; color: var(--text-muted); text-decoration: underline;">ลืมอุปกรณ์นี้ (ลบ PIN / Face ID ที่ตั้งไว้)</a>
+                </p>
+            </div>
+
             <!-- Toast Messages -->
             <div id="login-message" class="toast hidden"></div>
+        </div>
+    </div>
+
+    <!-- Remember Device / Setup Quick Login Modal -->
+    <div id="remember-device-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 380px;">
+            <div class="modal-header">
+                <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M20 13c0 5-3.5 7.5-7.35 8.95a1 1 0 0 1-.6.05C8.5 20.5 5 18 5 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C15.5 3.8 18 5 20 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg> จดจำอุปกรณ์นี้?</h3>
+                <button class="btn-close-modal" onclick="skipRememberDeviceSetup()">&times;</button>
+            </div>
+            <div style="padding: 20px;">
+                <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 18px;">ตั้งรหัส PIN 4 หลัก เพื่อเข้าใช้งานครั้งต่อไปได้เร็วขึ้น โดยไม่ต้องรออีเมล/OTP อีก (ใช้ได้เฉพาะอุปกรณ์เครื่องนี้)</p>
+
+                <div id="remember-pin-step">
+                    <p id="remember-setup-label" style="text-align: center; font-weight: 600; margin-bottom: 10px;">กำหนดรหัส PIN 4 หลัก</p>
+                    <div id="remember-pin-dots" style="display: flex; justify-content: center; gap: 14px; margin-bottom: 18px;">
+                        <div class="pin-dot"></div>
+                        <div class="pin-dot"></div>
+                        <div class="pin-dot"></div>
+                        <div class="pin-dot"></div>
+                    </div>
+                    <div class="pin-keypad">
+                        <button type="button" class="pin-key remember-pin-key" data-digit="1">1</button>
+                        <button type="button" class="pin-key remember-pin-key" data-digit="2">2</button>
+                        <button type="button" class="pin-key remember-pin-key" data-digit="3">3</button>
+                        <button type="button" class="pin-key remember-pin-key" data-digit="4">4</button>
+                        <button type="button" class="pin-key remember-pin-key" data-digit="5">5</button>
+                        <button type="button" class="pin-key remember-pin-key" data-digit="6">6</button>
+                        <button type="button" class="pin-key remember-pin-key" data-digit="7">7</button>
+                        <button type="button" class="pin-key remember-pin-key" data-digit="8">8</button>
+                        <button type="button" class="pin-key remember-pin-key" data-digit="9">9</button>
+                        <div></div>
+                        <button type="button" class="pin-key remember-pin-key" data-digit="0">0</button>
+                        <button type="button" id="btn-remember-pin-backspace" class="pin-key" aria-label="ลบ"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg></button>
+                    </div>
+
+                    <button id="btn-skip-remember" class="btn btn-secondary btn-block" style="margin-top: 18px;" onclick="skipRememberDeviceSetup()">ไว้คราวหน้า</button>
+                </div>
+
+                <!-- Step 2: Face ID / Touch ID (แสดงหลังตั้ง PIN สำเร็จ ถ้าอุปกรณ์รองรับ) -->
+                <div id="remember-faceid-offer" class="hidden" style="text-align: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:40px;height:40px;display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01"/><path d="M15 9h.01"/></svg>
+                    <p style="font-weight: 600; margin-bottom: 4px;">ตั้ง PIN สำเร็จแล้ว</p>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 18px;">ต้องการเปิดใช้ Face ID / Touch ID เพื่อปลดล็อกเร็วขึ้นอีกด้วยไหม?</p>
+                    <button id="btn-enable-faceid" class="btn btn-primary btn-block">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01"/><path d="M15 9h.01"/></svg> เปิดใช้ Face ID / Touch ID
+                    </button>
+                    <button class="btn btn-secondary btn-block" style="margin-top: 10px;" onclick="finishRememberDeviceSetup()">ไม่ใช้ตอนนี้</button>
+                </div>
+            </div>
         </div>
     </div>
 

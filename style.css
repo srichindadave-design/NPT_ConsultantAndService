@@ -313,6 +313,65 @@ body.light-mode .login-container {
     color: var(--text-secondary);
 }
 
+/* ================= QUICK UNLOCK: PIN PAD ================= */
+.pin-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    background: transparent;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.pin-dot.filled {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    transform: scale(1.1);
+}
+.pin-dots-error .pin-dot {
+    border-color: var(--danger-color);
+    background: var(--danger-color);
+}
+@keyframes pinShake {
+    10%, 90% { transform: translateX(-2px); }
+    20%, 80% { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-8px); }
+    40%, 60% { transform: translateX(8px); }
+}
+.pin-dots-error {
+    animation: pinShake 0.5s;
+}
+
+.pin-keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    max-width: 260px;
+    margin: 0 auto;
+}
+.pin-key {
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-size: 1.3rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.12s, transform 0.1s;
+    min-height: 52px;
+}
+.pin-key:active {
+    background: var(--accent-soft);
+    transform: scale(0.94);
+}
+.pin-key i, .pin-key svg {
+    width: 18px;
+    height: 18px;
+}
+
 /* ================= APP LAYOUT ================= */
 .app-layout {
     display: flex;
