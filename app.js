@@ -3442,7 +3442,12 @@ window.renderNotificationList = function() {
                     <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px; line-height: 1.3;">${notif.desc}</div>
                     <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">${timeAgo(notif.time)}</div>
                 </div>
-                ${notif.read ? '' : '<div style="width: 6px; height: 6px; background: #ff8800; border-radius: 50%; align-self: center; flex-shrink: 0;"></div>'}
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                    <button onclick="deleteNotification(event, '${notif.id}')" aria-label="ลบการแจ้งเตือน" style="background: transparent; border: none; cursor: pointer; padding: 6px; margin: -6px -6px 0 0; color: var(--text-muted); display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 15px; height: 15px;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                    </button>
+                    ${notif.read ? '' : '<div style="width: 6px; height: 6px; background: #ff8800; border-radius: 50%; flex-shrink: 0;"></div>'}
+                </div>
             </div>
         `;
     }).join('');
@@ -3450,6 +3455,17 @@ window.renderNotificationList = function() {
     if (window.lucide) {
         lucide.createIcons();
     }
+};
+
+window.deleteNotification = function(event, id) {
+    event.stopPropagation(); // กันไม่ให้ไปเรียก handleNotificationClick (ที่จะพาไปหน้าอื่น) พร้อมกัน
+    const index = state.notifications.findIndex(n => n.id === id);
+    if (index === -1) return;
+
+    state.notifications.splice(index, 1);
+    saveDataToLocalStorage();
+    renderNotificationBell();
+    renderNotificationList();
 };
 
 window.handleNotificationClick = function(id) {
