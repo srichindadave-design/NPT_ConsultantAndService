@@ -16,7 +16,6 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(__dirname));
 
 const dbPath = path.join(__dirname, 'db.json');
-const otpStore = new Map();
 
 // Helper to create nodemailer transporter dynamically
 function getTransporter(smtpConfig) {
@@ -65,107 +64,163 @@ app.post('/api/db', (req, res) => {
   }
 });
 
-// --- OTP & EMAIL ENDPOINTS ---
+// --- PIN AUTHENTICATION ENDPOINTS ---
+// แทนที่ระบบ OTP เดิม: พนักงาน/แอดมินแต่ละคนตั้งรหัส PIN ของตัวเองครั้งแรกที่เข้าใช้งาน
+// แล้วใช้ PIN นั้นเข้าสู่ระบบในครั้งถัดไป (ยืนยันฝั่งเซิร์ฟเวอร์ทุกครั้ง)
+const crypto = require('crypto');
 
-// Send OTP
-app.post('/api/send-otp', async (req, res) => {
+function hashPin(pin, salt) {
+  return crypto.scryptSync(String(pin), salt, 64).toString('hex');
+}
+
+function readDb() {
+  if (fs.existsSync(dbPath)) {
+    try {
+      return JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+    } catch (e) {
+      console.error('[DB] อ่านไฟล์ db.json ล้มเหลว:', e);
+      return {};
+    }
+  }
+  return {};
+}
+
+function writeDb(db) {
+  fs.writeFileSync(dbPath, JSON.stringify(db, null, 2), 'utf8');
+}
+
+const ADMIN_EMAILS = ['nptconsultant2017@gmail.com', 'davezaa1642@gmail.com', 'srichindadave@gmail.com'];
+
+function findAccount(db, emailLower) {
+  const isAdmin = ADMIN_EMAILS.includes(emailLower);
+  const staffList = db.staff || [];
+  const staffMember = staffList.find(s => s.email && s.email.toLowerCase() === emailLower);
+  return { isAdmin, staffMember, allowed: isAdmin || !!staffMember };
+}
+
+// 1. ตรวจสอบว่าอีเมลนี้มีสิทธิ์เข้าระบบไหม และเคยตั้ง PIN ไว้แล้วหรือยัง
+app.post('/api/check-pin-status', (req, res) => {
   const { email } = req.body;
-  let smtpConfig = req.body.smtpConfig;
-
   if (!email || !email.includes('@')) {
-    return res.status(400).json({ success: false, message: 'กรุณากรอก Gmail/Email ให้ถูกต้อง' });
+    return res.status(400).json({ success: false, message: 'กรุณากรอกอีเมลให้ถูกต้อง' });
+  }
+  const emailLower = email.toLowerCase();
+  const db = readDb();
+  const { isAdmin, staffMember, allowed } = findAccount(db, emailLower);
+
+  if (!allowed) {
+    return res.status(400).json({ success: false, message: 'ไม่พบอีเมลนี้ในระบบสิทธิ์แอดมินหรือพนักงาน' });
   }
 
-  // Fallback to server db.json config if not sent by client
-  if (!smtpConfig && fs.existsSync(dbPath)) {
-    try {
-      const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
-      smtpConfig = db.smtpConfig;
-    } catch (e) {
-      console.error('[OTP Email] Error reading smtpConfig from db.json:', e);
-    }
-  }
+  db.adminPins = db.adminPins || {};
+  const hasPinSet = isAdmin
+    ? !!(db.adminPins[emailLower] && db.adminPins[emailLower].hash)
+    : !!(staffMember && staffMember.pinHash);
 
-  // Fallback to default hardcoded config if still null
-  if (!smtpConfig || !smtpConfig.user || !smtpConfig.pass) {
-    smtpConfig = {
-      user: "srichindadave@gmail.com",
-      pass: "zpux ziwz yhbx umeq"
-    };
-  }
-
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const expires = Date.now() + 5 * 60 * 1000; // Expires in 5 minutes
-
-  otpStore.set(email.toLowerCase(), { otp, expires });
-
-  console.log(`[OTP Email] อีเมล: ${email} | รหัส OTP: ${otp} (หมดอายุใน 5 นาที)`);
-
-  let sentRealEmail = false;
-  const transporter = getTransporter(smtpConfig);
-  if (transporter) {
-    try {
-      await transporter.sendMail({
-        from: `"NPT Portal" <${smtpConfig.user}>`,
-        to: email,
-        subject: 'NPT Portal: รหัส OTP สำหรับเข้าใช้งานระบบ',
-        html: `
-          <div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 500px; border: 1px solid #e2e8f0; border-radius: 8px;">
-            <h2 style="color: #4f46e5; margin-bottom: 20px;">NPT Portal OTP</h2>
-            <p>คุณได้ทำการขอรหัส OTP สำหรับเข้าใช้งานระบบบริหารจัดการงาน NPT Portal</p>
-            <div style="background: #f1f5f9; padding: 16px; border-radius: 6px; text-align: center; margin: 20px 0;">
-              <span style="font-size: 24px; font-weight: 700; letter-spacing: 4px; color: #1e293b;">${otp}</span>
-            </div>
-            <p style="font-size: 13px; color: #64748b;">รหัสนี้มีอายุการใช้งาน 5 นาที หากคุณไม่ได้ทำรายการนี้ โปรดละเลยอีเมลฉบับนี้</p>
-          </div>
-        `
-      });
-      sentRealEmail = true;
-      console.log(`[OTP Email] ส่งรหัส OTP ไปยังอีเมลจริง ${email} สำเร็จ`);
-    } catch (e) {
-      console.error('[OTP Email] ล้มเหลวในการส่งอีเมลจริง:', e.message);
-    }
-  }
-
-  return res.json({
-    success: true,
-    message: sentRealEmail ? 'ส่งรหัส OTP ไปยัง Gmail ของคุณเรียบร้อยแล้ว' : 'ส่งรหัส OTP เรียบร้อยแล้ว (จำลองการส่ง)',
-    mockOtp: otp
-  });
+  return res.json({ success: true, hasPinSet, isAdmin, email: emailLower });
 });
 
-// Verify OTP
-app.post('/api/verify-otp', (req, res) => {
-  const { email, otp } = req.body;
+// 2. ตั้งรหัส PIN ครั้งแรกด้วยตนเอง (self-service)
+app.post('/api/setup-pin', (req, res) => {
+  const { email, pin } = req.body;
+  if (!email || !pin || !/^\d{4,6}$/.test(String(pin))) {
+    return res.status(400).json({ success: false, message: 'ข้อมูลไม่ถูกต้อง กรุณากรอกรหัส PIN เป็นตัวเลข 4 หลัก' });
+  }
+  const emailLower = email.toLowerCase();
+  const db = readDb();
+  const { isAdmin, staffMember, allowed } = findAccount(db, emailLower);
 
-  if (!email || !otp) {
-    return res.status(400).json({ success: false, message: 'กรุณาระบุอีเมลและรหัส OTP' });
+  if (!allowed) {
+    return res.status(400).json({ success: false, message: 'ไม่พบอีเมลนี้ในระบบสิทธิ์แอดมินหรือพนักงาน' });
   }
 
-  const record = otpStore.get(email.toLowerCase());
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = hashPin(pin, salt);
 
-  if (!record) {
-    return res.status(400).json({ success: false, message: 'ไม่พบรหัส OTP หรือกรุณากดขอรหัสอีกครั้ง' });
-  }
-
-  if (Date.now() > record.expires) {
-    otpStore.delete(email.toLowerCase());
-    return res.status(400).json({ success: false, message: 'รหัส OTP หมดอายุแล้ว กรุณาขอรหัสใหม่' });
-  }
-
-  if (record.otp === otp) {
-    otpStore.delete(email.toLowerCase());
-    const isAdmin = email.toLowerCase() === 'nptconsultant2017@gmail.com' || email.toLowerCase() === 'davezaa1642@gmail.com';
-
-    return res.json({
-      success: true,
-      message: 'เข้าสู่ระบบสำเร็จ',
-      isAdmin: isAdmin,
-      email: email.toLowerCase()
-    });
+  if (isAdmin) {
+    db.adminPins = db.adminPins || {};
+    if (db.adminPins[emailLower] && db.adminPins[emailLower].hash) {
+      return res.status(400).json({ success: false, message: 'มีการตั้งรหัส PIN ไว้แล้ว กรุณาติดต่อผู้ดูแลระบบเพื่อรีเซ็ต' });
+    }
+    db.adminPins[emailLower] = { salt, hash };
   } else {
-    return res.status(400).json({ success: false, message: 'รหัส OTP ไม่ถูกต้อง' });
+    if (staffMember.pinHash) {
+      return res.status(400).json({ success: false, message: 'มีการตั้งรหัส PIN ไว้แล้ว กรุณาติดต่อผู้จัดการเพื่อรีเซ็ต' });
+    }
+    staffMember.pinSalt = salt;
+    staffMember.pinHash = hash;
   }
+
+  writeDb(db);
+  console.log(`[PIN Setup] ${emailLower} ตั้งรหัส PIN สำเร็จ`);
+  return res.json({ success: true, message: 'ตั้งรหัส PIN สำเร็จ', isAdmin, email: emailLower });
+});
+
+// 3. เข้าสู่ระบบด้วยอีเมล + PIN
+app.post('/api/login-pin', (req, res) => {
+  const { email, pin } = req.body;
+  if (!email || !pin) {
+    return res.status(400).json({ success: false, message: 'กรุณาระบุอีเมลและรหัส PIN' });
+  }
+  const emailLower = email.toLowerCase();
+  const db = readDb();
+  const { isAdmin, staffMember, allowed } = findAccount(db, emailLower);
+
+  if (!allowed) {
+    return res.status(400).json({ success: false, message: 'ไม่พบอีเมลนี้ในระบบ' });
+  }
+
+  let saltRec, hashRec;
+  if (isAdmin) {
+    db.adminPins = db.adminPins || {};
+    const rec = db.adminPins[emailLower];
+    if (!rec) return res.status(400).json({ success: false, message: 'ยังไม่ได้ตั้งค่า PIN กรุณาตั้งค่าก่อน', needsSetup: true });
+    saltRec = rec.salt; hashRec = rec.hash;
+  } else {
+    if (!staffMember || !staffMember.pinHash) {
+      return res.status(400).json({ success: false, message: 'ยังไม่ได้ตั้งค่า PIN กรุณาตั้งค่าก่อน', needsSetup: true });
+    }
+    saltRec = staffMember.pinSalt; hashRec = staffMember.pinHash;
+  }
+
+  const attemptHash = hashPin(pin, saltRec);
+  const a = Buffer.from(attemptHash, 'hex');
+  const b = Buffer.from(hashRec, 'hex');
+  const match = a.length === b.length && crypto.timingSafeEqual(a, b);
+
+  if (!match) {
+    return res.status(400).json({ success: false, message: 'รหัส PIN ไม่ถูกต้อง' });
+  }
+  return res.json({ success: true, message: 'เข้าสู่ระบบสำเร็จ', isAdmin, email: emailLower });
+});
+
+// 4. รีเซ็ต PIN ของพนักงาน (ให้ผู้จัดการ/แอดมินใช้ เมื่อพนักงานลืมรหัส PIN)
+app.post('/api/reset-pin', (req, res) => {
+  const { targetEmail } = req.body;
+  if (!targetEmail) return res.status(400).json({ success: false, message: 'กรุณาระบุอีเมลที่ต้องการรีเซ็ต' });
+  const emailLower = targetEmail.toLowerCase();
+  const db = readDb();
+  const staffList = db.staff || [];
+  const staffMember = staffList.find(s => s.email && s.email.toLowerCase() === emailLower);
+
+  let found = false;
+  if (staffMember && staffMember.pinHash) {
+    delete staffMember.pinHash;
+    delete staffMember.pinSalt;
+    found = true;
+  }
+  db.adminPins = db.adminPins || {};
+  if (db.adminPins[emailLower]) {
+    delete db.adminPins[emailLower];
+    found = true;
+  }
+
+  if (!found) {
+    return res.status(400).json({ success: false, message: 'ไม่พบรหัส PIN ที่ตั้งไว้สำหรับอีเมลนี้' });
+  }
+
+  writeDb(db);
+  return res.json({ success: true, message: 'รีเซ็ตรหัส PIN เรียบร้อยแล้ว ผู้ใช้สามารถตั้งรหัสใหม่ได้ในการเข้าสู่ระบบครั้งถัดไป' });
 });
 
 // Ping endpoint to test backend online status

@@ -314,6 +314,12 @@ body.light-mode .login-container {
 }
 
 /* ================= QUICK UNLOCK: PIN PAD ================= */
+.pin-dots-row {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 18px;
+}
 .pin-dot {
     width: 16px;
     height: 16px;
@@ -1526,6 +1532,14 @@ body.light-mode select option {
         padding: 24px !important;
         width: 100% !important;
         max-width: 100% !important;
+    }
+    .pin-keypad {
+        max-width: 240px;
+        gap: 10px;
+    }
+    .pin-key {
+        min-height: 48px;
+        font-size: 1.15rem;
     }
 
     /* Modals responsive styling */

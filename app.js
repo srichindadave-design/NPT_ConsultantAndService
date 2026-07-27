@@ -62,8 +62,6 @@ function getSortedStaff() {
 
 // For client-side offline fallback simulation
 let isOfflineMode = false;
-let frontendMockOtp = '';
-let frontendMockEmail = '';
 let tempUploadedFileData = '';
 let tempUploadedFileName = '';
 let taskDatePicker = null;
@@ -519,140 +517,8 @@ function setupUserRoleUI() {
 
 function resetLoginForm() {
     document.getElementById('login-email').value = '';
-    document.getElementById('login-otp').value = '';
     document.getElementById('phone-view').classList.remove('hidden');
-    document.getElementById('otp-view').classList.add('hidden');
-}
-
-async function requestOTP() {
-    const emailInput = document.getElementById('login-email').value.trim().toLowerCase();
-    
-    if (!emailInput || !emailInput.includes('@')) {
-        showToast('กรุณากรอก Gmail/Email ให้ถูกต้อง', 'error', 'login-message');
-        return;
-    }
-
-    // If online mode, call backend directly and let it validate
-    if (!isOfflineMode) {
-        try {
-            const response = await fetch(`${API_BASE}/login-direct`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    email: emailInput
-                })
-            });
-            const result = await response.json();
-
-            if (result.success) {
-                state.currentUser = {
-                    email: result.email,
-                    isAdmin: result.isAdmin
-                };
-                localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(state.currentUser));
-                
-                checkAuth();
-                showToast('เข้าสู่ระบบสำเร็จ ยินดีต้อนรับครับ', 'success');
-                maybeOfferRememberDevice();
-            } else {
-                showToast(result.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ', 'error', 'login-message');
-            }
-            return;
-        } catch (e) {
-            console.error('[Login] Backend error, falling back to local verification...', e);
-        }
-    }
-
-    // Local / Offline Simulation
-    const isAdmin = emailInput === 'nptconsultant2017@gmail.com' || emailInput === 'davezaa1642@gmail.com';
-    const isStaff = state.staff.some(s => s.email && s.email.toLowerCase() === emailInput);
-
-    if (!isAdmin && !isStaff) {
-        showToast('ไม่พบอีเมลนี้ในระบบสิทธิ์แอดมินหรือพนักงาน', 'error', 'login-message');
-        return;
-    }
-
-    state.currentUser = {
-        email: emailInput,
-        isAdmin: isAdmin
-    };
-    localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(state.currentUser));
-    checkAuth();
-    showToast('เข้าสู่ระบบสำเร็จ (โหมดจำลองออฟไลน์)', 'success');
-    maybeOfferRememberDevice();
-}
-
-function triggerEmailAlert(email, htmlContent) {
-    if (email.toLowerCase() === 'davezaa1642@gmail.com') {
-        return; // Do not show OTP notification popup for this email
-    }
-    document.getElementById('display-target-email').textContent = email;
-    document.getElementById('sms-body-content').innerHTML = htmlContent;
-    
-    // Show Gmail notification style pop-up
-    const emailPopup = document.getElementById('simulated-sms');
-    emailPopup.classList.remove('hidden');
-    setTimeout(() => emailPopup.classList.add('show'), 100);
-
-    // Hide popup after 12 seconds
-    setTimeout(hideSMSNotification, 12000);
-}
-
-async function verifyOTP() {
-    const emailInput = document.getElementById('login-email').value.trim().toLowerCase();
-    const otpInput = document.getElementById('login-otp').value.trim();
-
-    if (!/^\d{6}$/.test(otpInput)) {
-        showToast('กรุณากรอกรหัส OTP ให้ครบ 6 หลัก', 'error', 'login-message');
-        return;
-    }
-
-    if (isOfflineMode) {
-        if (emailInput === frontendMockEmail && otpInput === frontendMockOtp) {
-            hideSMSNotification();
-            
-            state.currentUser = {
-                email: emailInput,
-                isAdmin: emailInput === 'nptconsultant2017@gmail.com' || emailInput === 'davezaa1642@gmail.com'
-            };
-            localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(state.currentUser));
-            
-            checkAuth();
-            showToast('เข้าสู่ระบบสำเร็จ (โหมดจำลองออฟไลน์)', 'success');
-            maybeOfferRememberDevice();
-        } else {
-            showToast('รหัส OTP ไม่ถูกต้อง', 'error', 'login-message');
-        }
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE}/verify-otp`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: emailInput, otp: otpInput })
-        });
-        const result = await response.json();
-
-        if (result.success) {
-            hideSMSNotification();
-            
-            // Save authentication state
-            state.currentUser = {
-                email: result.email,
-                isAdmin: result.isAdmin
-            };
-            localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(state.currentUser));
-            
-            checkAuth();
-            showToast('เข้าสู่ระบบสำเร็จ ยินดีต้อนรับครับ', 'success');
-            maybeOfferRememberDevice();
-        } else {
-            showToast(result.message || 'รหัส OTP ไม่ถูกต้อง', 'error', 'login-message');
-        }
-    } catch (e) {
-        showToast('เกิดข้อผิดพลาดในการยืนยัน OTP', 'error', 'login-message');
-    }
+    document.getElementById('pin-view').classList.add('hidden');
 }
 
 function logout() {
@@ -662,62 +528,33 @@ function logout() {
     showToast('ออกจากระบบเรียบร้อยแล้ว', 'info');
 }
 
-// ================= QUICK UNLOCK: จดจำอุปกรณ์ (PIN / Face ID / Touch ID) =================
-// หมายเหตุด้านความปลอดภัย: ระบบนี้เป็น "ตัวปลดล็อกอุปกรณ์เครื่องนี้" เท่านั้น
-// ตัวที่ยืนยันตัวตนจริงกับเซิร์ฟเวอร์ยังคงเป็นอีเมล (ผ่าน /api/login-direct ที่เช็ครายชื่อพนักงาน/แอดมิน)
-// PIN และ Face ID/Touch ID เก็บ/ตรวจสอบไว้ในเครื่องนี้เท่านั้น เพื่อข้ามการพิมพ์อีเมลซ้ำทุกครั้ง
+// ================= PIN AUTHENTICATION (แทนที่ระบบ OTP เดิม) =================
+// ผู้ใช้แต่ละคนตั้งรหัส PIN 4 หลักด้วยตนเองในการเข้าใช้งานครั้งแรก แล้วใช้ PIN นั้น
+// เข้าสู่ระบบในครั้งถัดไป (ยืนยันฝั่งเซิร์ฟเวอร์ทุกครั้งผ่าน /api/setup-pin และ /api/login-pin)
+// อีเมลที่เคยเข้าระบบสำเร็จจะถูกจดจำไว้ในเครื่องนี้ เพื่อไม่ต้องพิมพ์อีเมลซ้ำทุกครั้ง
+// (Face ID/Touch ID เป็นทางลัดเพิ่มเติม เก็บกุญแจไว้ในเครื่องนี้เท่านั้น)
 const REMEMBER_EMAIL_KEY = 'npt_remember_email';
 const REMEMBER_NAME_KEY = 'npt_remember_name';
-const PIN_HASH_KEY = 'npt_pin_hash';
 const WEBAUTHN_CRED_KEY = 'npt_webauthn_cred_id';
-const REMEMBER_DISMISSED_KEY = 'npt_remember_dismissed';
 
-let quickUnlockPinBuffer = '';
-let rememberSetupStage = 'enter'; // 'enter' -> 'confirm'
-let rememberSetupFirstPin = '';
-let rememberSetupPinBuffer = '';
+let pinBuffer = '';
+let pinMode = 'login';       // 'setup-enter' | 'setup-confirm' | 'login'
+let pinFirstEntry = '';
+let pinCurrentEmail = '';
+let pinCurrentIsAdmin = false;
 
-async function sha256Hex(text) {
-    const enc = new TextEncoder().encode(text);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', enc);
-    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-function hasRememberedDevice() {
-    return !!(localStorage.getItem(REMEMBER_EMAIL_KEY) && localStorage.getItem(PIN_HASH_KEY));
+function hasRememberedEmail() {
+    return !!localStorage.getItem(REMEMBER_EMAIL_KEY);
 }
 
 function hasFaceIdEnrolled() {
     return !!localStorage.getItem(WEBAUTHN_CRED_KEY);
 }
 
-// เรียกตอนหน้า login แสดงผล เพื่อสลับไปหน้าปลดล็อกด่วนถ้ามีการจดจำอุปกรณ์นี้ไว้
-function maybeShowQuickUnlock() {
-    const phoneView = document.getElementById('phone-view');
-    const otpView = document.getElementById('otp-view');
-    const quickView = document.getElementById('quick-unlock-view');
-
-    if (hasRememberedDevice()) {
-        phoneView.classList.add('hidden');
-        otpView.classList.add('hidden');
-        quickView.classList.remove('hidden');
-
-        const name = localStorage.getItem(REMEMBER_NAME_KEY) || localStorage.getItem(REMEMBER_EMAIL_KEY);
-        document.getElementById('quick-unlock-name').textContent = `สวัสดี, ${name}`;
-
-        const faceBtn = document.getElementById('btn-faceid-unlock');
-        if (hasFaceIdEnrolled() && window.PublicKeyCredential) {
-            faceBtn.classList.remove('hidden');
-        } else {
-            faceBtn.classList.add('hidden');
-        }
-
-        quickUnlockPinBuffer = '';
-        updatePinDots('pin-dots', 0, false);
-    } else {
-        quickView.classList.add('hidden');
-        phoneView.classList.remove('hidden');
-    }
+function forgetDevice() {
+    localStorage.removeItem(REMEMBER_EMAIL_KEY);
+    localStorage.removeItem(REMEMBER_NAME_KEY);
+    localStorage.removeItem(WEBAUTHN_CRED_KEY);
 }
 
 function updatePinDots(containerId, filledCount, isError) {
@@ -728,192 +565,201 @@ function updatePinDots(containerId, filledCount, isError) {
     container.classList.toggle('pin-dots-error', !!isError);
 }
 
-// --- Quick Unlock (เข้าสู่ระบบด้วย PIN ที่จดจำไว้) ---
-function setupQuickUnlockListeners() {
-    document.querySelectorAll('#quick-unlock-view .pin-key[data-digit]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (quickUnlockPinBuffer.length >= 4) return;
-            quickUnlockPinBuffer += btn.dataset.digit;
-            updatePinDots('pin-dots', quickUnlockPinBuffer.length, false);
-            if (quickUnlockPinBuffer.length === 4) {
-                attemptPinUnlock();
-            }
-        });
-    });
-    document.getElementById('btn-pin-backspace').addEventListener('click', () => {
-        quickUnlockPinBuffer = quickUnlockPinBuffer.slice(0, -1);
-        updatePinDots('pin-dots', quickUnlockPinBuffer.length, false);
-    });
+// เรียกตอนหน้า login แสดงผล: ถ้าเคยจดจำอีเมลไว้ ข้ามไปหน้ากรอก PIN ได้เลย
+function maybeShowQuickUnlock() {
+    const phoneView = document.getElementById('phone-view');
 
-    document.getElementById('btn-use-other-account').addEventListener('click', () => {
-        document.getElementById('quick-unlock-view').classList.add('hidden');
-        document.getElementById('phone-view').classList.remove('hidden');
-    });
-
-    document.getElementById('btn-forget-device').addEventListener('click', (e) => {
-        e.preventDefault();
-        forgetDevice();
-        showToast('ลบการจดจำอุปกรณ์นี้เรียบร้อยแล้ว', 'info');
-        maybeShowQuickUnlock();
-    });
-
-    document.getElementById('btn-faceid-unlock').addEventListener('click', attemptFaceIdUnlock);
-
-    // --- Remember Device Setup Modal: PIN keypad ---
-    document.querySelectorAll('.remember-pin-key[data-digit]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (rememberSetupPinBuffer.length >= 4) return;
-            rememberSetupPinBuffer += btn.dataset.digit;
-            updatePinDots('remember-pin-dots', rememberSetupPinBuffer.length, false);
-            if (rememberSetupPinBuffer.length === 4) {
-                handleRememberPinComplete();
-            }
-        });
-    });
-    document.getElementById('btn-remember-pin-backspace').addEventListener('click', () => {
-        rememberSetupPinBuffer = rememberSetupPinBuffer.slice(0, -1);
-        updatePinDots('remember-pin-dots', rememberSetupPinBuffer.length, false);
-    });
-
-    document.getElementById('btn-enable-faceid').addEventListener('click', enrollFaceId);
-}
-
-async function attemptPinUnlock() {
-    const enteredHash = await sha256Hex(quickUnlockPinBuffer);
-    const storedHash = localStorage.getItem(PIN_HASH_KEY);
-
-    if (enteredHash === storedHash) {
-        await finishQuickLogin();
+    if (hasRememberedEmail()) {
+        const email = localStorage.getItem(REMEMBER_EMAIL_KEY);
+        const name = localStorage.getItem(REMEMBER_NAME_KEY) || email;
+        document.getElementById('login-email').value = email;
+        phoneView.classList.add('hidden');
+        showPinView('login', email, false, name);
     } else {
-        updatePinDots('pin-dots', 4, true);
-        showToast('รหัส PIN ไม่ถูกต้อง', 'error', 'login-message');
-        setTimeout(() => {
-            quickUnlockPinBuffer = '';
-            updatePinDots('pin-dots', 0, false);
-        }, 500);
+        phoneView.classList.remove('hidden');
+        document.getElementById('pin-view').classList.add('hidden');
     }
 }
 
-async function attemptFaceIdUnlock() {
-    try {
-        const credIdB64 = localStorage.getItem(WEBAUTHN_CRED_KEY);
-        const credId = Uint8Array.from(atob(credIdB64), c => c.charCodeAt(0));
-        const challenge = crypto.getRandomValues(new Uint8Array(32));
+function showPinView(mode, email, isAdmin, displayName) {
+    pinMode = mode;
+    pinCurrentEmail = email;
+    pinCurrentIsAdmin = !!isAdmin;
+    pinBuffer = '';
+    pinFirstEntry = '';
 
-        await navigator.credentials.get({
-            publicKey: {
-                challenge: challenge,
-                allowCredentials: [{ id: credId, type: 'public-key' }],
-                userVerification: 'required',
-                timeout: 30000
-            }
-        });
+    document.getElementById('phone-view').classList.add('hidden');
+    document.getElementById('pin-view').classList.remove('hidden');
+    updatePinDots('pin-dots', 0, false);
 
-        // ผ่านการยืนยัน Face ID/Touch ID ของเครื่องนี้แล้ว
-        await finishQuickLogin();
-    } catch (e) {
-        console.warn('[FaceID Unlock] ยกเลิกหรือไม่สำเร็จ:', e);
-        showToast('ปลดล็อกด้วย Face ID/Touch ID ไม่สำเร็จ กรุณาใช้ PIN แทน', 'error', 'login-message');
+    const title = document.getElementById('pin-view-title');
+    const subtitle = document.getElementById('pin-view-subtitle');
+    const faceBtn = document.getElementById('btn-faceid-unlock');
+    const forgetWrap = document.getElementById('pin-forget-device-wrap');
+
+    if (mode === 'setup-enter') {
+        title.textContent = 'ยินดีต้อนรับ! ตั้งรหัส PIN ของคุณ';
+        subtitle.textContent = 'กำหนดรหัส PIN 4 หลักสำหรับเข้าใช้งานครั้งต่อไป';
+        faceBtn.classList.add('hidden');
+        forgetWrap.classList.add('hidden');
+    } else if (mode === 'setup-confirm') {
+        title.textContent = 'กรอกรหัส PIN อีกครั้ง';
+        subtitle.textContent = 'เพื่อยืนยันว่ารหัสถูกต้อง';
+        faceBtn.classList.add('hidden');
+        forgetWrap.classList.add('hidden');
+    } else {
+        title.textContent = `สวัสดี, ${displayName || email}`;
+        subtitle.textContent = 'กรอกรหัส PIN เพื่อเข้าสู่ระบบ';
+        if (hasFaceIdEnrolled() && window.PublicKeyCredential) {
+            faceBtn.classList.remove('hidden');
+        } else {
+            faceBtn.classList.add('hidden');
+        }
+        forgetWrap.classList.remove('hidden');
     }
+
+    // โฟกัสช่องกรอกที่มองไม่เห็น เพื่อให้พิมพ์ตัวเลขจากแป้นพิมพ์บนคอมพิวเตอร์ได้ทันที
+    const hiddenInput = document.getElementById('pin-hidden-input');
+    hiddenInput.value = '';
+    setTimeout(() => hiddenInput.focus(), 50);
 }
 
-// เข้าสู่ระบบจริงโดยใช้อีเมลที่จดจำไว้ ผ่าน endpoint เดิม (login-direct)
-async function finishQuickLogin() {
-    const email = localStorage.getItem(REMEMBER_EMAIL_KEY);
-    if (!email) return;
+// --- ขั้นตอนที่ 1: กรอกอีเมล แล้วเช็คว่าต้องตั้ง PIN ใหม่ หรือกรอก PIN เข้าระบบ ---
+async function handleEmailContinue() {
+    const emailInput = document.getElementById('login-email').value.trim().toLowerCase();
+
+    if (!emailInput || !emailInput.includes('@')) {
+        showToast('กรุณากรอก Gmail/Email ให้ถูกต้อง', 'error', 'login-message');
+        return;
+    }
 
     try {
-        const response = await fetch(`${API_BASE}/login-direct`, {
+        const response = await fetch(`${API_BASE}/check-pin-status`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
+            body: JSON.stringify({ email: emailInput })
+        });
+        const result = await response.json();
+
+        if (!result.success) {
+            showToast(result.message || 'ไม่พบอีเมลนี้ในระบบ', 'error', 'login-message');
+            return;
+        }
+
+        if (result.hasPinSet) {
+            const member = state.staff.find(s => s.email.toLowerCase() === emailInput);
+            showPinView('login', emailInput, result.isAdmin, member ? member.name : emailInput);
+        } else {
+            showPinView('setup-enter', emailInput, result.isAdmin);
+        }
+    } catch (e) {
+        showToast('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่', 'error', 'login-message');
+    }
+}
+
+// --- ขั้นตอนที่ 2: กดตัวเลข/พิมพ์ครบ 4 หลัก แล้วดำเนินการตาม pinMode ---
+async function handlePinComplete() {
+    if (pinMode === 'setup-enter') {
+        pinFirstEntry = pinBuffer;
+        pinBuffer = '';
+        pinMode = 'setup-confirm';
+        document.getElementById('pin-view-title').textContent = 'กรอกรหัส PIN อีกครั้ง';
+        document.getElementById('pin-view-subtitle').textContent = 'เพื่อยืนยันว่ารหัสถูกต้อง';
+        updatePinDots('pin-dots', 0, false);
+        document.getElementById('pin-hidden-input').value = '';
+        return;
+    }
+
+    if (pinMode === 'setup-confirm') {
+        if (pinBuffer !== pinFirstEntry) {
+            updatePinDots('pin-dots', 4, true);
+            showToast('รหัส PIN ไม่ตรงกัน กรุณาตั้งใหม่อีกครั้ง', 'error', 'login-message');
+            setTimeout(() => {
+                pinMode = 'setup-enter';
+                pinFirstEntry = '';
+                pinBuffer = '';
+                document.getElementById('pin-view-title').textContent = 'ยินดีต้อนรับ! ตั้งรหัส PIN ของคุณ';
+                document.getElementById('pin-view-subtitle').textContent = 'กำหนดรหัส PIN 4 หลักสำหรับเข้าใช้งานครั้งต่อไป';
+                updatePinDots('pin-dots', 0, false);
+                document.getElementById('pin-hidden-input').value = '';
+            }, 600);
+            return;
+        }
+        await submitPinSetup(pinCurrentEmail, pinBuffer);
+        return;
+    }
+
+    // mode === 'login'
+    await submitPinLogin(pinCurrentEmail, pinBuffer);
+}
+
+async function submitPinSetup(email, pin) {
+    try {
+        const response = await fetch(`${API_BASE}/setup-pin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, pin })
         });
         const result = await response.json();
 
         if (result.success) {
-            state.currentUser = { email: result.email, isAdmin: result.isAdmin };
-            localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(state.currentUser));
-            checkAuth();
-            showToast('ปลดล็อกสำเร็จ ยินดีต้อนรับกลับครับ', 'success');
+            completeLogin(result.email, result.isAdmin);
         } else {
-            showToast('ไม่สามารถเข้าสู่ระบบอัตโนมัติได้ กรุณาเข้าสู่ระบบด้วยอีเมลอีกครั้ง', 'error', 'login-message');
-            forgetDevice();
-            maybeShowQuickUnlock();
+            showToast(result.message || 'ตั้งรหัส PIN ไม่สำเร็จ', 'error', 'login-message');
+            document.getElementById('phone-view').classList.remove('hidden');
+            document.getElementById('pin-view').classList.add('hidden');
         }
     } catch (e) {
-        showToast('เชื่อมต่อไม่สำเร็จ กรุณาลองใหม่', 'error', 'login-message');
+        showToast('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่', 'error', 'login-message');
     }
 }
 
-function forgetDevice() {
-    localStorage.removeItem(REMEMBER_EMAIL_KEY);
-    localStorage.removeItem(REMEMBER_NAME_KEY);
-    localStorage.removeItem(PIN_HASH_KEY);
-    localStorage.removeItem(WEBAUTHN_CRED_KEY);
-}
+async function submitPinLogin(email, pin) {
+    try {
+        const response = await fetch(`${API_BASE}/login-pin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, pin })
+        });
+        const result = await response.json();
 
-// --- หลังเข้าสู่ระบบสำเร็จ: ชวนตั้งค่าจดจำอุปกรณ์นี้ (ถ้ายังไม่เคยตั้ง/ยังไม่เคยปฏิเสธ) ---
-function maybeOfferRememberDevice() {
-    if (hasRememberedDevice()) return; // ตั้งไว้แล้ว ไม่ต้องถามซ้ำ
-    if (localStorage.getItem(REMEMBER_DISMISSED_KEY)) return; // เคยกด "ไว้คราวหน้า" แล้ว
-
-    rememberSetupStage = 'enter';
-    rememberSetupFirstPin = '';
-    rememberSetupPinBuffer = '';
-    document.getElementById('remember-setup-label').textContent = 'กำหนดรหัส PIN 4 หลัก';
-    updatePinDots('remember-pin-dots', 0, false);
-    document.getElementById('remember-pin-step').classList.remove('hidden');
-    document.getElementById('remember-faceid-offer').classList.add('hidden');
-    openModal('remember-device-modal');
-}
-
-function skipRememberDeviceSetup() {
-    localStorage.setItem(REMEMBER_DISMISSED_KEY, '1');
-    closeModal('remember-device-modal');
-}
-
-function handleRememberPinComplete() {
-    if (rememberSetupStage === 'enter') {
-        rememberSetupFirstPin = rememberSetupPinBuffer;
-        rememberSetupPinBuffer = '';
-        rememberSetupStage = 'confirm';
-        document.getElementById('remember-setup-label').textContent = 'กรอกรหัส PIN อีกครั้งเพื่อยืนยัน';
-        updatePinDots('remember-pin-dots', 0, false);
-    } else {
-        if (rememberSetupPinBuffer === rememberSetupFirstPin) {
-            completeRememberPinSetup(rememberSetupPinBuffer);
+        if (result.success) {
+            completeLogin(result.email, result.isAdmin);
         } else {
-            updatePinDots('remember-pin-dots', 4, true);
-            showToast('รหัส PIN ไม่ตรงกัน กรุณาตั้งใหม่อีกครั้ง', 'error');
+            updatePinDots('pin-dots', 4, true);
+            showToast(result.message || 'รหัส PIN ไม่ถูกต้อง', 'error', 'login-message');
             setTimeout(() => {
-                rememberSetupStage = 'enter';
-                rememberSetupFirstPin = '';
-                rememberSetupPinBuffer = '';
-                document.getElementById('remember-setup-label').textContent = 'กำหนดรหัส PIN 4 หลัก';
-                updatePinDots('remember-pin-dots', 0, false);
-            }, 600);
+                pinBuffer = '';
+                updatePinDots('pin-dots', 0, false);
+                document.getElementById('pin-hidden-input').value = '';
+            }, 500);
         }
+    } catch (e) {
+        showToast('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่', 'error', 'login-message');
     }
 }
 
-async function completeRememberPinSetup(pin) {
-    const hash = await sha256Hex(pin);
-    localStorage.setItem(PIN_HASH_KEY, hash);
-    localStorage.setItem(REMEMBER_EMAIL_KEY, state.currentUser.email);
+function completeLogin(email, isAdmin) {
+    state.currentUser = { email, isAdmin };
+    localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(state.currentUser));
 
-    const member = state.staff.find(s => s.email.toLowerCase() === state.currentUser.email.toLowerCase());
-    localStorage.setItem(REMEMBER_NAME_KEY, member ? member.name : state.currentUser.email);
+    const member = state.staff.find(s => s.email.toLowerCase() === email.toLowerCase());
+    localStorage.setItem(REMEMBER_EMAIL_KEY, email);
+    localStorage.setItem(REMEMBER_NAME_KEY, member ? member.name : email);
 
-    // ถ้าอุปกรณ์รองรับ Face ID/Touch ID (WebAuthn platform authenticator) ให้เสนอเปิดใช้ต่อ
-    if (window.PublicKeyCredential && window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-        const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
-        if (available) {
-            document.getElementById('remember-pin-step').classList.add('hidden');
-            document.getElementById('remember-faceid-offer').classList.remove('hidden');
-            return;
-        }
+    checkAuth();
+    showToast('เข้าสู่ระบบสำเร็จ ยินดีต้อนรับครับ', 'success');
+    maybeOfferFaceId();
+}
+
+// --- Face ID / Touch ID: ทางลัดเพิ่มเติม (เก็บกุญแจไว้ในเครื่องนี้เท่านั้น) ---
+async function maybeOfferFaceId() {
+    if (hasFaceIdEnrolled()) return;
+    if (!(window.PublicKeyCredential && window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable)) return;
+    const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
+    if (available) {
+        openModal('faceid-offer-modal');
     }
-    finishRememberDeviceSetup();
 }
 
 async function enrollFaceId() {
@@ -944,21 +790,103 @@ async function enrollFaceId() {
         showToast('เปิดใช้ Face ID / Touch ID สำเร็จ', 'success');
     } catch (e) {
         console.warn('[FaceID Enroll] ยกเลิกหรือไม่สำเร็จ:', e);
-        showToast('ไม่สามารถเปิดใช้ Face ID/Touch ID ได้ในขณะนี้ ใช้ PIN แทนได้ครับ', 'error');
+        showToast('ไม่สามารถเปิดใช้ Face ID/Touch ID ได้ในขณะนี้', 'error');
     }
-    finishRememberDeviceSetup();
+    closeModal('faceid-offer-modal');
 }
 
-function finishRememberDeviceSetup() {
-    closeModal('remember-device-modal');
-    showToast('ตั้งค่าเข้าสู่ระบบด่วนเรียบร้อยแล้ว', 'success');
+async function attemptFaceIdUnlock() {
+    try {
+        const credIdB64 = localStorage.getItem(WEBAUTHN_CRED_KEY);
+        const credId = Uint8Array.from(atob(credIdB64), c => c.charCodeAt(0));
+        const challenge = crypto.getRandomValues(new Uint8Array(32));
+
+        await navigator.credentials.get({
+            publicKey: {
+                challenge: challenge,
+                allowCredentials: [{ id: credId, type: 'public-key' }],
+                userVerification: 'required',
+                timeout: 30000
+            }
+        });
+
+        // ผ่านการยืนยัน Face ID/Touch ID ของเครื่องนี้แล้ว -> เข้าสู่ระบบด้วยอีเมลที่จดจำไว้
+        const emailResp = await fetch(`${API_BASE}/check-pin-status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: pinCurrentEmail })
+        });
+        const statusResult = await emailResp.json();
+        if (statusResult.success) {
+            completeLogin(statusResult.email, statusResult.isAdmin);
+        } else {
+            showToast('ไม่สามารถเข้าสู่ระบบได้ กรุณากรอก PIN แทน', 'error', 'login-message');
+        }
+    } catch (e) {
+        console.warn('[FaceID Unlock] ยกเลิกหรือไม่สำเร็จ:', e);
+        showToast('ปลดล็อกด้วย Face ID/Touch ID ไม่สำเร็จ กรุณาใช้ PIN แทน', 'error', 'login-message');
+    }
 }
 
-function hideSMSNotification() {
-    const smsPopup = document.getElementById('simulated-sms');
-    smsPopup.classList.remove('show');
-    setTimeout(() => smsPopup.classList.add('hidden'), 500);
+// --- ปุ่มกดตัวเลข + คีย์บอร์ดจริง (สำหรับ PC) ---
+function setupQuickUnlockListeners() {
+    document.querySelectorAll('#pin-view .pin-key[data-digit]').forEach(btn => {
+        btn.addEventListener('click', () => pushPinDigit(btn.dataset.digit));
+    });
+    document.getElementById('btn-pin-backspace').addEventListener('click', popPinDigit);
+
+    // รองรับพิมพ์ตัวเลขจากแป้นพิมพ์จริงบน PC/Mac
+    const hiddenInput = document.getElementById('pin-hidden-input');
+    hiddenInput.addEventListener('input', () => {
+        const digitsOnly = hiddenInput.value.replace(/\D/g, '').slice(0, 4);
+        hiddenInput.value = digitsOnly;
+        pinBuffer = digitsOnly;
+        updatePinDots('pin-dots', pinBuffer.length, false);
+        if (pinBuffer.length === 4) {
+            hiddenInput.blur();
+            handlePinComplete();
+        }
+    });
+    document.getElementById('pin-view').addEventListener('click', (e) => {
+        // แตะที่ไหนก็ได้ในหน้า PIN (ยกเว้นปุ่มอื่นๆ) ให้โฟกัสช่องพิมพ์ไว้เผื่อใช้คีย์บอร์ด
+        if (e.target.closest('.pin-key, button, a')) return;
+        hiddenInput.focus();
+    });
+
+    document.getElementById('btn-use-other-account').addEventListener('click', () => {
+        document.getElementById('pin-view').classList.add('hidden');
+        document.getElementById('phone-view').classList.remove('hidden');
+    });
+
+    document.getElementById('btn-forget-device').addEventListener('click', (e) => {
+        e.preventDefault();
+        forgetDevice();
+        showToast('ไม่จดจำอีเมลนี้บนอุปกรณ์นี้แล้ว', 'info');
+        document.getElementById('login-email').value = '';
+        document.getElementById('pin-view').classList.add('hidden');
+        document.getElementById('phone-view').classList.remove('hidden');
+    });
+
+    document.getElementById('btn-faceid-unlock').addEventListener('click', attemptFaceIdUnlock);
+    document.getElementById('btn-enable-faceid').addEventListener('click', enrollFaceId);
 }
+
+function pushPinDigit(digit) {
+    if (pinBuffer.length >= 4) return;
+    pinBuffer += digit;
+    document.getElementById('pin-hidden-input').value = pinBuffer;
+    updatePinDots('pin-dots', pinBuffer.length, false);
+    if (pinBuffer.length === 4) {
+        handlePinComplete();
+    }
+}
+
+function popPinDigit() {
+    pinBuffer = pinBuffer.slice(0, -1);
+    document.getElementById('pin-hidden-input').value = pinBuffer;
+    updatePinDots('pin-dots', pinBuffer.length, false);
+}
+
 
 // ================= TAB NAVIGATION =================
 function switchTab(tabId) {
@@ -2522,12 +2450,7 @@ window.viewPrintPO = function(id) {
 function setupEventListeners() {
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
-    document.getElementById('btn-request-otp').addEventListener('click', requestOTP);
-    document.getElementById('btn-verify-otp').addEventListener('click', verifyOTP);
-    document.getElementById('btn-back-to-phone').addEventListener('click', () => {
-        document.getElementById('phone-view').classList.remove('hidden');
-        document.getElementById('otp-view').classList.add('hidden');
-    });
+    document.getElementById('btn-continue-email').addEventListener('click', handleEmailContinue);
     document.getElementById('btn-logout').addEventListener('click', logout);
     setupQuickUnlockListeners();
     
@@ -2559,10 +2482,7 @@ function setupEventListeners() {
     }
 
     document.getElementById('login-email').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') requestOTP();
-    });
-    document.getElementById('login-otp').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') verifyOTP();
+        if (e.key === 'Enter') handleEmailContinue();
     });
 
     document.querySelectorAll('.nav-item').forEach(item => {
