@@ -749,7 +749,79 @@ function completeLogin(email, isAdmin) {
 
     checkAuth();
     showToast('เข้าสู่ระบบสำเร็จ ยินดีต้อนรับครับ', 'success');
+    maybeOfferPushNotifications();
+}
+
+// --- Push Notification: แจ้งเตือนจริงแม้ปิดแอปอยู่ (Web Push) ---
+const PUSH_DISMISSED_KEY = 'npt_push_dismissed';
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+}
+
+async function maybeOfferPushNotifications() {
+    const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    if (!supported || Notification.permission !== 'default' || localStorage.getItem(PUSH_DISMISSED_KEY)) {
+        maybeOfferFaceId();
+        return;
+    }
+    openModal('push-offer-modal');
+}
+
+function skipPushOffer() {
+    localStorage.setItem(PUSH_DISMISSED_KEY, '1');
+    closeModal('push-offer-modal');
     maybeOfferFaceId();
+}
+
+async function enablePushNotifications() {
+    try {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            showToast('ไม่ได้เปิดใช้การแจ้งเตือน', 'info');
+            closeModal('push-offer-modal');
+            maybeOfferFaceId();
+            return;
+        }
+
+        const reg = await navigator.serviceWorker.ready;
+        const keyResp = await fetch(`${API_BASE}/push/vapid-public-key`);
+        const keyResult = await keyResp.json();
+
+        const subscription = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(keyResult.publicKey)
+        });
+
+        await fetch(`${API_BASE}/push/subscribe`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscription, email: state.currentUser.email })
+        });
+
+        showToast('เปิดการแจ้งเตือนสำเร็จ', 'success');
+    } catch (e) {
+        console.warn('[Push] เปิดใช้การแจ้งเตือนไม่สำเร็จ:', e);
+        showToast('ไม่สามารถเปิดการแจ้งเตือนได้ในขณะนี้', 'error');
+    }
+    closeModal('push-offer-modal');
+    maybeOfferFaceId();
+}
+
+// ส่งแจ้งเตือนจริงไปยังทุกอุปกรณ์ที่เปิดรับไว้ (ใช้คู่กับ addNotification เพื่อแจ้งเตือนแม้ปิดแอปอยู่)
+async function broadcastPushNotification(title, body) {
+    try {
+        await fetch(`${API_BASE}/push/broadcast`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, body, url: '/' })
+        });
+    } catch (e) {
+        console.warn('[Push] กระจายการแจ้งเตือนไม่สำเร็จ:', e);
+    }
 }
 
 // --- Face ID / Touch ID: ทางลัดเพิ่มเติม (เก็บกุญแจไว้ในเครื่องนี้เท่านั้น) ---
@@ -869,6 +941,7 @@ function setupQuickUnlockListeners() {
 
     document.getElementById('btn-faceid-unlock').addEventListener('click', attemptFaceIdUnlock);
     document.getElementById('btn-enable-faceid').addEventListener('click', enrollFaceId);
+    document.getElementById('btn-enable-push').addEventListener('click', enablePushNotifications);
 }
 
 function pushPinDigit(digit) {
@@ -1319,6 +1392,7 @@ function renderStaff() {
             <td>
                 <div class="gap-2" style="display:flex;">
                     <button class="btn btn-secondary btn-small btn-icon-only" onclick="editStaff('${s.id}')" title="แก้ไขข้อมูล">${iconSvg('edit-3')}</button>
+                    <button class="btn btn-secondary btn-small btn-icon-only" onclick="resetStaffPin('${escapeHtml(s.email)}', '${escapeHtml(s.name)}')" title="รีเซ็ตรหัส PIN">${iconSvg('key-round')}</button>
                     <button class="btn btn-danger btn-small btn-icon-only" onclick="deleteStaff('${s.id}')" title="ลบพนักงาน">${iconSvg('trash-2')}</button>
                 </div>
             </td>
@@ -1533,6 +1607,27 @@ window.deleteStaff = function(id) {
         saveDataToLocalStorage();
         renderStaff();
         showToast('ลบข้อมูลพนักงานเรียบร้อยแล้ว', 'success');
+    }
+};
+
+window.resetStaffPin = async function(email, name) {
+    if (!confirm(`รีเซ็ตรหัส PIN ของ "${name}" ใช่หรือไม่?\n\nพนักงานจะต้องตั้งรหัส PIN ใหม่ในการเข้าสู่ระบบครั้งถัดไป`)) {
+        return;
+    }
+    try {
+        const response = await fetch(`${API_BASE}/reset-pin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetEmail: email })
+        });
+        const result = await response.json();
+        if (result.success) {
+            showToast(`รีเซ็ต PIN ของ ${name} เรียบร้อยแล้ว`, 'success');
+        } else {
+            showToast(result.message || 'รีเซ็ต PIN ไม่สำเร็จ', 'error');
+        }
+    } catch (e) {
+        showToast('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่', 'error');
     }
 };
 
@@ -2961,7 +3056,8 @@ const ICON_PATHS = {
     'bell-off': '<path d="M8.7 3A6 6 0 0 1 18 8c0 2.4.8 4.3 1.5 5.5"/><path d="M17 17H3s3-2 3-9c0-.4 0-.7.1-1.1"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><line x1="1" y1="1" x2="23" y2="23"/>',
     'info': '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
     'alert-triangle': '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
-    'x-circle': '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'
+    'x-circle': '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
+    'key-round': '<path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/>'
 };
 
 function iconSvg(name, extraStyle) {
@@ -3599,6 +3695,7 @@ window.addNotification = function(title, desc, type = 'info', action = null) {
     }
     saveDataToLocalStorage();
     renderNotificationBell();
+    broadcastPushNotification(title, desc);
     
     // Play alert sound or animation
     const bellBtn = document.getElementById('notification-bell-btn');

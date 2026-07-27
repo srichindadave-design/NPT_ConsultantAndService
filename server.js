@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
+const webpush = require('web-push');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -221,6 +222,88 @@ app.post('/api/reset-pin', (req, res) => {
 
   writeDb(db);
   return res.json({ success: true, message: 'รีเซ็ตรหัส PIN เรียบร้อยแล้ว ผู้ใช้สามารถตั้งรหัสใหม่ได้ในการเข้าสู่ระบบครั้งถัดไป' });
+});
+
+// --- PUSH NOTIFICATION (Web Push) ---
+// สร้างคู่กุญแจ VAPID ครั้งแรก แล้วเก็บไว้ใน db.json เพื่อให้ใช้ค่าเดิมทุกครั้งที่เซิร์ฟเวอร์รีสตาร์ท
+function ensureVapidKeys() {
+  const db = readDb();
+  if (!db.vapidKeys || !db.vapidKeys.publicKey || !db.vapidKeys.privateKey) {
+    const keys = webpush.generateVAPIDKeys();
+    db.vapidKeys = keys;
+    writeDb(db);
+    console.log('[Push] สร้างคู่กุญแจ VAPID ใหม่สำหรับการแจ้งเตือนแล้ว');
+  }
+  return db.vapidKeys;
+}
+const vapidKeys = ensureVapidKeys();
+webpush.setVapidDetails('mailto:nptconsultant2017@gmail.com', vapidKeys.publicKey, vapidKeys.privateKey);
+
+// ให้ฝั่งไคลเอนต์ดึง public key ไปใช้สมัครรับการแจ้งเตือน
+app.get('/api/push/vapid-public-key', (req, res) => {
+  res.json({ success: true, publicKey: vapidKeys.publicKey });
+});
+
+// ไคลเอนต์ลงทะเบียนอุปกรณ์นี้เพื่อรับการแจ้งเตือน
+app.post('/api/push/subscribe', (req, res) => {
+  const { subscription, email } = req.body;
+  if (!subscription || !subscription.endpoint) {
+    return res.status(400).json({ success: false, message: 'ข้อมูลการสมัครรับแจ้งเตือนไม่ถูกต้อง' });
+  }
+  const db = readDb();
+  db.pushSubscriptions = db.pushSubscriptions || [];
+  // เอาตัวเก่าที่ endpoint ซ้ำออกก่อน (เผื่อสมัครซ้ำ/คีย์ใหม่) แล้วค่อยเพิ่มตัวใหม่
+  db.pushSubscriptions = db.pushSubscriptions.filter(s => s.subscription.endpoint !== subscription.endpoint);
+  db.pushSubscriptions.push({ email: email || null, subscription, subscribedAt: Date.now() });
+  writeDb(db);
+  console.log(`[Push] อุปกรณ์ใหม่ลงทะเบียนรับแจ้งเตือน (${email || 'ไม่ระบุอีเมล'}) รวมทั้งหมด ${db.pushSubscriptions.length} อุปกรณ์`);
+  res.json({ success: true, message: 'เปิดใช้การแจ้งเตือนสำเร็จ' });
+});
+
+// ยกเลิกรับการแจ้งเตือนบนอุปกรณ์นี้
+app.post('/api/push/unsubscribe', (req, res) => {
+  const { endpoint } = req.body;
+  if (!endpoint) return res.status(400).json({ success: false, message: 'ข้อมูลไม่ถูกต้อง' });
+  const db = readDb();
+  db.pushSubscriptions = (db.pushSubscriptions || []).filter(s => s.subscription.endpoint !== endpoint);
+  writeDb(db);
+  res.json({ success: true, message: 'ปิดการแจ้งเตือนสำหรับอุปกรณ์นี้แล้ว' });
+});
+
+// กระจายการแจ้งเตือนไปยังทุกอุปกรณ์ที่ลงทะเบียนไว้ (ใช้ตอนมีงานใหม่/อนุมัติ PR ฯลฯ)
+app.post('/api/push/broadcast', async (req, res) => {
+  const { title, body, url } = req.body;
+  if (!title) return res.status(400).json({ success: false, message: 'กรุณาระบุหัวข้อการแจ้งเตือน' });
+
+  const db = readDb();
+  const subs = db.pushSubscriptions || [];
+  if (subs.length === 0) {
+    return res.json({ success: true, message: 'ยังไม่มีอุปกรณ์ที่เปิดรับการแจ้งเตือน', sent: 0 });
+  }
+
+  const payload = JSON.stringify({ title, body: body || '', url: url || '/' });
+  let sent = 0, removed = 0;
+  const stillValid = [];
+
+  for (const entry of subs) {
+    try {
+      await webpush.sendNotification(entry.subscription, payload);
+      sent++;
+      stillValid.push(entry);
+    } catch (err) {
+      if (err.statusCode === 404 || err.statusCode === 410) {
+        removed++; // อุปกรณ์ยกเลิก/หมดอายุการสมัครแล้ว -> เอาออกจากรายการ
+      } else {
+        console.error('[Push] ส่งแจ้งเตือนไม่สำเร็จไปยังอุปกรณ์หนึ่ง:', err.message);
+        stillValid.push(entry);
+      }
+    }
+  }
+
+  db.pushSubscriptions = stillValid;
+  writeDb(db);
+  console.log(`[Push] ส่งแจ้งเตือน "${title}" สำเร็จ ${sent} อุปกรณ์ (ลบ ${removed} อุปกรณ์ที่หมดอายุ)`);
+  res.json({ success: true, message: `ส่งแจ้งเตือนสำเร็จ ${sent} อุปกรณ์`, sent, removed });
 });
 
 // Ping endpoint to test backend online status

@@ -115,6 +115,23 @@
         </div>
     </div>
 
+    <!-- Push Notification permission offer (แสดงหลังเข้าสู่ระบบสำเร็จ ครั้งแรกที่ยังไม่เคยตอบ) -->
+    <div id="push-offer-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 360px;">
+            <div class="modal-header">
+                <h3><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg> เปิดการแจ้งเตือน</h3>
+                <button class="btn-close-modal" onclick="skipPushOffer()">&times;</button>
+            </div>
+            <div style="padding: 20px; text-align: center;">
+                <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 18px;">รับแจ้งเตือนงานใหม่ ใบขอซื้อรออนุมัติ และข่าวสารสำคัญ แม้ปิดแอปอยู่ก็ตาม</p>
+                <button id="btn-enable-push" class="btn btn-primary btn-block">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;display:inline-block;vertical-align:middle;flex-shrink:0;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg> เปิดการแจ้งเตือน
+                </button>
+                <button class="btn btn-secondary btn-block" style="margin-top: 10px;" onclick="skipPushOffer()">ไม่ใช้ตอนนี้</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ================= MAIN DASHBOARD APPLICATION ================= -->
     <div id="app-container" class="app-layout hidden">
         
