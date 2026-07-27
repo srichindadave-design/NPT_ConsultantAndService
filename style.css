@@ -1839,3 +1839,257 @@ body.light-mode select option {
         grid-template-columns: repeat(5, 1fr) !important;
     }
 }
+
+/* ==========================================================================
+   INTERACTIVE WORK CALENDAR SYSTEM
+   ========================================================================== */
+
+/* Segmented Control Switcher */
+.segmented-control {
+    display: inline-flex;
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: var(--radius-lg);
+    padding: 3px;
+    border: 1px solid var(--border-color);
+}
+.light-mode .segmented-control {
+    background: rgba(0, 0, 0, 0.04);
+}
+.seg-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.seg-btn:hover {
+    color: var(--text-primary);
+}
+.seg-btn.active {
+    background: var(--bg-surface);
+    color: var(--accent-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.dark-mode .seg-btn.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+/* Calendar Layout Container */
+.calendar-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 15px;
+    animation: fadeIn 0.4s ease;
+}
+
+/* Calendar Header Navigation */
+.calendar-header-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+.calendar-nav-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.calendar-current-label {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 160px;
+    text-align: center;
+}
+.calendar-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Grid Header & Weekdays */
+.calendar-grid-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: 8px;
+}
+.calendar-weekday {
+    padding: 6px 0;
+    border-bottom: 2px solid var(--border-color);
+}
+.calendar-weekday.sunday {
+    color: #ef4444; /* Sunday color highlight */
+}
+.calendar-weekday.saturday {
+    color: var(--accent-color); /* Saturday color highlight */
+}
+
+/* Calendar Grid Body */
+.calendar-grid-body {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background-color: var(--border-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+/* Calendar Day Cell */
+.calendar-day-cell {
+    background-color: var(--bg-surface);
+    min-height: 120px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    position: relative;
+    transition: all 0.2s ease;
+}
+.calendar-day-cell:hover {
+    background-color: var(--card-bg-hover);
+    z-index: 2;
+    box-shadow: inset 0 0 0 2px rgba(255, 136, 0, 0.2);
+}
+.calendar-day-cell.other-month {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+.dark-mode .calendar-day-cell.other-month {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+.calendar-day-cell.other-month .calendar-day-number {
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+.calendar-day-cell.today {
+    background-color: rgba(255, 136, 0, 0.04);
+    box-shadow: inset 0 0 0 2px var(--accent-color) !important;
+}
+
+/* Day Number Label */
+.calendar-day-number {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    position: absolute;
+    top: 6px;
+    right: 8px;
+}
+.calendar-day-cell.today .calendar-day-number {
+    color: var(--accent-color);
+    background: var(--accent-soft);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    top: 4px;
+    right: 6px;
+    font-size: 0.75rem;
+}
+
+/* Task list container in cell */
+.calendar-task-list {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    overflow-y: auto;
+    max-height: 90px;
+}
+
+/* Dynamic Task Pills styling */
+.calendar-task-pill {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    width: 100%;
+}
+.calendar-task-pill:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    filter: brightness(1.05);
+}
+
+/* Status colors for pills */
+.calendar-task-pill.pending {
+    background-color: var(--warning-soft) !important;
+    color: var(--warning-color) !important;
+    border-color: rgba(255, 136, 0, 0.2);
+}
+.calendar-task-pill.ongoing {
+    background-color: var(--info-soft) !important;
+    color: var(--info-color) !important;
+    border-color: rgba(6, 182, 212, 0.2);
+}
+.calendar-task-pill.completed {
+    background-color: var(--success-soft) !important;
+    color: var(--success-color) !important;
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+/* Hover Tooltip style */
+.calendar-tooltip {
+    position: absolute;
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+    font-weight: 500;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    pointer-events: none;
+    max-width: 250px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    display: none;
+    line-height: 1.4;
+}
+.calendar-tooltip.visible {
+    display: block;
+    opacity: 1;
+}
+.calendar-tooltip h4 {
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #ff8800;
+    font-size: 0.85rem;
+}
+.calendar-tooltip .tooltip-meta {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    margin-top: 4px;
+    border-top: 1px dashed rgba(255,255,255,0.1);
+    padding-top: 4px;
+}

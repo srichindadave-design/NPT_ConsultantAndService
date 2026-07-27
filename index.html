@@ -431,19 +431,30 @@
                 <!-- 2. WORK SCHEDULE VIEW (Visible to Everyone) -->
                 <section id="tab-tasks" class="tab-panel">
                     <div class="layout-card glass mt-4">
-                        <div class="card-header flex-between">
+                        <div class="card-header flex-between" style="flex-wrap: wrap; gap: 12px;">
                             <h2>ตารางงานพนักงานและความรับผิดชอบ</h2>
-                            <div class="filters">
-                                <select id="filter-task-status" class="form-control-inline">
-                                    <option value="all">สถานะงานทั้งหมด</option>
-                                    <option value="pending">ยังไม่ดำเนินการ</option>
-                                    <option value="ongoing">กำลังดำเนินการ</option>
-                                    <option value="completed">เสร็จสิ้นแล้ว</option>
-                                </select>
+                            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                                <div class="segmented-control">
+                                    <button type="button" class="seg-btn active" id="btn-task-view-list">
+                                        <i data-lucide="list" style="width: 16px; height: 16px;"></i> ตารางรายการ
+                                    </button>
+                                    <button type="button" class="seg-btn" id="btn-task-view-calendar">
+                                        <i data-lucide="calendar" style="width: 16px; height: 16px;"></i> ปฏิทินแผนงาน
+                                    </button>
+                                </div>
+                                <div class="filters" id="task-list-filters">
+                                    <select id="filter-task-status" class="form-control-inline">
+                                        <option value="all">สถานะงานทั้งหมด</option>
+                                        <option value="pending">ยังไม่ดำเนินการ</option>
+                                        <option value="ongoing">กำลังดำเนินการ</option>
+                                        <option value="completed">เสร็จสิ้นแล้ว</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <div class="card-body">
-                            <div class="table-responsive">
+                            <!-- List View Wrapper -->
+                            <div class="table-responsive" id="task-list-wrapper">
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>
@@ -458,6 +469,47 @@
                                         <!-- Injected by JS -->
                                     </tbody>
                                 </table>
+                            </div>
+
+                            <!-- Interactive Calendar View Wrapper -->
+                            <div class="calendar-wrapper hidden" id="task-calendar-wrapper">
+                                <div class="calendar-header-controls">
+                                    <div class="calendar-nav-buttons">
+                                        <button type="button" class="btn btn-secondary btn-small" id="btn-cal-prev">
+                                            <i data-lucide="chevron-left" style="width: 14px; height: 14px;"></i> ก่อนหน้า
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-small" id="btn-cal-today">วันนี้</button>
+                                        <button type="button" class="btn btn-secondary btn-small" id="btn-cal-next">
+                                            ถัดไป <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+                                        </button>
+                                    </div>
+                                    <div class="calendar-current-label" id="calendar-month-year-label">กรกฎาคม 2026</div>
+                                    <div class="calendar-filters">
+                                        <select id="filter-calendar-staff" class="form-control-inline" style="min-width: 160px;">
+                                            <option value="all">พนักงานทุกคน</option>
+                                            <!-- Injected by JS -->
+                                        </select>
+                                        <select id="filter-calendar-status" class="form-control-inline">
+                                            <option value="all">สถานะงานทั้งหมด</option>
+                                            <option value="pending">ยังไม่ดำเนินการ</option>
+                                            <option value="ongoing">กำลังดำเนินการ</option>
+                                            <option value="completed">เสร็จสิ้นแล้ว</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="calendar-grid-header">
+                                    <div class="calendar-weekday sunday">อา.</div>
+                                    <div class="calendar-weekday">จ.</div>
+                                    <div class="calendar-weekday">อ.</div>
+                                    <div class="calendar-weekday">พ.</div>
+                                    <div class="calendar-weekday">พฤ.</div>
+                                    <div class="calendar-weekday">ศ.</div>
+                                    <div class="calendar-weekday saturday">ส.</div>
+                                </div>
+                                <div class="calendar-grid-body" id="calendar-grid-body">
+                                    <!-- Day cells injected by JS -->
+                                </div>
+                                <div id="calendar-tooltip" class="calendar-tooltip"></div>
                             </div>
                         </div>
                     </div>

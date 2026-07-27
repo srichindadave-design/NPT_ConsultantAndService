@@ -113,5 +113,29 @@
   "lineConfig": {
     "channelAccessToken": "erZo+4pNIZKrdmVAwxBqeYnnoTO+NEx1jVdTuJYjjDCOor9v4+Pi4ojZ2yi0dYOeY6K3hFRiFBWfPbtruv9kVQTLmjO7eOHsZU9h5vqwzBuAEcuuLPdACWKjbx8sOMCDOVP8Y0iDYRG95rYBkRmn2wdB04t89/1O/w1cDnyilFU=",
     "lineGroupId": "C98983b7ba3aa0ef7a3cc98490ccf8d3f"
+  },
+  "adminPins": {
+    "davezaa1642@gmail.com": {
+      "salt": "456d1351712dbc49581f80a8ac9d80ec",
+      "hash": "84ea464c1dd168492ce54f8cdf77aa412afa1594acdeff60b20df7266206d26a2dc87764560493bad15b9e75730542b05dbb1ac90e53adcaa31e2412cd99f3c3"
+    }
+  },
+  "pushSubscriptions": [
+    {
+      "email": "davezaa1642@gmail.com",
+      "subscription": {
+        "endpoint": "https://wns2-bl2p.notify.windows.com/w/?token=BQYAAABP4WIDOBG%2fkQ%2fqu5ZkBNJFa3i0Z29kkJkokwR6Vk%2bkoCT%2fFbzU6lGUOAf0EjRbvIabyfcpawZiGckffF2x8GHaZN3c5JG4D11w4H6F1lf4AGdZ%2fERrc8AvjM3okrRxTTkNYJ2Ew7RzgK9saQSFFCYE%2fJbuBx1jRQ2Y296I4uYvRSoCcIJ42FUWpSih9mddziqsMkp4DM82e47Lc3CEdrpkjUJv%2bpATDCCookWPRVpblA8CL6dydTDJYrKO5Z%2f0repFTVQZ92%2fSH%2fMdCf1AYOlIFdaYPsC%2bmmt273DJl0QpCVnx0SqirTomDSkaBVnOzVcUpzfD2KEAtPGD2NsG1oCO",
+        "expirationTime": null,
+        "keys": {
+          "p256dh": "BIQ3IzXdNneRG0Z2BkluwOGDlwttXy0YC-d6wLVy0cms4_6TyBO-NrpQ8aaLSQ1r1H1ih-XcW1gjixxnRM3hIc0",
+          "auth": "a1h7BfDnbv7cWPqCmBbxEA"
+        }
+      },
+      "subscribedAt": 1785137573656
+    }
+  ],
+  "vapidKeys": {
+    "publicKey": "BE99g6Vrp4KTxW9dj1og7RHFpD-WPT4haq8GFq2dLt_cINxVozoc-XZGWnGyT3JU3vbfBPlOdk_W7RmfM2SWsqc",
+    "privateKey": "ugMax86bK33kwJDMkP9E0_KR5ak0r1qxIadjeoBkf14"
   }
 }

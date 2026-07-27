@@ -40,6 +40,12 @@ let state = {
     notifications: []
 };
 
+// ================= CALENDAR STATE =================
+let currentCalMonth = new Date().getMonth();
+let currentCalYear = new Date().getFullYear();
+let selectedView = 'list'; // 'list' | 'calendar'
+let calFiltersInitialized = false;
+
 const positionOrder = {
     'ผู้จัดการ': 1,
     'ผู้ช่วยผู้จัดการ': 2,
@@ -1007,7 +1013,29 @@ function switchTab(tabId) {
         case 'tasks':
             title.textContent = 'ตารางงานและความรับผิดชอบ';
             subtitle.textContent = 'ตารางงานพนักงานและความรับผิดชอบทั้งหมด';
-            renderTasks();
+            initCalendarFilters();
+            
+            const listWrapper = document.getElementById('task-list-wrapper');
+            const listFilters = document.getElementById('task-list-filters');
+            const calWrapper = document.getElementById('task-calendar-wrapper');
+            const btnList = document.getElementById('btn-task-view-list');
+            const btnCal = document.getElementById('btn-task-view-calendar');
+
+            if (selectedView === 'calendar') {
+                if (listWrapper) listWrapper.classList.add('hidden');
+                if (listFilters) listFilters.classList.add('hidden');
+                if (calWrapper) calWrapper.classList.remove('hidden');
+                if (btnList) btnList.classList.remove('active');
+                if (btnCal) btnCal.classList.add('active');
+                renderCalendar();
+            } else {
+                if (listWrapper) listWrapper.classList.remove('hidden');
+                if (listFilters) listFilters.classList.remove('hidden');
+                if (calWrapper) calWrapper.classList.add('hidden');
+                if (btnList) btnList.classList.add('active');
+                if (btnCal) btnCal.classList.remove('active');
+                renderTasks();
+            }
             break;
         case 'assign-tasks':
             title.textContent = 'การมอบหมายงานและจัดการ';
@@ -1268,6 +1296,206 @@ function renderTasks() {
         `;
         tbody.appendChild(tr);
     });
+    lucide.createIcons();
+}
+
+// ================= RENDER: INTERACTIVE CALENDAR =================
+function initCalendarFilters() {
+    if (calFiltersInitialized) return;
+    const select = document.getElementById('filter-calendar-staff');
+    if (select) {
+        select.innerHTML = '<option value="all">พนักงานทุกคน</option>';
+        const sortedStaff = getSortedStaff();
+        sortedStaff.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.email.toLowerCase();
+            opt.textContent = `${s.name} (${s.nickname || s.position})`;
+            select.appendChild(opt);
+        });
+        calFiltersInitialized = true;
+    }
+}
+
+function renderCalendar() {
+    const gridBody = document.getElementById('calendar-grid-body');
+    const label = document.getElementById('calendar-month-year-label');
+    if (!gridBody || !label) return;
+
+    gridBody.innerHTML = '';
+
+    const thaiMonths = [
+        'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+        'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+    ];
+
+    // Show current month label (with Buddhist Era year + 543)
+    label.textContent = `${thaiMonths[currentCalMonth]} ${currentCalYear + 543}`;
+
+    // Month calculations
+    const firstDayIndex = new Date(currentCalYear, currentCalMonth, 1).getDay();
+    const lastDayDate = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+    const prevLastDayDate = new Date(currentCalYear, currentCalMonth, 0).getDate();
+
+    // Filters values
+    const staffFilter = document.getElementById('filter-calendar-staff').value;
+    const statusFilter = document.getElementById('filter-calendar-status').value;
+
+    // Filter tasks list
+    let filteredTasks = [...state.tasks];
+    
+    // Role checks
+    if (!checkIsManagement()) {
+        filteredTasks = filteredTasks.filter(t => {
+            const emails = t.assigneeEmails || (t.assigneeEmail ? [t.assigneeEmail.toLowerCase()] : []);
+            return emails.map(e => e.toLowerCase()).includes(state.currentUser.email.toLowerCase());
+        });
+    }
+
+    // Filter by staff select
+    if (staffFilter !== 'all') {
+        filteredTasks = filteredTasks.filter(t => {
+            const emails = t.assigneeEmails || (t.assigneeEmail ? [t.assigneeEmail.toLowerCase()] : []);
+            return emails.map(e => e.toLowerCase()).includes(staffFilter.toLowerCase());
+        });
+    }
+
+    // Filter by status select
+    if (statusFilter !== 'all') {
+        filteredTasks = filteredTasks.filter(t => t.status === statusFilter);
+    }
+
+    // Render 42 day cells
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    for (let i = 0; i < 42; i++) {
+        let dayVal, cellMonth, cellYear, isOtherMonth = false;
+
+        if (i < firstDayIndex) {
+            dayVal = prevLastDayDate - firstDayIndex + 1 + i;
+            cellMonth = currentCalMonth - 1;
+            cellYear = currentCalYear;
+            isOtherMonth = true;
+        } else if (i < firstDayIndex + lastDayDate) {
+            dayVal = i - firstDayIndex + 1;
+            cellMonth = currentCalMonth;
+            cellYear = currentCalYear;
+        } else {
+            dayVal = i - firstDayIndex - lastDayDate + 1;
+            cellMonth = currentCalMonth + 1;
+            cellYear = currentCalYear;
+            isOtherMonth = true;
+        }
+
+        // Normalize month and year overflow
+        let normMonth = cellMonth;
+        let normYear = cellYear;
+        if (normMonth < 0) {
+            normMonth = 11;
+            normYear--;
+        } else if (normMonth > 11) {
+            normMonth = 0;
+            normYear++;
+        }
+
+        const dateStr = `${normYear}-${String(normMonth + 1).padStart(2, '0')}-${String(dayVal).padStart(2, '0')}`;
+
+        const cellDiv = document.createElement('div');
+        cellDiv.className = 'calendar-day-cell';
+        if (isOtherMonth) cellDiv.classList.add('other-month');
+        if (dateStr === todayStr) cellDiv.classList.add('today');
+
+        // Double click to assign new task (Admin/Management only)
+        if (checkIsManagement()) {
+            cellDiv.title = 'ดับเบิ้ลคลิกเพื่อมอบหมายงานใหม่ในวันนี้';
+            cellDiv.addEventListener('dblclick', () => {
+                document.getElementById('task-form').reset();
+                document.getElementById('task-id').value = '';
+                document.getElementById('task-date').value = dateStr;
+                document.querySelectorAll('.task-assignee-checkbox').forEach(chk => chk.checked = false);
+                document.getElementById('task-modal-title').textContent = 'มอบหมายงานใหม่';
+                openModal('task-modal');
+            });
+        }
+
+        // Day Number
+        const numDiv = document.createElement('div');
+        numDiv.className = 'calendar-day-number';
+        numDiv.textContent = dayVal;
+        cellDiv.appendChild(numDiv);
+
+        // Task List container
+        const taskListDiv = document.createElement('div');
+        taskListDiv.className = 'calendar-task-list';
+
+        // Find matching tasks for this cell date
+        const dayTasks = filteredTasks.filter(t => t.assignedDate === dateStr);
+
+        dayTasks.forEach(t => {
+            const pill = document.createElement('button');
+            pill.type = 'button';
+            
+            let statusClass = 'pending';
+            let statusText = 'ยังไม่ดำเนินการ';
+            if (t.status === 'ongoing') { statusClass = 'ongoing'; statusText = 'กำลังดำเนินการ'; }
+            else if (t.status === 'completed') { statusClass = 'completed'; statusText = 'เสร็จสิ้นแล้ว'; }
+
+            pill.className = `calendar-task-pill ${statusClass}`;
+            pill.textContent = t.title;
+
+            // Tooltip events
+            const tooltip = document.getElementById('calendar-tooltip');
+            pill.addEventListener('mouseenter', (e) => {
+                if (!tooltip) return;
+                const assignees = t.assigneeNames ? t.assigneeNames.join(', ') : t.assigneeName;
+                tooltip.innerHTML = `
+                    <h4>${escapeHtml(t.title)}</h4>
+                    <p style="margin: 0; font-size: 0.75rem;">${escapeHtml(t.desc || 'ไม่มีคำอธิบาย')}</p>
+                    <div class="tooltip-meta">
+                        <strong>ผู้รับผิดชอบ:</strong> ${escapeHtml(assignees)}<br>
+                        <strong>สถานะ:</strong> ${statusText}
+                    </div>
+                `;
+                tooltip.classList.add('visible');
+            });
+
+            pill.addEventListener('mousemove', (e) => {
+                if (!tooltip) return;
+                const tooltipWidth = tooltip.offsetWidth;
+                const tooltipHeight = tooltip.offsetHeight;
+                
+                // Adjust position relative to viewport
+                let left = e.clientX + 15;
+                let top = e.clientY + 15;
+                
+                if (left + tooltipWidth > window.innerWidth) {
+                    left = e.clientX - tooltipWidth - 15;
+                }
+                if (top + tooltipHeight > window.innerHeight) {
+                    top = e.clientY - tooltipHeight - 15;
+                }
+                
+                tooltip.style.left = `${left + window.scrollX}px`;
+                tooltip.style.top = `${top + window.scrollY}px`;
+            });
+
+            pill.addEventListener('mouseleave', () => {
+                if (tooltip) tooltip.classList.remove('visible');
+            });
+
+            // Click opens task detail modal
+            pill.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent dblclick on cell
+                if (tooltip) tooltip.classList.remove('visible');
+                window.viewTaskDetail(t.id);
+            });
+
+            taskListDiv.appendChild(pill);
+        });
+
+        cellDiv.appendChild(taskListDiv);
+        gridBody.appendChild(cellDiv);
+    }
+    
     lucide.createIcons();
 }
 
@@ -2807,6 +3035,63 @@ function setupEventListeners() {
     const weatherLocSelect = document.getElementById('weather-location-select');
     if (weatherLocSelect) {
         weatherLocSelect.addEventListener('change', fetchCurrentWeather);
+    }
+
+    // Segmented Control View Switcher listeners
+    const btnTaskListView = document.getElementById('btn-task-view-list');
+    const btnTaskCalView = document.getElementById('btn-task-view-calendar');
+    if (btnTaskListView && btnTaskCalView) {
+        btnTaskListView.addEventListener('click', () => {
+            selectedView = 'list';
+            switchTab('tasks');
+        });
+        btnTaskCalView.addEventListener('click', () => {
+            selectedView = 'calendar';
+            switchTab('tasks');
+        });
+    }
+
+    // Calendar Navigation events
+    const btnCalPrev = document.getElementById('btn-cal-prev');
+    const btnCalNext = document.getElementById('btn-cal-next');
+    const btnCalToday = document.getElementById('btn-cal-today');
+
+    if (btnCalPrev) {
+        btnCalPrev.addEventListener('click', () => {
+            currentCalMonth--;
+            if (currentCalMonth < 0) {
+                currentCalMonth = 11;
+                currentCalYear--;
+            }
+            renderCalendar();
+        });
+    }
+    if (btnCalNext) {
+        btnCalNext.addEventListener('click', () => {
+            currentCalMonth++;
+            if (currentCalMonth > 11) {
+                currentCalMonth = 0;
+                currentCalYear++;
+            }
+            renderCalendar();
+        });
+    }
+    if (btnCalToday) {
+        btnCalToday.addEventListener('click', () => {
+            currentCalMonth = new Date().getMonth();
+            currentCalYear = new Date().getFullYear();
+            renderCalendar();
+        });
+    }
+
+    // Calendar Filters change events
+    const filterCalStaff = document.getElementById('filter-calendar-staff');
+    const filterCalStatus = document.getElementById('filter-calendar-status');
+    if (filterCalStaff) {
+        filterCalStaff.addEventListener('change', renderCalendar);
+    }
+    if (filterCalStatus) {
+        filterCalStatus.addEventListener('change', renderCalendar);
     }
 }
 
