@@ -3207,7 +3207,7 @@ const TAB_HAS_NO_DATA = {
     dashboard: () => state.tasks.length === 0,
     tasks: () => state.tasks.length === 0,
     'assign-tasks': () => state.tasks.length === 0,
-    staff: () => state.staff.length === 0,
+    staff: () => state.staff.length <= 1, // ค่าเริ่มต้นมีพนักงานปลอม 1 คนติดมา ไม่นับว่าเป็น "มีข้อมูลจริง"
     quotations: () => state.quotations.length === 0,
     pr: () => state.prs.length === 0,
     po: () => state.pos.length === 0,
