@@ -1109,7 +1109,7 @@ function renderDashboard() {
     const recent = state.tasks.slice(-5).reverse();
     
     if (recent.length === 0) {
-        recentTasksContainer.innerHTML = `<tr><td colspan="3" class="text-muted" style="text-align:center;">ไม่มีรายการงานในขณะนี้</td></tr>`;
+        recentTasksContainer.innerHTML = emptyStateRow(3, 'ไม่มีรายการงานในขณะนี้');
     } else {
         recent.forEach(t => {
             let statusText = 'ยังไม่เริ่ม';
@@ -1199,7 +1199,7 @@ function renderTasks() {
     }
 
     if (filteredTasks.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-muted" style="text-align:center;">ไม่พบข้อมูลรายการงาน</td></tr>`;
+        tbody.innerHTML = emptyStateRow(5, 'ไม่พบข้อมูลรายการงาน');
         return;
     }
 
@@ -1277,7 +1277,7 @@ function renderAssignTasks() {
     let filteredTasks = [...state.tasks];
 
     if (filteredTasks.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-muted" style="text-align:center;">ไม่พบข้อมูลรายการงาน</td></tr>`;
+        tbody.innerHTML = emptyStateRow(4, 'ไม่พบข้อมูลรายการงาน');
         return;
     }
 
@@ -1357,7 +1357,7 @@ function renderStaff() {
     tbody.innerHTML = '';
 
     if (state.staff.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-muted" style="text-align:center;">ไม่มีรายชื่อพนักงาน</td></tr>`;
+        tbody.innerHTML = emptyStateRow(5, 'ไม่มีรายชื่อพนักงาน');
         return;
     }
 
@@ -1407,7 +1407,7 @@ function renderQuotations() {
     tbody.innerHTML = '';
 
     if (state.quotations.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-muted" style="text-align:center;">ไม่มีประวัติใบเสนอราคา</td></tr>`;
+        tbody.innerHTML = emptyStateRow(5, 'ไม่มีประวัติใบเสนอราคา');
         return;
     }
 
@@ -1800,7 +1800,7 @@ function renderPRs() {
     tbody.innerHTML = '';
 
     if (state.prs.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-muted" style="text-align:center;">ไม่มีข้อมูลใบขอซื้อ (PR)</td></tr>`;
+        tbody.innerHTML = emptyStateRow(6, 'ไม่มีข้อมูลใบขอซื้อ (PR)');
         return;
     }
 
@@ -2174,7 +2174,7 @@ function renderPOs() {
     tbody.innerHTML = '';
 
     if (state.pos.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-muted" style="text-align:center;">ไม่มีข้อมูลใบสั่งซื้อ (PO)</td></tr>`;
+        tbody.innerHTML = emptyStateRow(7, 'ไม่มีข้อมูลใบสั่งซื้อ (PO)');
         return;
     }
 
@@ -3055,7 +3055,8 @@ const ICON_PATHS = {
     'info': '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
     'alert-triangle': '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
     'x-circle': '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
-    'key-round': '<path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/>'
+    'key-round': '<path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/>',
+    'inbox': '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>'
 };
 
 // แอนิเมชันตัวเลขนับขึ้นในการ์ดสถิติ (นับจากค่าที่แสดงอยู่เดิมไปยังค่าใหม่)
@@ -3093,6 +3094,20 @@ function iconSvg(name, extraStyle) {
     if (!paths) return '';
     const style = `width: 16px; height: 16px; display: inline-block; vertical-align: middle; flex-shrink: 0; ${extraStyle || ''}`;
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="${style}">${paths}</svg>`;
+}
+
+// สร้างแถวตาราง "ไม่มีข้อมูล" พร้อมไอคอนประกอบ แทนข้อความเปล่าๆ ที่ดูเหมือนหน้าจอพัง
+function emptyStateRow(colspan, message) {
+    return `
+        <tr>
+            <td colspan="${colspan}" style="text-align: center; padding: 48px 20px; border: none;">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; opacity: 0.55;">
+                    ${iconSvg('inbox', 'width:40px;height:40px;color:var(--text-muted);')}
+                    <span class="text-muted" style="font-size: 0.9rem;">${message}</span>
+                </div>
+            </td>
+        </tr>
+    `;
 }
 
 function escapeHtml(str) {
@@ -3240,7 +3255,7 @@ function renderEquipments() {
     tbody.innerHTML = '';
 
     if (!state.equipments || state.equipments.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-muted" style="text-align:center;">ไม่มีข้อมูลอุปกรณ์ของบริษัท</td></tr>`;
+        tbody.innerHTML = emptyStateRow(6, 'ไม่มีข้อมูลอุปกรณ์ของบริษัท');
         return;
     }
 
