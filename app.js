@@ -1095,14 +1095,12 @@ function renderDashboard() {
     const totalStaff = getSortedStaff().length;
     const totalQuotations = state.quotations.length;
 
-    // Apply stats to UI
-    document.getElementById('stat-total-tasks').textContent = totalTasks;
-    document.getElementById('stat-pending-tasks').textContent = ongoingTasks;
-    document.getElementById('stat-completed-tasks').textContent = completedTasks;
-    document.getElementById('stat-total-quotations').textContent = totalQuotations;
-    if (document.getElementById('stat-total-staff')) {
-        document.getElementById('stat-total-staff').textContent = totalStaff;
-    }
+    // Apply stats to UI (แอนิเมชันตัวเลขนับขึ้นจากค่าเดิมไปค่าใหม่)
+    animateCountUp('stat-total-tasks', totalTasks);
+    animateCountUp('stat-pending-tasks', ongoingTasks);
+    animateCountUp('stat-completed-tasks', completedTasks);
+    animateCountUp('stat-total-quotations', totalQuotations);
+    animateCountUp('stat-total-staff', totalStaff);
 
     // 2. Render Recent Tasks (Max 5)
     const recentTasksContainer = document.getElementById('recent-tasks-list');
@@ -3059,6 +3057,36 @@ const ICON_PATHS = {
     'x-circle': '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
     'key-round': '<path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/>'
 };
+
+// แอนิเมชันตัวเลขนับขึ้นในการ์ดสถิติ (นับจากค่าที่แสดงอยู่เดิมไปยังค่าใหม่)
+const PREFERS_REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function animateCountUp(elementId, targetValue, duration = 700) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    const startValue = parseInt(el.textContent.replace(/[^\d-]/g, ''), 10) || 0;
+
+    if (PREFERS_REDUCED_MOTION || startValue === targetValue) {
+        el.textContent = targetValue;
+        return;
+    }
+
+    const startTime = performance.now();
+    function tick(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        const current = Math.round(startValue + (targetValue - startValue) * eased);
+        el.textContent = current;
+        if (progress < 1) {
+            requestAnimationFrame(tick);
+        } else {
+            el.textContent = targetValue;
+        }
+    }
+    requestAnimationFrame(tick);
+}
 
 function iconSvg(name, extraStyle) {
     const paths = ICON_PATHS[name];
