@@ -62,6 +62,7 @@ function getSortedStaff() {
 
 // For client-side offline fallback simulation
 let isOfflineMode = false;
+let isSyncingDatabase = false;
 let tempUploadedFileData = '';
 let tempUploadedFileName = '';
 let taskDatePicker = null;
@@ -283,7 +284,10 @@ function initData() {
 // Synchronize database with backend db.json file
 async function syncDatabase() {
     if (isOfflineMode) return;
-    
+
+    isSyncingDatabase = true;
+    showActiveTabSkeleton();
+
     try {
         const response = await fetch(`${API_BASE}/db`);
         const serverDb = await response.json();
@@ -328,6 +332,13 @@ async function syncDatabase() {
         }
     } catch (e) {
         console.warn('[Database] เชื่อมต่อซิงค์ฐานข้อมูลไม่สำเร็จ:', e);
+        // ซิงค์ไม่สำเร็จ -> แสดงข้อมูลที่มีอยู่เดิม (จากแคช) แทน ไม่ให้ค้างเป็นแถบโหลดตลอดไป
+        const activeItem = document.querySelector('.nav-item.active');
+        if (activeItem && state.currentUser) {
+            switchTab(activeItem.dataset.tab);
+        }
+    } finally {
+        isSyncingDatabase = false;
     }
 }
 
@@ -1058,6 +1069,54 @@ function showToast(message, type = 'info', elementId = 'global-toast') {
     setTimeout(() => {
         toast.classList.add('hidden');
     }, 4000);
+
+    // เอฟเฟกต์ฉลองตอนบันทึก/ทำรายการสำเร็จ (เฉพาะ toast หลักของแอป ไม่ใช่หน้า login)
+    if (type === 'success' && elementId === 'global-toast') {
+        showSuccessCheckmark();
+        playSuccessDing();
+    }
+}
+
+// วงกลมเครื่องหมายถูกโผล่ขึ้นมาสั้นๆ กลางจอ ตอนทำรายการสำเร็จ
+function showSuccessCheckmark() {
+    if (PREFERS_REDUCED_MOTION) return; // งดแอนิเมชันถ้าผู้ใช้ตั้งค่าลดการเคลื่อนไหวไว้
+
+    const el = document.createElement('div');
+    el.className = 'success-check-burst';
+    el.innerHTML = `<div class="success-check-circle">${iconSvg('check', 'width:34px;height:34px;color:#fff;')}</div>`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 850);
+}
+
+// เสียง "ติ๊ง" สั้นๆ สังเคราะห์ขึ้นเอง (ไม่ต้องใช้ไฟล์เสียงจากภายนอก ทำงานได้แน่นอนไม่ว่าเน็ตช้าแค่ไหน)
+let sharedAudioContext = null;
+function playSuccessDing() {
+    try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        if (!sharedAudioContext) sharedAudioContext = new AudioContextClass();
+        const ctx = sharedAudioContext;
+        if (ctx.state === 'suspended') ctx.resume();
+
+        const now = ctx.currentTime;
+        const playTone = (freq, startOffset, duration, peakGain) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0, now + startOffset);
+            gain.gain.linearRampToValueAtTime(peakGain, now + startOffset + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + startOffset + duration);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + startOffset);
+            osc.stop(now + startOffset + duration + 0.05);
+        };
+        playTone(880, 0, 0.12, 0.10);        // โน้ตแรก
+        playTone(1318.5, 0.09, 0.18, 0.09);  // โน้ตสอง เสียงสูงขึ้น คล้ายเสียง "ติ๊ง"
+    } catch (e) {
+        console.warn('[Sound] เล่นเสียงยืนยันไม่สำเร็จ:', e);
+    }
 }
 
 function updateDateBadge() {
@@ -1119,7 +1178,7 @@ function renderDashboard() {
 
             let qtyText = '';
             if (t.qty && t.qty >= 1) {
-                qtyText = `<br><small class="text-muted">ความคืบหน้า: ${t.completedQty || 0} / ${t.qty} หน่วย</small>`;
+                qtyText = progressBarHtml(t.completedQty || 0, t.qty);
             }
 
             const displayNames = t.assigneeNames ? t.assigneeNames.join(', ') : t.assigneeName;
@@ -1245,7 +1304,7 @@ function renderTasks() {
 
         let qtyText = '';
         if (t.qty && t.qty >= 1) {
-            qtyText = `<br><small class="text-muted">ความคืบหน้า: ${t.completedQty || 0} / ${t.qty} หน่วย</small>`;
+            qtyText = progressBarHtml(t.completedQty || 0, t.qty);
         }
         
         const dateText = `<br><small class="text-muted">${iconSvg('calendar', 'width:12px;height:12px;margin-right:4px;')}มอบหมายเมื่อ: ${t.assignedDate || '-'}</small>`;
@@ -1291,7 +1350,7 @@ function renderAssignTasks() {
 
         let qtyText = '';
         if (t.qty && t.qty >= 1) {
-            qtyText = `<br><small class="text-muted">ความคืบหน้า: ${t.completedQty || 0} / ${t.qty} หน่วย</small>`;
+            qtyText = progressBarHtml(t.completedQty || 0, t.qty);
         }
 
         const displayNames = t.assigneeNames ? t.assigneeNames.join(', ') : t.assigneeName;
@@ -3097,6 +3156,73 @@ function iconSvg(name, extraStyle) {
 }
 
 // สร้างแถวตาราง "ไม่มีข้อมูล" พร้อมไอคอนประกอบ แทนข้อความเปล่าๆ ที่ดูเหมือนหน้าจอพัง
+// สร้างแถบความคืบหน้างาน (ใช้แทนข้อความ "ความคืบหน้า: X / Y หน่วย" เฉยๆ)
+function progressBarHtml(completed, total) {
+    const safeCompleted = completed || 0;
+    const pct = total > 0 ? Math.min(100, Math.round((safeCompleted / total) * 100)) : 0;
+    const barColor = pct >= 100 ? 'var(--success-color)' : 'var(--accent-color)';
+    return `
+        <div style="margin-top: 6px; max-width: 150px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 3px;">
+                <span>${safeCompleted}/${total} หน่วย</span>
+                <span>${pct}%</span>
+            </div>
+            <div style="height: 5px; border-radius: 3px; background: var(--border-color); overflow: hidden;">
+                <div style="height: 100%; width: ${pct}%; background: ${barColor}; border-radius: 3px; transition: width 0.4s ease;"></div>
+            </div>
+        </div>
+    `;
+}
+
+// Skeleton loading: แสดงแถบเทาเคลื่อนไหวแทนตารางว่าง ระหว่างรอข้อมูลจากเซิร์ฟเวอร์
+function renderTableSkeleton(tbodyId, colspan, rows = 4) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    let rowsHtml = '';
+    for (let i = 0; i < rows; i++) {
+        const width = 55 + ((i * 13) % 35); // ความกว้างสลับกันไปแต่ละแถว ดูเป็นธรรมชาติ
+        rowsHtml += `
+            <tr class="skeleton-row">
+                <td colspan="${colspan}"><div class="skeleton-bar" style="width: ${width}%;"></div></td>
+            </tr>
+        `;
+    }
+    tbody.innerHTML = rowsHtml;
+}
+
+const TAB_SKELETON_MAP = {
+    dashboard: [['recent-tasks-list', 3]],
+    tasks: [['tasks-table-body', 5]],
+    'assign-tasks': [['assign-tasks-table-body', 4]],
+    staff: [['staff-table-body', 5]],
+    quotations: [['quotations-table-body', 5]],
+    pr: [['prs-table-body', 6]],
+    po: [['pos-table-body', 7]],
+    equipment: [['equipment-table-body', 6]]
+};
+
+// เช็คว่าแท็บนี้ "ยังไม่มีข้อมูลแคชเลย" ไหม (เครื่อง/เบราว์เซอร์ใหม่) ถ้าใช่ค่อยโชว์ skeleton
+// ถ้ามีข้อมูลแคชอยู่แล้วให้แสดงของเดิมไปก่อน ไม่ต้องขึ้น skeleton ทับข้อมูลที่เห็นอยู่
+const TAB_HAS_NO_DATA = {
+    dashboard: () => state.tasks.length === 0,
+    tasks: () => state.tasks.length === 0,
+    'assign-tasks': () => state.tasks.length === 0,
+    staff: () => state.staff.length === 0,
+    quotations: () => state.quotations.length === 0,
+    pr: () => state.prs.length === 0,
+    po: () => state.pos.length === 0,
+    equipment: () => state.equipments.length === 0
+};
+
+function showActiveTabSkeleton() {
+    const activeItem = document.querySelector('.nav-item.active');
+    const tabId = activeItem ? activeItem.dataset.tab : 'dashboard';
+    const targets = TAB_SKELETON_MAP[tabId];
+    const hasNoData = TAB_HAS_NO_DATA[tabId];
+    if (!targets || !hasNoData || !hasNoData()) return;
+    targets.forEach(([id, colspan]) => renderTableSkeleton(id, colspan));
+}
+
 function emptyStateRow(colspan, message) {
     return `
         <tr>
