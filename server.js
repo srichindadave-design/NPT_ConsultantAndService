@@ -158,12 +158,25 @@ app.post('/api/setup-pin', (req, res) => {
 });
 
 // 3. เข้าสู่ระบบด้วยอีเมล + PIN
+// ป้องกันการเดารหัส PIN แบบสุ่ม (brute-force) เนื่องจาก PIN มีแค่ 4 หลัก (10,000 แบบ)
+// ล็อกชั่วคราวหลังพยายามผิด 5 ครั้งติดต่อกัน (เก็บในหน่วยความจำ รีเซ็ตเองเมื่อรีสตาร์ทเซิร์ฟเวอร์)
+const pinAttempts = new Map();
+const MAX_PIN_ATTEMPTS = 5;
+const PIN_LOCKOUT_MS = 5 * 60 * 1000; // 5 นาที
+
 app.post('/api/login-pin', (req, res) => {
   const { email, pin } = req.body;
   if (!email || !pin) {
     return res.status(400).json({ success: false, message: 'กรุณาระบุอีเมลและรหัส PIN' });
   }
   const emailLower = email.toLowerCase();
+
+  const attemptRec = pinAttempts.get(emailLower);
+  if (attemptRec && attemptRec.count >= MAX_PIN_ATTEMPTS && Date.now() - attemptRec.lastAttempt < PIN_LOCKOUT_MS) {
+    const waitMin = Math.ceil((PIN_LOCKOUT_MS - (Date.now() - attemptRec.lastAttempt)) / 60000);
+    return res.status(429).json({ success: false, message: `กรอกรหัส PIN ผิดหลายครั้งเกินไป กรุณาลองใหม่อีกครั้งใน ${waitMin} นาที` });
+  }
+
   const db = readDb();
   const { isAdmin, staffMember, allowed } = findAccount(db, emailLower);
 
@@ -190,17 +203,31 @@ app.post('/api/login-pin', (req, res) => {
   const match = a.length === b.length && crypto.timingSafeEqual(a, b);
 
   if (!match) {
+    const current = pinAttempts.get(emailLower) || { count: 0 };
+    pinAttempts.set(emailLower, { count: current.count + 1, lastAttempt: Date.now() });
     return res.status(400).json({ success: false, message: 'รหัส PIN ไม่ถูกต้อง' });
   }
+
+  pinAttempts.delete(emailLower);
   return res.json({ success: true, message: 'เข้าสู่ระบบสำเร็จ', isAdmin, email: emailLower });
 });
 
 // 4. รีเซ็ต PIN ของพนักงาน (ให้ผู้จัดการ/แอดมินใช้ เมื่อพนักงานลืมรหัส PIN)
 app.post('/api/reset-pin', (req, res) => {
-  const { targetEmail } = req.body;
+  const { targetEmail, actingEmail } = req.body;
   if (!targetEmail) return res.status(400).json({ success: false, message: 'กรุณาระบุอีเมลที่ต้องการรีเซ็ต' });
-  const emailLower = targetEmail.toLowerCase();
+  if (!actingEmail) return res.status(400).json({ success: false, message: 'ไม่พบข้อมูลผู้ดำเนินการ กรุณาเข้าสู่ระบบใหม่' });
+
   const db = readDb();
+  const actingLower = actingEmail.toLowerCase();
+  const { isAdmin: actingIsAdmin, staffMember: actingStaff } = findAccount(db, actingLower);
+  const actingIsManager = actingIsAdmin || (actingStaff && actingStaff.position === 'ผู้จัดการ');
+
+  if (!actingIsManager) {
+    return res.status(403).json({ success: false, message: 'คุณไม่มีสิทธิ์รีเซ็ตรหัส PIN ของผู้อื่น' });
+  }
+
+  const emailLower = targetEmail.toLowerCase();
   const staffList = db.staff || [];
   const staffMember = staffList.find(s => s.email && s.email.toLowerCase() === emailLower);
 
