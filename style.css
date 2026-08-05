@@ -634,6 +634,73 @@ body.light-mode .login-container::after {
     border-top: 1px solid var(--border-color);
 }
 
+/* ================= BOTTOM NAVIGATION (มือถือเท่านั้น) ================= */
+.bottom-nav {
+    display: none; /* แสดงเฉพาะบนมือถือผ่าน media query ด้านล่าง */
+}
+
+@media (max-width: 768px) {
+    .bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 62px;
+        background: var(--bg-surface-solid, var(--bg-surface));
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-top: 1px solid var(--border-color);
+        z-index: 900;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+    }
+
+    .bottom-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 6px 2px;
+        transition: color 0.15s;
+    }
+
+    .bottom-nav-item svg {
+        width: 21px;
+        height: 21px;
+        transition: transform 0.15s;
+    }
+
+    .bottom-nav-item span {
+        font-size: 0.65rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .bottom-nav-item.active {
+        color: var(--accent-color);
+    }
+
+    .bottom-nav-item.active svg {
+        transform: translateY(-1px) scale(1.08);
+    }
+
+    .bottom-nav-item:active {
+        opacity: 0.6;
+    }
+
+    /* กระดิ่งแจ้งเตือน/ปฏิทิน ที่กางแบบเต็มจอ ต้องเว้นไม่ให้ทับแถบล่างด้วย */
+    #notifications-dropdown {
+        max-height: calc(100vh - 90px - 62px) !important;
+    }
+}
+
 /* MAIN CONTENT AREA */
 .main-content {
     flex-grow: 1;
@@ -1606,6 +1673,11 @@ body.light-mode select option {
         padding: 16px !important;
         width: 100% !important;
         overflow-x: hidden;
+    }
+
+    /* กันไม่ให้เนื้อหาโดนแถบเมนูล่างบัง (ต้องอยู่หลัง .main-content padding shorthand ด้านบน เพื่อให้ชนะ) */
+    .main-content {
+        padding-bottom: calc(62px + 16px + env(safe-area-inset-bottom, 0px)) !important;
     }
 
     .content-header {

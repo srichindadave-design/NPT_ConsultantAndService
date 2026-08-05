@@ -974,9 +974,21 @@ function popPinDigit() {
 
 // ================= TAB NAVIGATION =================
 function switchTab(tabId) {
-    // Update Active Menu
+    // Update Active Menu (sidebar)
     document.querySelectorAll('.nav-item').forEach(item => {
         if (item.dataset.tab === tabId) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
+
+    // Update Active Menu (แถบเมนูล่างบนมือถือ)
+    const bottomNavTabs = ['dashboard', 'tasks', 'quotations', 'staff'];
+    document.querySelectorAll('.bottom-nav-item').forEach(item => {
+        if (item.dataset.tab === tabId) {
+            item.classList.add('active');
+        } else if (item.id === 'bottom-nav-more' && !bottomNavTabs.includes(tabId)) {
             item.classList.add('active');
         } else {
             item.classList.remove('active');
@@ -2834,6 +2846,20 @@ function setupEventListeners() {
                 sidebar.classList.remove('active');
                 sidebarOverlay.classList.remove('active');
             });
+        });
+    }
+
+    // Bottom Navigation (มือถือ)
+    document.querySelectorAll('.bottom-nav-item[data-tab]').forEach(item => {
+        item.addEventListener('click', () => {
+            switchTab(item.dataset.tab);
+        });
+    });
+
+    const bottomNavMore = document.getElementById('bottom-nav-more');
+    if (bottomNavMore && mobileToggle) {
+        bottomNavMore.addEventListener('click', () => {
+            mobileToggle.click();
         });
     }
 

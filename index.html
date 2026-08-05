@@ -1276,6 +1276,30 @@
     <!-- E. Global Dialog Box (Toast/Notification) -->
     <div id="global-toast" class="toast hidden"></div>
 
+    <!-- ================= BOTTOM NAVIGATION (มือถือเท่านั้น) ================= -->
+    <nav id="bottom-nav" class="bottom-nav">
+        <button type="button" class="bottom-nav-item active" data-tab="dashboard">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+            <span>หน้าหลัก</span>
+        </button>
+        <button type="button" class="bottom-nav-item" data-tab="tasks">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>
+            <span>งาน</span>
+        </button>
+        <button type="button" class="bottom-nav-item" data-tab="quotations">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span>จัดซื้อ</span>
+        </button>
+        <button type="button" class="bottom-nav-item" data-tab="staff">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>บุคลากร</span>
+        </button>
+        <button type="button" id="bottom-nav-more" class="bottom-nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>
+            <span>เพิ่มเติม</span>
+        </button>
+    </nav>
+
     <script src="app.js"></script>
     <!-- PWA: ลงทะเบียน Service Worker เพื่อให้ติดตั้งเป็นแอปได้ -->
     <script>
